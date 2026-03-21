@@ -12,11 +12,11 @@
     "mcp",
     "workflow"
   ],
-  "author": "",
+  "author": "aokiz",
   "license": "MIT",
   "main": "dist/cli/index.js",
   "bin": {
-    "ethan": "./dist/cli/index.js"
+    "ethan": "dist/cli/index.js"
   },
   "files": [
     "dist/",
@@ -66,6 +66,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/ethan-skill.git"
+    "url": "git+https://github.com/aokiz-ek/smart-flow-skill.git"
   }
 }
