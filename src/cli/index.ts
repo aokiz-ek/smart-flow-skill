@@ -380,13 +380,9 @@ program
     );
 
     // 2. MCP SDK check
-    let sdkOk = false;
-    try {
-      require.resolve('@modelcontextprotocol/sdk');
-      sdkOk = true;
-    } catch {
-      // not installed
-    }
+    const sdkOk = fs.existsSync(
+      path.join(__dirname, '../../node_modules/@modelcontextprotocol/sdk')
+    );
     console.log(`  @modelcontextprotocol/sdk: ${sdkOk ? '✅ 已安装' : '❌ 未安装'}`);
 
     // 3. Rules files status
