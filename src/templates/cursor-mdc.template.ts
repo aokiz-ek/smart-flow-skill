@@ -9,12 +9,12 @@ export function renderCursorMdc(ctx: BuildContext): string {
   const skillsContent = skills.map(renderSkillSection).join('\n\n---\n\n');
 
   return `---
-description: 工作流自动执行助手 - 智能引导 AI 完成需求理解、任务拆解、方案设计、执行实现、进度跟踪和报告生成
+description: Ethan - Your AI Workflow Assistant
 globs:
 alwaysApply: true
 ---
 
-# 工作流自动执行助手（Smart Flow Skill v${version}）
+# Ethan v${version}
 
 > 自动生成 - 请勿手动修改，源文件：src/skills/
 > Generated at: ${generatedAt}
@@ -49,7 +49,7 @@ export function renderCursorOld(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const skillsContent = skills.map(renderSkillSection).join('\n\n---\n\n');
 
-  return `# 工作流自动执行助手（Smart Flow Skill v${version}）
+  return `# Ethan v${version}
 
 > 自动生成 - 请勿手动修改，源文件：src/skills/
 > Generated at: ${generatedAt}

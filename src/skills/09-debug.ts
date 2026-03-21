@@ -18,7 +18,7 @@ export const debugSkill: SkillDefinition = {
     '为什么报错',
     '程序崩溃',
     '/故障排查',
-    '@smartflow debug',
+    '@ethan debug',
   ],
   steps: [
     {

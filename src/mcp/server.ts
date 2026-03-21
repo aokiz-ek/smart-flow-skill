@@ -1,7 +1,7 @@
 /**
  * MCP Server（stdio transport）
  * 每个 Skill → 一个 MCP tool
- * 运行：node dist/mcp/server.js  或  npx smart-flow mcp
+ * 运行：node dist/mcp/server.js  或  npx ethan mcp
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -76,7 +76,7 @@ function executeSkill(skill: SkillDefinition, context: string, format: 'full' | 
 export async function startMcpServer(): Promise<void> {
   const server = new Server(
     {
-      name: 'smart-flow-skill',
+      name: 'ethan-skill',
       version: pkg.version,
     },
     {
@@ -87,7 +87,7 @@ export async function startMcpServer(): Promise<void> {
   );
 
   const pipelineTool: Tool = {
-    name: 'smart_flow_pipeline',
+    name: 'ethan_pipeline',
     description: '按 Pipeline 顺序串联执行多个 Skill，适用于完整工作流场景',
     inputSchema: {
       type: 'object',
@@ -118,7 +118,7 @@ export async function startMcpServer(): Promise<void> {
     const { name, arguments: args } = request.params;
 
     // Handle pipeline tool
-    if (name === 'smart_flow_pipeline') {
+    if (name === 'ethan_pipeline') {
       const pipelineId = (args?.pipeline as string) || '';
       const context = (args?.context as string) || '';
       const resolved = resolvePipeline(pipelineId);
@@ -157,7 +157,7 @@ export async function startMcpServer(): Promise<void> {
         content: [
           {
             type: 'text',
-            text: `Unknown tool: ${name}. Available tools: ${ALL_SKILLS.map((s) => s.nameEn).join(', ')}, smart_flow_pipeline`,
+            text: `Unknown tool: ${name}. Available tools: ${ALL_SKILLS.map((s) => s.nameEn).join(', ')}, ethan_pipeline`,
           },
         ],
         isError: true,
@@ -185,7 +185,7 @@ export async function startMcpServer(): Promise<void> {
 
   // MCP server 运行时不输出到 stdout（会破坏协议）
   process.stderr.write(
-    `Smart Flow MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + 1 pipeline tool, ${PIPELINES.length} pipelines)\n`
+    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + 1 pipeline tool, ${PIPELINES.length} pipelines)\n`
   );
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * npx smart-flow CLI
+ * npx ethan CLI
  * 命令：install | list | mcp | validate | pipeline | doctor | stats
  */
 
@@ -17,13 +17,13 @@ const pkg = JSON.parse(
 const program = new Command();
 
 program
-  .name('smart-flow')
-  .description('工作流自动执行助手 AI Skill - 跨平台分发工具')
+  .name('ethan')
+  .description('Ethan - Your AI Workflow Assistant')
   .version(pkg.version);
 
 // ─── Stats 辅助函数 ──────────────────────────────────────────────────────────
 
-const STATS_FILE = path.join(os.homedir(), '.smart-flow-stats.json');
+const STATS_FILE = path.join(os.homedir(), '.ethan-stats.json');
 
 function readStats(): Record<string, number> {
   try {
@@ -47,7 +47,7 @@ function writeStats(stats: Record<string, number>): void {
 // ─── install 命令 ───────────────────────────────────────────────────────────
 program
   .command('install')
-  .description('将 Smart Flow 规则文件安装到当前项目')
+  .description('将 Ethan 规则文件安装到当前项目')
   .option(
     '-p, --platform <platform>',
     '目标平台：cursor | copilot | cline | lingma | codebuddy | windsurf | zed | jetbrains | continue | claude-code | all',
@@ -184,7 +184,7 @@ program
       return;
     }
 
-    console.log('\nSmart Flow Skills\n');
+    console.log('\nEthan Skills\n');
     console.log('─'.repeat(60));
     for (const skill of ALL_SKILLS) {
       const categoryTag = skill.category ? ` [${skill.category}]` : '';
@@ -305,7 +305,7 @@ pipelineCmd
   .description('列出所有可用 Pipeline')
   .action(async () => {
     const { PIPELINES } = await import('../skills/pipeline');
-    console.log('\nSmart Flow Pipelines\n');
+    console.log('\nEthan Pipelines\n');
     console.log('─'.repeat(60));
     for (const p of PIPELINES) {
       console.log(`\n${p.id}`);
@@ -368,7 +368,7 @@ program
   .command('doctor')
   .description('检查运行环境和构建产物健康状态')
   .action(async () => {
-    console.log('\n🩺 Smart Flow Doctor\n');
+    console.log('\n🩺 Ethan Doctor\n');
     console.log('─'.repeat(60));
 
     // 1. Node.js version check
@@ -469,7 +469,7 @@ program
     const maxCount = Math.max(...entries.map(([, v]) => v));
     const BAR_WIDTH = 30;
 
-    console.log('\n📊 Smart Flow Skill 使用频次\n');
+    console.log('\n📊 Ethan Skill 使用频次\n');
     console.log('─'.repeat(60));
 
     for (const [skillId, count] of entries) {

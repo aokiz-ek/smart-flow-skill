@@ -6,12 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Initial release of Smart Flow Skill cross-platform distribution package
+- Initial release of Ethan cross-platform distribution package
 - 7 standard workflow skills: 需求理解、任务拆解、方案设计、执行实现、进度跟踪、任务报告、周报生成
 - Support for 4 distribution formats:
   - Markdown rule files for AI editors
-  - npm package with CLI (`npx smart-flow`)
-  - VS Code extension with `@smartflow` chat participant
+  - npm package with CLI (`npx ethan`)
+  - VS Code extension with `@ethan` chat participant
   - MCP Server with 7 tools (stdio transport)
 - Support for 6 platform targets:
   - Cursor (new `.mdc` format with YAML frontmatter)

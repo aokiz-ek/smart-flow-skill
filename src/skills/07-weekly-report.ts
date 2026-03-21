@@ -17,7 +17,7 @@ export const weeklyReportSkill: SkillDefinition = {
     '周总结',
     'weekly report',
     '/周报',
-    '@smartflow 周报',
+    '@ethan 周报',
   ],
   steps: [
     {

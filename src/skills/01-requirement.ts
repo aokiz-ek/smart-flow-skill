@@ -18,7 +18,7 @@ export const requirementSkill: SkillDefinition = {
     '实现一个',
     '开发一个',
     '/需求理解',
-    '@smartflow 需求',
+    '@ethan 需求',
   ],
   steps: [
     {

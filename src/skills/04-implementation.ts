@@ -17,7 +17,7 @@ export const implementationSkill: SkillDefinition = {
     '代码实现',
     '开始开发',
     '/执行实现',
-    '@smartflow 实现',
+    '@ethan 实现',
   ],
   steps: [
     {

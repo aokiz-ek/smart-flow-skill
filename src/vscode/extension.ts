@@ -7,9 +7,9 @@ export function activate(context: vscode.ExtensionContext): void {
   // 注册命令
   registerCommands(context);
 
-  // 注册 Chat Participant（@smartflow）
+  // 注册 Chat Participant（@ethan）
   const participant = vscode.chat.createChatParticipant(
-    'smartflow',
+    'ethan',
     handleChatRequest
   );
 
@@ -50,7 +50,7 @@ async function handleChatRequest(
 
   if (!skill) {
     // 未匹配到 Skill，显示帮助信息
-    stream.markdown('## Smart Flow Skills\n\n');
+    stream.markdown('## Ethan Skills\n\n');
     stream.markdown('可用 Skill（输入对应触发词或使用 `/命令`）：\n\n');
     for (const s of ALL_SKILLS) {
       stream.markdown(`- **${s.name}**：${s.description}\n`);

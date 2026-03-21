@@ -18,7 +18,7 @@ export const designSkill: SkillDefinition = {
     '接口设计',
     'API 设计',
     '/方案设计',
-    '@smartflow 设计',
+    '@ethan 设计',
   ],
   steps: [
     {

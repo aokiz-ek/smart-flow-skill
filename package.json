@@ -1,7 +1,7 @@
 {
-  "name": "smart-flow-skill",
+  "name": "ethan-skill",
   "version": "1.0.0",
-  "description": "工作流自动执行助手 AI Skill - 跨平台分发包（Cursor、VS Code Copilot、Cline、通义灵码、腾讯 CodeBuddy）",
+  "description": "Ethan - Your AI Workflow Assistant",
   "keywords": [
     "ai-skill",
     "cursor",
@@ -16,7 +16,7 @@
   "license": "MIT",
   "main": "dist/cli/index.js",
   "bin": {
-    "smart-flow": "./dist/cli/index.js"
+    "ethan": "./dist/cli/index.js"
   },
   "files": [
     "dist/",
@@ -53,6 +53,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/smart-flow-skill.git"
+    "url": "https://github.com/your-org/ethan-skill.git"
   }
 }

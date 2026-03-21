@@ -1,6 +1,6 @@
-# Smart Flow Skill
+# Ethan
 
-**工作流自动执行助手** - 跨平台 AI Skill 分发包
+Ethan - Your AI Workflow Assistant
 
 将 7 个标准化工作流节点打包为可跨平台分发的 AI Skill，支持 Cursor、VS Code Copilot、Cline、通义灵码、腾讯 CodeBuddy。
 
@@ -35,7 +35,7 @@ cp rules/cursor/.cursorrules .cursorrules
 
 **或使用 CLI 一键安装：**
 ```bash
-npx smart-flow-skill install --platform cursor
+npx ethan-skill install --platform cursor
 ```
 
 ---
@@ -49,7 +49,7 @@ cp rules/copilot/copilot-instructions.md .github/copilot-instructions.md
 
 或 CLI：
 ```bash
-npx smart-flow-skill install --platform copilot
+npx ethan-skill install --platform copilot
 ```
 
 ---
@@ -82,16 +82,16 @@ cp rules/codebuddy/CODEBUDDY.md CODEBUDDY.md
 ### 方式六：安装所有平台
 
 ```bash
-npx smart-flow-skill install --platform all
+npx ethan-skill install --platform all
 ```
 
 ---
 
 ### 方式七：VS Code 扩展
 
-1. 下载 `dist/smart-flow-skill-*.vsix`
+1. 下载 `dist/ethan-skill-*.vsix`
 2. VS Code → Extensions → `...` → Install from VSIX
-3. 在 Copilot Chat 中输入 `@smartflow /需求理解 <你的需求>`
+3. 在 Copilot Chat 中输入 `@ethan /需求理解 <你的需求>`
 
 ---
 
@@ -102,9 +102,9 @@ npx smart-flow-skill install --platform all
 ```json
 {
   "mcpServers": {
-    "smart-flow": {
+    "ethan": {
       "command": "npx",
-      "args": ["smart-flow-skill", "mcp"]
+      "args": ["ethan-skill", "mcp"]
     }
   }
 }
@@ -125,16 +125,16 @@ npx smart-flow-skill install --platform all
 
 ```bash
 # 安装规则文件
-npx smart-flow-skill install --platform all
+npx ethan-skill install --platform all
 
 # 列出所有 Skill
-npx smart-flow-skill list
+npx ethan-skill list
 
 # 以 JSON 格式输出
-npx smart-flow-skill list --json
+npx ethan-skill list --json
 
 # 启动 MCP Server
-npx smart-flow-skill mcp
+npx ethan-skill mcp
 ```
 
 ---
@@ -200,7 +200,7 @@ src/skills/*.ts  →  [build-rules.ts]  →  rules/cursor/smart-flow.mdc
 ### 目录结构
 
 ```
-smart-flow-skill/
+ethan-skill/
 ├── src/
 │   ├── skills/          # 单一数据源（7 个 Skill 定义）
 │   ├── router/          # 触发词路由

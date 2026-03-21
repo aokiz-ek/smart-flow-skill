@@ -18,7 +18,7 @@ export const techResearchSkill: SkillDefinition = {
     '调研一下',
     '技术评估',
     '/技术调研',
-    '@smartflow 调研',
+    '@ethan 调研',
   ],
   steps: [
     {

@@ -18,7 +18,7 @@ export const progressTrackingSkill: SkillDefinition = {
     '完成了什么',
     '还剩什么',
     '/进度跟踪',
-    '@smartflow 进度',
+    '@ethan 进度',
   ],
   steps: [
     {

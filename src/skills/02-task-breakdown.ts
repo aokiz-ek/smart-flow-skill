@@ -17,7 +17,7 @@ export const taskBreakdownSkill: SkillDefinition = {
     '怎么实现',
     '实现步骤',
     '/任务拆解',
-    '@smartflow 拆解',
+    '@ethan 拆解',
   ],
   steps: [
     {

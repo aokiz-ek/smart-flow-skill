@@ -35,12 +35,12 @@ export function renderMarkdown(ctx: BuildContext): string {
 function renderCopilot(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
 
-  return `# Smart Flow Skill - Copilot Instructions (v${version})
+  return `# Ethan - Copilot Instructions (v${version})
 
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Smart Flow Skill workflow assistant. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+You are equipped with the Ethan workflow assistant. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
 
 ## Available Skills
 
@@ -77,11 +77,11 @@ function renderCline(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const skillsContent = skills.map(renderClineSkill).join('\n\n');
 
-  return `# Smart Flow Skill v${version}
+  return `# Ethan v${version}
 # Generated: ${generatedAt}
-# Source: https://github.com/your-org/smart-flow-skill
+# Source: https://github.com/your-org/ethan-skill
 
-工作流自动执行助手。当用户输入以下触发词时，按对应 Skill 的步骤执行。
+Ethan。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
 ## 触发词总览
 ${skills.map((s) => `- **${s.name}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
@@ -111,7 +111,7 @@ ${stepsContent}
 function renderLingma(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
 
-  return `# 工作流自动执行助手 v${version}
+  return `# Ethan v${version}
 
 > 生成时间：${generatedAt}
 
@@ -151,9 +151,9 @@ ${stepsList}
 function renderCodeBuddy(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
 
-  return `# Smart Flow Skill v${version}
+  return `# Ethan v${version}
 
-工作流自动执行助手 | 生成时间：${generatedAt}
+Ethan - Your AI Workflow Assistant | 生成时间：${generatedAt}
 
 ## Skills
 
@@ -178,12 +178,12 @@ ${skills
 function renderWindsurf(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
 
-  return `# Smart Flow Skill - Windsurf Rules (v${version})
+  return `# Ethan - Windsurf Rules (v${version})
 
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Smart Flow Skill workflow assistant for Windsurf. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+You are equipped with the Ethan workflow assistant for Windsurf. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
 
 ## Available Skills
 
@@ -209,7 +209,7 @@ function renderZed(ctx: BuildContext): string {
     )
     .join('\n\n');
 
-  return `Smart Flow Skill v${version} | ${generatedAt}
+  return `Ethan v${version} | ${generatedAt}
 
 Workflow automation assistant. Match trigger keywords to execute the corresponding skill.
 
@@ -223,12 +223,12 @@ Rules: Follow steps in order. Output per skill template. Auto-detect intent from
 function renderJetBrains(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
 
-  return `# Smart Flow Skill - JetBrains AI Instructions (v${version})
+  return `# Ethan - JetBrains AI Instructions (v${version})
 
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Smart Flow Skill workflow assistant for JetBrains AI. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+You are equipped with the Ethan workflow assistant for JetBrains AI. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
 
 ## Available Skills
 
@@ -248,11 +248,11 @@ function renderContinue(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const skillsContent = skills.map(renderClineSkill).join('\n\n');
 
-  return `# Smart Flow Skill v${version}
+  return `# Ethan v${version}
 # Generated: ${generatedAt}
-# Source: https://github.com/your-org/smart-flow-skill
+# Source: https://github.com/your-org/ethan-skill
 
-工作流自动执行助手（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
+Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
 ## 触发词总览
 ${skills.map((s) => `- **${s.name}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
@@ -296,12 +296,12 @@ ${stepsContent}
     })
     .join('\n\n---\n\n');
 
-  return `# Smart Flow Skill v${version}
+  return `# Ethan v${version}
 
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually. Source: src/skills/
 
-## 工作流自动执行助手
+## Ethan
 
 本文件配置了 ${skills.length} 个标准化工作流节点（Skill）。当用户输入触发词时，严格按对应 Skill 的步骤执行，输出遵循各 Skill 的格式模板。
 
@@ -319,6 +319,6 @@ ${skillsContent}
 
 ---
 
-*Smart Flow Skill - 工作流自动执行助手 | 让每一步都有据可依*
+*Ethan - Your AI Workflow Assistant | 让每一步都有据可依*
 `;
 }

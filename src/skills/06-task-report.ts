@@ -17,7 +17,7 @@ export const taskReportSkill: SkillDefinition = {
     '项目总结',
     '阶段总结',
     '/任务报告',
-    '@smartflow 报告',
+    '@ethan 报告',
   ],
   steps: [
     {

@@ -1,8 +1,8 @@
-# Smart Flow Skill v1.0.0
-# Generated: 2026-03-21T13:59:28.555Z
-# Source: https://github.com/your-org/smart-flow-skill
+# Ethan v1.0.0
+# Generated: 2026-03-21T14:18:11.636Z
+# Source: https://github.com/your-org/ethan-skill
 
-工作流自动执行助手（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
+Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
 ## 触发词总览
 - **需求理解**: 需求理解 | 理解需求 | 分析需求 | 需求分析

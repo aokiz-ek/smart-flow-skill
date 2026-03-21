@@ -1,6 +1,6 @@
-# Smart Flow Skill v1.0.0
+# Ethan v1.0.0
 
-工作流自动执行助手 | 生成时间：2026-03-21T13:59:28.555Z
+Ethan - Your AI Workflow Assistant | 生成时间：2026-03-21T14:18:11.636Z
 
 ## Skills
 

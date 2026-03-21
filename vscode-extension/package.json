@@ -1,7 +1,7 @@
 {
-  "name": "smart-flow-skill",
-  "displayName": "Smart Flow Skill",
-  "description": "工作流自动执行助手 - 需求理解、任务拆解、方案设计、执行实现、进度跟踪、任务报告、周报生成",
+  "name": "ethan-skill",
+  "displayName": "Ethan",
+  "description": "Ethan - Your AI Workflow Assistant",
   "version": "1.0.0",
   "publisher": "your-publisher",
   "engines": {
@@ -16,7 +16,7 @@
     "ai",
     "workflow",
     "copilot",
-    "smart-flow",
+    "ethan",
     "productivity"
   ],
   "activationEvents": [],
@@ -24,9 +24,9 @@
   "contributes": {
     "chatParticipants": [
       {
-        "id": "smartflow",
-        "name": "smartflow",
-        "description": "工作流自动执行助手 - 输入 @smartflow 加触发词激活对应 Skill",
+        "id": "ethan",
+        "name": "ethan",
+        "description": "Ethan - Your AI Workflow Assistant - 输入 @ethan 加触发词激活对应 Skill",
         "isSticky": true,
         "commands": [
           {
@@ -62,12 +62,12 @@
     ],
     "commands": [
       {
-        "command": "smartflow.install",
-        "title": "Smart Flow: Install Rules for Current Project"
+        "command": "ethan.install",
+        "title": "Ethan: Install Rules for Current Project"
       },
       {
-        "command": "smartflow.listSkills",
-        "title": "Smart Flow: List Available Skills"
+        "command": "ethan.listSkills",
+        "title": "Ethan: List Available Skills"
       }
     ]
   },
@@ -82,7 +82,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/smart-flow-skill.git"
+    "url": "https://github.com/your-org/ethan-skill.git"
   },
   "license": "MIT"
 }

@@ -18,7 +18,7 @@ export const codeReviewSkill: SkillDefinition = {
     'review 一下',
     '代码 review',
     '/代码审查',
-    '@smartflow review',
+    '@ethan review',
   ],
   steps: [
     {

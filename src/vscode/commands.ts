@@ -5,8 +5,8 @@ import { ALL_SKILLS } from '../skills/index';
 
 export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('smartflow.install', installRules),
-    vscode.commands.registerCommand('smartflow.listSkills', listSkills)
+    vscode.commands.registerCommand('ethan.install', installRules),
+    vscode.commands.registerCommand('ethan.listSkills', listSkills)
   );
 }
 
@@ -87,7 +87,7 @@ async function installRules(): Promise<void> {
   }
 
   vscode.window.showInformationMessage(
-    `Smart Flow: Installed ${installed} rule file(s). Restart your AI editor to apply.`
+    `Ethan: Installed ${installed} rule file(s). Restart your AI editor to apply.`
   );
 }
 
@@ -96,8 +96,8 @@ async function installRules(): Promise<void> {
  */
 async function listSkills(): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    'smartflowSkills',
-    'Smart Flow Skills',
+    'ethanSkills',
+    'Ethan Skills',
     vscode.ViewColumn.One,
     {}
   );
@@ -125,7 +125,7 @@ async function listSkills(): Promise<void> {
   </style>
 </head>
 <body>
-  <h1>Smart Flow Skills</h1>
+  <h1>Ethan Skills</h1>
   <table>
     <thead><tr><th>#</th><th>Skill</th><th>描述</th><th>触发词</th></tr></thead>
     <tbody>${rows}</tbody>
