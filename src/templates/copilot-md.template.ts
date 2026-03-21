@@ -1,4 +1,4 @@
-import { SkillDefinition, BuildContext, Platform } from '../skills/types';
+import type { SkillDefinition, BuildContext } from '../skills/types';
 
 /**
  * 生成各平台 Markdown 规则文件

@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { ALL_SKILLS } from '../skills/index';
+import type { Platform, BuildContext } from '../skills/types';
 
 const pkg = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf-8')
@@ -217,13 +218,11 @@ program
   .action(async () => {
     const { renderCursorMdc, renderCursorOld } = await import('../templates/cursor-mdc.template');
     const { renderMarkdown } = await import('../templates/copilot-md.template');
-    const { BuildContext } = await import('../skills/types') as any;
-    const { Platform } = await import('../skills/types') as any;
 
     const ROOT = path.join(__dirname, '../..');
     const FIXED_TS = '1970-01-01T00:00:00.000Z';
 
-    function makeCtx(platform: any): any {
+    function makeCtx(platform: Platform): BuildContext {
       return {
         platform,
         skills: ALL_SKILLS,
@@ -397,7 +396,7 @@ program
     const { renderMarkdown } = await import('../templates/copilot-md.template');
 
     const FIXED_TS = '1970-01-01T00:00:00.000Z';
-    function makeCtx(platform: any): any {
+    function makeCtx(platform: Platform): BuildContext {
       return { platform, skills: ALL_SKILLS, generatedAt: FIXED_TS, version: pkg.version };
     }
     const TS_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z/g;

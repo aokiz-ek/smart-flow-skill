@@ -1,4 +1,4 @@
-import { SkillDefinition } from './types';
+import type { SkillDefinition } from './types';
 
 export const debugSkill: SkillDefinition = {
   id: 'debug',

@@ -54,7 +54,7 @@ async function handleChatRequest(
     stream.markdown('可用 Skill（输入对应触发词或使用 `/命令`）：\n\n');
     for (const s of ALL_SKILLS) {
       stream.markdown(`- **${s.name}**：${s.description}\n`);
-      stream.markdown(`  触发词：\`${s.triggers.slice(0, 3).join('\`、\`')}\`\n\n`);
+      stream.markdown('  触发词：`' + s.triggers.slice(0, 3).join('`、`') + '`\n\n');
     }
     return;
   }

@@ -4,7 +4,7 @@
  * index.ts 不得导入此文件（防循环依赖）
  */
 
-import { PipelineDefinition, SkillDefinition } from './types';
+import type { PipelineDefinition, SkillDefinition } from './types';
 import { ALL_SKILLS } from './index';
 
 export const PIPELINES: PipelineDefinition[] = [

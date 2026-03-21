@@ -1,4 +1,4 @@
-import { SkillDefinition } from '../skills/types';
+import type { SkillDefinition } from '../skills/types';
 import { ALL_SKILLS } from '../skills/index';
 
 export interface RouteResult {
@@ -13,6 +13,7 @@ export interface RouteResult {
  */
 export function routeTrigger(input: string): RouteResult | null {
   const normalized = input.trim().toLowerCase();
+  if (normalized.length === 0) return null;
 
   // 精确匹配：输入完全等于某个触发词
   for (const skill of ALL_SKILLS) {

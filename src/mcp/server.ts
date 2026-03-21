@@ -9,10 +9,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { ALL_SKILLS } from '../skills/index';
-import { SkillDefinition } from '../skills/types';
+import type { SkillDefinition } from '../skills/types';
 import { PIPELINES, resolvePipeline } from '../skills/pipeline';
 import * as fs from 'fs';
 import * as path from 'path';

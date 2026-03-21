@@ -1,4 +1,4 @@
-import { SkillDefinition, BuildContext } from '../skills/types';
+import type { SkillDefinition, BuildContext } from '../skills/types';
 
 /**
  * 生成 Cursor 新版 .mdc 文件内容（含 YAML frontmatter）
