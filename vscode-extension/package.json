@@ -1,0 +1,88 @@
+{
+  "name": "smart-flow-skill",
+  "displayName": "Smart Flow Skill",
+  "description": "工作流自动执行助手 - 需求理解、任务拆解、方案设计、执行实现、进度跟踪、任务报告、周报生成",
+  "version": "1.0.0",
+  "publisher": "your-publisher",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "workflow",
+    "copilot",
+    "smart-flow",
+    "productivity"
+  ],
+  "activationEvents": [],
+  "main": "../dist/vscode/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "smartflow",
+        "name": "smartflow",
+        "description": "工作流自动执行助手 - 输入 @smartflow 加触发词激活对应 Skill",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "需求理解",
+            "description": "深度解析用户需求，消除歧义，输出结构化需求文档"
+          },
+          {
+            "name": "任务拆解",
+            "description": "将复杂需求拆解为可执行的原子任务，建立依赖关系和优先级"
+          },
+          {
+            "name": "方案设计",
+            "description": "输出技术方案设计文档，包含架构选择、接口设计、数据模型"
+          },
+          {
+            "name": "执行实现",
+            "description": "按设计方案逐步实现代码，遵循最佳实践"
+          },
+          {
+            "name": "进度跟踪",
+            "description": "实时更新任务状态，识别阻塞风险，保持项目透明度"
+          },
+          {
+            "name": "任务报告",
+            "description": "任务完成后生成总结报告，记录成果、问题和经验教训"
+          },
+          {
+            "name": "周报",
+            "description": "根据本周工作内容自动生成结构化周报"
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "smartflow.install",
+        "title": "Smart Flow: Install Rules for Current Project"
+      },
+      {
+        "command": "smartflow.listSkills",
+        "title": "Smart Flow: List Available Skills"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ../tsconfig.vscode.json",
+    "watch": "tsc -watch -p ../tsconfig.vscode.json"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/smart-flow-skill.git"
+  },
+  "license": "MIT"
+}

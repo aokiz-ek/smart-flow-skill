@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.vsix
+.DS_Store
+*.log
+npm-debug.log*
+
+# Build outputs (rules/ is committed intentionally)
+# dist/ is excluded but rules/ is kept
+
+# Environment
+.env
+.env.local
