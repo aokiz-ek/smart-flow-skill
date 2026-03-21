@@ -1,6 +1,6 @@
-# Ethan - Windsurf Rules (v1.0.0)
+# Ethan - Windsurf Rules (v1.1.0)
 
-> Auto-generated from src/skills/ | 2026-03-21T14:18:11.636Z
+> Auto-generated from src/skills/ | 2026-03-21T16:27:34.521Z
 > Do not edit manually.
 
 You are equipped with the Ethan workflow assistant for Windsurf. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
@@ -9,7 +9,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 1. 需求理解 (requirement_understanding)
 
-**Triggers**: `需求理解`, `理解需求`, `分析需求`, `需求分析`, `我需要`, `帮我做`, `实现一个`, `开发一个`, `/需求理解`, `@ethan 需求`
+**Triggers**: `需求理解`, `理解需求`, `分析需求`, `需求分析`, `我需要`, `帮我做`, `实现一个`, `开发一个`, `/需求理解`, `@ethan 需求`, `requirement analysis`, `analyze requirements`, `@ethan requirement`
 
 **Goal**: 深度解析用户需求，消除歧义，输出结构化需求文档
 
@@ -23,7 +23,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 2. 任务拆解 (task_breakdown)
 
-**Triggers**: `任务拆解`, `拆解任务`, `拆分任务`, `制定计划`, `任务规划`, `怎么实现`, `实现步骤`, `/任务拆解`, `@ethan 拆解`
+**Triggers**: `任务拆解`, `拆解任务`, `拆分任务`, `制定计划`, `任务规划`, `怎么实现`, `实现步骤`, `/任务拆解`, `@ethan 拆解`, `task breakdown`, `break down`, `@ethan breakdown`
 
 **Goal**: 将复杂需求拆解为可执行的原子任务，建立依赖关系和优先级
 
@@ -37,7 +37,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 3. 方案设计 (solution_design)
 
-**Triggers**: `方案设计`, `技术方案`, `架构设计`, `设计方案`, `怎么设计`, `数据库设计`, `接口设计`, `API 设计`, `/方案设计`, `@ethan 设计`
+**Triggers**: `方案设计`, `技术方案`, `架构设计`, `设计方案`, `怎么设计`, `数据库设计`, `接口设计`, `API 设计`, `/方案设计`, `@ethan 设计`, `solution design`, `tech design`, `@ethan design`
 
 **Goal**: 输出技术方案设计文档，包含架构选择、接口设计、数据模型和关键决策说明
 
@@ -52,7 +52,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 4. 执行实现 (implementation)
 
-**Triggers**: `执行实现`, `开始实现`, `写代码`, `编写代码`, `实现功能`, `代码实现`, `开始开发`, `/执行实现`, `@ethan 实现`
+**Triggers**: `执行实现`, `开始实现`, `写代码`, `编写代码`, `实现功能`, `代码实现`, `开始开发`, `/执行实现`, `@ethan 实现`, `implementation`, `start implementing`, `@ethan implement`
 
 **Goal**: 按设计方案逐步实现代码，遵循最佳实践，同步记录实现决策
 
@@ -67,7 +67,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 5. 进度跟踪 (progress_tracking)
 
-**Triggers**: `进度跟踪`, `跟踪进度`, `进度更新`, `更新进度`, `项目进展`, `任务状态`, `完成了什么`, `还剩什么`, `/进度跟踪`, `@ethan 进度`
+**Triggers**: `进度跟踪`, `跟踪进度`, `进度更新`, `更新进度`, `项目进展`, `任务状态`, `完成了什么`, `还剩什么`, `/进度跟踪`, `@ethan 进度`, `progress tracking`, `progress update`, `@ethan progress`
 
 **Goal**: 实时更新任务状态，识别阻塞风险，保持项目透明度
 
@@ -82,7 +82,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 6. 任务报告 (task_report)
 
-**Triggers**: `任务报告`, `生成报告`, `任务总结`, `总结报告`, `完成总结`, `项目总结`, `阶段总结`, `/任务报告`, `@ethan 报告`
+**Triggers**: `任务报告`, `生成报告`, `任务总结`, `总结报告`, `完成总结`, `项目总结`, `阶段总结`, `/任务报告`, `@ethan 报告`, `task report`, `generate report`, `@ethan report`
 
 **Goal**: 任务完成后生成总结报告，记录成果、问题和经验教训
 
@@ -97,7 +97,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 7. 周报生成 (weekly_report)
 
-**Triggers**: `周报`, `生成周报`, `写周报`, `周报生成`, `本周总结`, `周总结`, `weekly report`, `/周报`, `@ethan 周报`
+**Triggers**: `周报`, `生成周报`, `写周报`, `周报生成`, `本周总结`, `周总结`, `weekly report`, `/周报`, `@ethan 周报`, `generate weekly`, `@ethan weekly`
 
 **Goal**: 根据本周工作内容自动生成结构化周报，突出价值而非流水账
 
@@ -111,7 +111,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 8. 代码审查 (code_review)
 
-**Triggers**: `代码审查`, `code review`, `CR`, `帮我 review`, `帮我看看代码`, `审查代码`, `review 一下`, `代码 review`, `/代码审查`, `@ethan review`
+**Triggers**: `代码审查`, `code review`, `CR`, `帮我 review`, `帮我看看代码`, `审查代码`, `review 一下`, `代码 review`, `/代码审查`, `@ethan review`, `@ethan code-review`
 
 **Goal**: 系统性审查代码变更，分级输出 Blocker/Major/Minor 问题，提升代码质量
 
@@ -126,7 +126,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 9. 故障排查 (debug)
 
-**Triggers**: `故障排查`, `debug`, `线上故障`, `报错了`, `排查问题`, `定位 bug`, `为什么报错`, `程序崩溃`, `/故障排查`, `@ethan debug`
+**Triggers**: `故障排查`, `debug`, `线上故障`, `报错了`, `排查问题`, `定位 bug`, `为什么报错`, `程序崩溃`, `/故障排查`, `@ethan debug`, `troubleshoot`, `@ethan troubleshoot`
 
 **Goal**: 系统性排查故障，通过假设验证和 5 Why 定位根因，输出临时/永久/预防三层方案
 
@@ -141,7 +141,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ### 10. 技术调研 (tech_research)
 
-**Triggers**: `技术调研`, `技术选型`, `POC`, `对比方案`, `选哪个好`, `方案对比`, `调研一下`, `技术评估`, `/技术调研`, `@ethan 调研`
+**Triggers**: `技术调研`, `技术选型`, `POC`, `对比方案`, `选哪个好`, `方案对比`, `调研一下`, `技术评估`, `/技术调研`, `@ethan 调研`, `tech research`, `tech selection`, `@ethan research`
 
 **Goal**: 结构化技术选型：问题定义→方案收集→加权评分矩阵→POC 验证→明确结论
 
