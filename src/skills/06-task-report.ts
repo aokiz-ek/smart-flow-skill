@@ -6,6 +6,7 @@ export const taskReportSkill: SkillDefinition = {
   nameEn: 'task_report',
   order: 6,
   description: '任务完成后生成总结报告，记录成果、问题和经验教训',
+  descriptionEn: 'Generate outcome report with issue retrospective and lessons learned',
   detailDescription: `在任务或阶段完成后，生成全面的总结报告：梳理完成情况、
 遇到的问题和解决方式、技术债务、经验教训，为后续迭代提供参考。`,
   triggers: [
@@ -18,6 +19,9 @@ export const taskReportSkill: SkillDefinition = {
     '阶段总结',
     '/任务报告',
     '@ethan 报告',
+    'task report',
+    'generate report',
+    '@ethan report',
   ],
   steps: [
     {

@@ -6,6 +6,7 @@ export const techResearchSkill: SkillDefinition = {
   nameEn: 'tech_research',
   order: 10,
   description: '结构化技术选型：问题定义→方案收集→加权评分矩阵→POC 验证→明确结论',
+  descriptionEn: 'Weighted scoring matrix + POC validation for tech selection',
   detailDescription: `通过标准化流程完成技术调研：先明确问题和评估标准，再收集候选方案，
 用加权评分矩阵量化对比，必要时进行 POC 验证，最终输出有据可查的选型结论。`,
   triggers: [
@@ -19,6 +20,9 @@ export const techResearchSkill: SkillDefinition = {
     '技术评估',
     '/技术调研',
     '@ethan 调研',
+    'tech research',
+    'tech selection',
+    '@ethan research',
   ],
   steps: [
     {

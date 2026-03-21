@@ -6,6 +6,7 @@ export const weeklyReportSkill: SkillDefinition = {
   nameEn: 'weekly_report',
   order: 7,
   description: '根据本周工作内容自动生成结构化周报，突出价值而非流水账',
+  descriptionEn: 'Auto-generate structured weekly report highlighting business value',
   detailDescription: `收集本周工作信息，生成专业的周报：聚焦业务价值而非技术细节，
 突出完成了什么、解决了什么问题、下周计划，让不同层级的读者都能快速获取关键信息。`,
   triggers: [
@@ -18,6 +19,8 @@ export const weeklyReportSkill: SkillDefinition = {
     'weekly report',
     '/周报',
     '@ethan 周报',
+    'generate weekly',
+    '@ethan weekly',
   ],
   steps: [
     {

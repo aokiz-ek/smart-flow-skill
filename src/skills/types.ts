@@ -26,6 +26,8 @@ export interface SkillDefinition {
   nameEn: string;
   /** 简短描述（一句话），用于 MCP tool description */
   description: string;
+  /** English short description */
+  descriptionEn?: string;
   /** 详细描述，用于规则文件头部 */
   detailDescription: string;
   /** 触发关键词列表（用于路由匹配） */
@@ -73,4 +75,6 @@ export interface BuildContext {
   generatedAt: string;
   /** 包版本 */
   version: string;
+  /** 输出语言，默认 zh */
+  lang?: 'zh' | 'en';
 }

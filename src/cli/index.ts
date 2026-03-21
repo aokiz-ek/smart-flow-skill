@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * npx ethan CLI
- * 命令：install | list | mcp | validate | pipeline | doctor | stats
+ * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run
  */
 
 import { Command } from 'commander';
@@ -10,10 +10,22 @@ import * as path from 'path';
 import * as os from 'os';
 import { ALL_SKILLS } from '../skills/index';
 import type { Platform, BuildContext } from '../skills/types';
+import { checkForUpdates } from './update-check';
+import { readConfig, writeConfig, getConfigPath } from './config';
+
+// ─── 加载自定义 Skill（透明合并到 ALL_SKILLS） ───────────────────────────────
+async function getActiveSkills() {
+  const { loadCustomSkills } = await import('../loader/custom-skill-loader');
+  const custom = loadCustomSkills(process.cwd());
+  return [...ALL_SKILLS, ...custom];
+}
 
 const pkg = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf-8')
 );
+
+// 静默后台检查更新（不阻塞 CLI）
+checkForUpdates(pkg.version, pkg.name);
 
 const program = new Command();
 
@@ -55,75 +67,58 @@ program
     'all'
   )
   .option('-d, --dir <dir>', '目标目录（默认为当前目录）', process.cwd())
+  .option('--lang <lang>', '输出语言：zh（默认）或 en', '')
+  .option('--auto-context', '自动检测项目技术栈并注入规则文件头部')
   .action(async (options) => {
     const { platform, dir } = options;
+
+    // 语言优先级：--lang 参数 > .ethanrc.json > 默认 zh
+    const config = readConfig(dir);
+    const lang: 'zh' | 'en' =
+      options.lang === 'en' || options.lang === 'zh'
+        ? options.lang
+        : config.lang ?? 'zh';
+
+    // 自动上下文检测
+    let contextPrefix = '';
+    if (options.autoContext) {
+      const { detectProjectContext, formatContextBlock } = await import('../context/detector');
+      const projCtx = detectProjectContext(dir);
+      contextPrefix = formatContextBlock(projCtx, lang);
+      const detected = [
+        ...projCtx.languages,
+        ...projCtx.frameworks,
+        ...projCtx.tools,
+      ].join(', ');
+      console.log(`\n🔍 检测到技术栈：${detected || '未识别，仍可注入项目名称'}`);
+    }
+
     const rulesDir = path.join(__dirname, '../../rules');
 
-    const platformMap: Record<string, Array<{ src: string; dest: string }>> = {
+    // platform → { 预构建文件路径, 目标路径, 对应模板 Platform 类型 }
+    type InstallEntry = { src: string; dest: string; platformKey: Platform };
+    const platformMap: Record<string, InstallEntry[]> = {
       cursor: [
         {
           src: path.join(rulesDir, 'cursor/smart-flow.mdc'),
           dest: path.join(dir, '.cursor/rules/smart-flow.mdc'),
+          platformKey: 'cursor-new',
         },
         {
           src: path.join(rulesDir, 'cursor/.cursorrules'),
           dest: path.join(dir, '.cursorrules'),
+          platformKey: 'cursor-old',
         },
       ],
-      copilot: [
-        {
-          src: path.join(rulesDir, 'copilot/copilot-instructions.md'),
-          dest: path.join(dir, '.github/copilot-instructions.md'),
-        },
-      ],
-      cline: [
-        {
-          src: path.join(rulesDir, 'cline/.clinerules'),
-          dest: path.join(dir, '.clinerules'),
-        },
-      ],
-      lingma: [
-        {
-          src: path.join(rulesDir, 'lingma/smart-flow.md'),
-          dest: path.join(dir, '.lingma/rules/smart-flow.md'),
-        },
-      ],
-      codebuddy: [
-        {
-          src: path.join(rulesDir, 'codebuddy/CODEBUDDY.md'),
-          dest: path.join(dir, 'CODEBUDDY.md'),
-        },
-      ],
-      windsurf: [
-        {
-          src: path.join(rulesDir, 'windsurf/.windsurf/rules/smart-flow.md'),
-          dest: path.join(dir, '.windsurf/rules/smart-flow.md'),
-        },
-      ],
-      zed: [
-        {
-          src: path.join(rulesDir, 'zed/smart-flow.rules'),
-          dest: path.join(dir, 'smart-flow.rules'),
-        },
-      ],
-      jetbrains: [
-        {
-          src: path.join(rulesDir, 'jetbrains/smart-flow.md'),
-          dest: path.join(dir, '.github/ai-instructions.md'),
-        },
-      ],
-      continue: [
-        {
-          src: path.join(rulesDir, 'continue/.continuerules'),
-          dest: path.join(dir, '.continuerules'),
-        },
-      ],
-      'claude-code': [
-        {
-          src: path.join(rulesDir, 'claude-code/CLAUDE.md'),
-          dest: path.join(dir, 'CLAUDE.md'),
-        },
-      ],
+      copilot: [{ src: path.join(rulesDir, 'copilot/copilot-instructions.md'), dest: path.join(dir, '.github/copilot-instructions.md'), platformKey: 'copilot' }],
+      cline: [{ src: path.join(rulesDir, 'cline/.clinerules'), dest: path.join(dir, '.clinerules'), platformKey: 'cline' }],
+      lingma: [{ src: path.join(rulesDir, 'lingma/smart-flow.md'), dest: path.join(dir, '.lingma/rules/smart-flow.md'), platformKey: 'lingma' }],
+      codebuddy: [{ src: path.join(rulesDir, 'codebuddy/CODEBUDDY.md'), dest: path.join(dir, 'CODEBUDDY.md'), platformKey: 'codebuddy' }],
+      windsurf: [{ src: path.join(rulesDir, 'windsurf/.windsurf/rules/smart-flow.md'), dest: path.join(dir, '.windsurf/rules/smart-flow.md'), platformKey: 'windsurf' }],
+      zed: [{ src: path.join(rulesDir, 'zed/smart-flow.rules'), dest: path.join(dir, 'smart-flow.rules'), platformKey: 'zed' }],
+      jetbrains: [{ src: path.join(rulesDir, 'jetbrains/smart-flow.md'), dest: path.join(dir, '.github/ai-instructions.md'), platformKey: 'jetbrains' }],
+      continue: [{ src: path.join(rulesDir, 'continue/.continuerules'), dest: path.join(dir, '.continuerules'), platformKey: 'continue' }],
+      'claude-code': [{ src: path.join(rulesDir, 'claude-code/CLAUDE.md'), dest: path.join(dir, 'CLAUDE.md'), platformKey: 'claude-code' }],
     };
 
     const targets =
@@ -139,6 +134,36 @@ program
       process.exit(1);
     }
 
+    // 英文模式：按需渲染模板写入，无需预构建文件
+    if (lang === 'en') {
+      const { renderMarkdown } = await import('../templates/copilot-md.template');
+      const { renderCursorMdc, renderCursorOld } = await import('../templates/cursor-mdc.template');
+      const now = new Date().toISOString();
+      let installed = 0;
+      for (const { dest, platformKey } of targets) {
+        const makeCtx = (): BuildContext => ({
+          platform: platformKey,
+          skills: ALL_SKILLS,
+          generatedAt: now,
+          version: pkg.version,
+          lang: 'en',
+        });
+        let content: string;
+        if (platformKey === 'cursor-new') content = renderCursorMdc(makeCtx());
+        else if (platformKey === 'cursor-old') content = renderCursorOld(makeCtx());
+        else content = renderMarkdown(makeCtx());
+        if (contextPrefix) content = contextPrefix + content;
+        const destDir = path.dirname(dest);
+        if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+        fs.writeFileSync(dest, content, 'utf-8');
+        console.log(`  ✅  ${path.relative(dir, dest)} [en]`);
+        installed++;
+      }
+      console.log(`\nInstalled ${installed} rule file(s) to ${dir} (lang: en)`);
+      if (installed > 0) console.log('Restart your AI editor to apply the new rules.');
+      return;
+    }
+
     let installed = 0;
     for (const { src, dest } of targets) {
       if (!fs.existsSync(src)) {
@@ -149,7 +174,13 @@ program
       if (!fs.existsSync(destDir)) {
         fs.mkdirSync(destDir, { recursive: true });
       }
-      fs.copyFileSync(src, dest);
+      // auto-context 模式：读取内容并注入上下文前缀
+      if (contextPrefix) {
+        const content = fs.readFileSync(src, 'utf-8');
+        fs.writeFileSync(dest, contextPrefix + content, 'utf-8');
+      } else {
+        fs.copyFileSync(src, dest);
+      }
       console.log(`  ✅  ${path.relative(dir, dest)}`);
       installed++;
     }
@@ -163,13 +194,16 @@ program
 // ─── list 命令 ──────────────────────────────────────────────────────────────
 program
   .command('list')
-  .description('列出所有可用 Skill')
+  .description('列出所有可用 Skill（含自定义 Skill）')
   .option('--json', '以 JSON 格式输出')
-  .action((options) => {
+  .action(async (options) => {
+    const skills = await getActiveSkills();
+    const customCount = skills.length - ALL_SKILLS.length;
+
     if (options.json) {
       console.log(
         JSON.stringify(
-          ALL_SKILLS.map((s) => ({
+          skills.map((s) => ({
             id: s.id,
             name: s.name,
             nameEn: s.nameEn,
@@ -187,14 +221,142 @@ program
 
     console.log('\nEthan Skills\n');
     console.log('─'.repeat(60));
-    for (const skill of ALL_SKILLS) {
+    for (const skill of skills) {
       const categoryTag = skill.category ? ` [${skill.category}]` : '';
-      console.log(`\n${skill.order}. ${skill.name} (${skill.id})${categoryTag}`);
+      const customTag = skill.order >= 100 ? ' 🔧' : '';
+      console.log(`\n${skill.order}. ${skill.name} (${skill.id})${categoryTag}${customTag}`);
       console.log(`   ${skill.description}`);
       console.log(`   Triggers: ${skill.triggers.slice(0, 3).join(' | ')}`);
     }
     console.log('\n' + '─'.repeat(60));
-    console.log(`Total: ${ALL_SKILLS.length} skills`);
+    console.log(`Total: ${skills.length} skills (${ALL_SKILLS.length} built-in${customCount > 0 ? `, ${customCount} custom` : ''})`);
+  });
+
+// ─── skill 子命令（自定义 Skill 管理） ──────────────────────────────────────
+const skillCmd = program.command('skill').description('自定义 Skill 管理');
+
+skillCmd
+  .command('new [name]')
+  .description('在 .ethan/skills/ 目录生成自定义 Skill YAML 模板')
+  .action(async (name?: string) => {
+    const { generateSkillTemplate } = await import('../loader/custom-skill-loader');
+    const skillsDir = path.join(process.cwd(), '.ethan/skills');
+    if (!fs.existsSync(skillsDir)) fs.mkdirSync(skillsDir, { recursive: true });
+
+    const filename = name ? `${name}.yaml` : 'my-skill.yaml';
+    const filePath = path.join(skillsDir, filename);
+
+    if (fs.existsSync(filePath)) {
+      console.log(`⚠️  文件已存在：${filePath}`);
+      return;
+    }
+
+    fs.writeFileSync(filePath, generateSkillTemplate(), 'utf-8');
+    console.log(`\n✅ 已创建自定义 Skill 模板：${filePath}`);
+    console.log('   编辑该文件后运行 ethan list 验证加载结果\n');
+  });
+
+skillCmd
+  .command('list')
+  .description('列出当前项目的自定义 Skill')
+  .action(async () => {
+    const { loadCustomSkills } = await import('../loader/custom-skill-loader');
+    const custom = loadCustomSkills(process.cwd());
+    if (custom.length === 0) {
+      console.log('\n暂无自定义 Skill。运行 ethan skill new 创建一个。\n');
+      return;
+    }
+    console.log(`\n🔧 自定义 Skill（${custom.length} 个）\n`);
+    for (const s of custom) {
+      console.log(`  ${s.name} (${s.id})`);
+      console.log(`  触发词：${s.triggers.slice(0, 3).join(' | ')}`);
+      console.log('');
+    }
+  });
+
+// ─── plugin 命令（Skill Marketplace） ───────────────────────────────────────
+const OFFICIAL_PLUGINS = [
+  { name: 'ethan-plugin-deploy', description: '部署工作流 Skill（CI/CD、Docker、K8s）', author: 'community' },
+  { name: 'ethan-plugin-prd', description: 'PRD 文档生成 Skill', author: 'community' },
+  { name: 'ethan-plugin-api-design', description: 'RESTful/GraphQL API 设计 Skill', author: 'community' },
+  { name: 'ethan-plugin-security', description: '安全审查 Skill（OWASP、依赖检查）', author: 'community' },
+];
+
+const pluginCmd = program.command('plugin').description('Skill 插件市场管理');
+
+pluginCmd
+  .command('list')
+  .description('列出官方推荐插件及已安装插件')
+  .action(() => {
+    const config = readConfig(process.cwd());
+    const installed = config.plugins ?? [];
+
+    console.log('\n📦 Ethan 插件市场\n');
+    console.log('─'.repeat(60));
+    console.log('\n[官方推荐插件]\n');
+    for (const p of OFFICIAL_PLUGINS) {
+      const tag = installed.includes(p.name) ? ' ✅ 已安装' : '';
+      console.log(`  ${p.name}${tag}`);
+      console.log(`  ${p.description}\n`);
+    }
+    if (installed.length > 0) {
+      console.log('[已安装插件]\n');
+      for (const name of installed) {
+        console.log(`  ${name}`);
+      }
+      console.log('');
+    }
+    console.log('─'.repeat(60));
+    console.log('\n安装插件：ethan plugin install <plugin-name>');
+    console.log('卸载插件：ethan plugin remove <plugin-name>\n');
+  });
+
+pluginCmd
+  .command('install <name>')
+  .description('从 npm 安装 Skill 插件包')
+  .action(async (name: string) => {
+    const { execSync } = await import('child_process');
+
+    console.log(`\n📦 安装插件：${name}\n`);
+
+    try {
+      execSync(`npm install ${name}`, { stdio: 'inherit', cwd: process.cwd() });
+    } catch {
+      console.error(`\n❌ 安装失败，请确认包名正确且已发布到 npm\n`);
+      process.exit(1);
+    }
+
+    // 注册到 .ethanrc.json
+    const config = readConfig(process.cwd());
+    const plugins = config.plugins ?? [];
+    if (!plugins.includes(name)) {
+      plugins.push(name);
+      writeConfig({ ...config, plugins }, process.cwd());
+    }
+
+    console.log(`\n✅ 插件 ${name} 安装完成`);
+    console.log(`   运行 ethan list 可查看新增 Skill\n`);
+  });
+
+pluginCmd
+  .command('remove <name>')
+  .description('卸载 Skill 插件包')
+  .action(async (name: string) => {
+    const { execSync } = await import('child_process');
+
+    console.log(`\n🗑  卸载插件：${name}\n`);
+
+    try {
+      execSync(`npm uninstall ${name}`, { stdio: 'inherit', cwd: process.cwd() });
+    } catch {
+      console.warn(`  ⚠️  npm uninstall 失败，仍会从配置中移除`);
+    }
+
+    const config = readConfig(process.cwd());
+    const plugins = (config.plugins ?? []).filter((p) => p !== name);
+    writeConfig({ ...config, plugins }, process.cwd());
+
+    console.log(`\n✅ 插件 ${name} 已卸载\n`);
   });
 
 // ─── mcp 命令 ───────────────────────────────────────────────────────────────
@@ -479,6 +641,204 @@ program
     const total = entries.reduce((sum, [, v]) => sum + v, 0);
     console.log('─'.repeat(60));
     console.log(`  Total executions: ${total}\n`);
+  });
+
+// ─── serve 命令（Web UI Dashboard） ─────────────────────────────────────────
+program
+  .command('serve')
+  .description('启动本地 Web UI Dashboard（默认端口 3000）')
+  .option('--port <port>', '监听端口', '3000')
+  .action(async (options) => {
+    const port = parseInt(options.port, 10) || 3000;
+    const { startDashboardServer } = await import('../server/dashboard');
+    startDashboardServer(port);
+  });
+
+// ─── run 命令（交互式向导） ──────────────────────────────────────────────────
+program
+  .command('run')
+  .description('交互式 Skill 执行向导：选择 Skill → 填写上下文 → 生成提示词')
+  .action(async () => {
+    const clack = await import('@clack/prompts');
+    const { intro, outro, select, text, isCancel, cancel, note, spinner } = clack;
+
+    // 读取项目配置
+    const config = readConfig(process.cwd());
+    const isEn = config.lang === 'en';
+    const activeSkills = ALL_SKILLS.filter(
+      (s) => !config.disabledSkills?.includes(s.id)
+    );
+
+    intro(isEn ? '✨  Ethan - Skill Wizard' : '✨  Ethan - 技能执行向导');
+
+    // 按分类分组展示
+    const categoryLabel: Record<string, string> = {
+      '需求侧': isEn ? '[Requirements]' : '[需求侧]',
+      '执行侧': isEn ? '[Execution]' : '[执行侧]',
+      '跟踪侧': isEn ? '[Tracking]' : '[跟踪侧]',
+      '输出侧': isEn ? '[Output]' : '[输出侧]',
+      '质量侧': isEn ? '[Quality]' : '[质量侧]',
+    };
+
+    const skillOptions = activeSkills.map((s) => ({
+      value: s.id,
+      label: isEn
+        ? `${s.nameEn.replace(/_/g, ' ')}  ${categoryLabel[s.category ?? ''] ?? ''}`
+        : `${s.name}  ${categoryLabel[s.category ?? ''] ?? ''}`,
+      hint: isEn ? (s.descriptionEn ?? s.description) : s.description,
+    }));
+
+    const skillId = await select({
+      message: isEn ? 'Which Skill do you want to run?' : '选择要执行的 Skill：',
+      options: skillOptions,
+    });
+
+    if (isCancel(skillId)) {
+      cancel(isEn ? 'Cancelled.' : '已取消');
+      process.exit(0);
+    }
+
+    const skill = ALL_SKILLS.find((s) => s.id === skillId)!;
+
+    const context = await text({
+      message: isEn
+        ? `Describe your context for "${skill.nameEn.replace(/_/g, ' ')}":`
+        : `请输入「${skill.name}」的上下文描述：`,
+      placeholder: isEn
+        ? 'e.g. Build a user login feature with JWT auth'
+        : '例如：实现用户登录功能，支持 JWT 认证',
+      validate: (v) => {
+        if (!v?.trim()) return isEn ? 'Context cannot be empty' : '上下文不能为空';
+      },
+    });
+
+    if (isCancel(context)) {
+      cancel(isEn ? 'Cancelled.' : '已取消');
+      process.exit(0);
+    }
+
+    const s = spinner();
+    s.start(isEn ? 'Generating prompt...' : '生成提示词中...');
+
+    // 组装完整提示词
+    const stepsText = skill.steps
+      .map((step, i) => `${i + 1}. ${step.title.replace(/^\d+\.\s*/, '')}`)
+      .join('\n');
+
+    const prompt = [
+      `## ${isEn ? skill.nameEn.replace(/_/g, ' ') : skill.name}`,
+      '',
+      `**${isEn ? 'Context' : '上下文'}**: ${context}`,
+      '',
+      `**${isEn ? 'Goal' : '目标'}**: ${isEn ? (skill.descriptionEn ?? skill.description) : skill.description}`,
+      '',
+      `**${isEn ? 'Please follow these steps' : '请按以下步骤执行'}**:`,
+      stepsText,
+      '',
+      `**${isEn ? 'Output format' : '输出格式'}**: ${skill.outputFormat}`,
+    ].join('\n');
+
+    s.stop(isEn ? 'Prompt ready!' : '提示词已生成！');
+
+    note(prompt, isEn ? 'Your Prompt' : '你的提示词');
+
+    // 尝试复制到剪贴板
+    try {
+      const { execSync } = await import('child_process');
+      const cmd =
+        process.platform === 'darwin'
+          ? `echo ${JSON.stringify(prompt)} | pbcopy`
+          : process.platform === 'win32'
+            ? `echo ${JSON.stringify(prompt)} | clip`
+            : `echo ${JSON.stringify(prompt)} | xclip -selection clipboard`;
+      execSync(cmd, { stdio: 'pipe' });
+      outro(
+        isEn
+          ? '✅ Prompt copied to clipboard! Paste it into your AI editor.'
+          : '✅ 提示词已复制到剪贴板！粘贴到你的 AI 编辑器中使用。'
+      );
+    } catch {
+      outro(
+        isEn
+          ? '✅ Done! Copy the prompt above and paste it into your AI editor.'
+          : '✅ 完成！请复制上方提示词，粘贴到你的 AI 编辑器中使用。'
+      );
+    }
+
+    // 记录使用统计
+    const stats = readStats();
+    stats[skill.id] = (stats[skill.id] || 0) + 1;
+    writeStats(stats);
+  });
+
+// ─── init 命令 ───────────────────────────────────────────────────────────────
+program
+  .command('init')
+  .description('在当前项目生成 .ethanrc.json 配置文件')
+  .option('-d, --dir <dir>', '目标目录（默认为当前目录）', process.cwd())
+  .action(async (options) => {
+    const { dir } = options;
+    const configPath = getConfigPath(dir);
+
+    if (fs.existsSync(configPath)) {
+      const existing = readConfig(dir);
+      console.log(`\n⚠️  ${configPath} 已存在，当前配置：`);
+      console.log(JSON.stringify(existing, null, 2));
+      console.log('\n如需修改，请直接编辑该文件。\n');
+      return;
+    }
+
+    // 使用 readline 简单交互
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string): Promise<string> =>
+      new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+
+    console.log('\n🚀 Ethan 项目配置向导\n');
+    console.log('─'.repeat(50));
+
+    const langInput = await ask('\n输出语言 [zh/en]（默认 zh）: ');
+    const lang: 'zh' | 'en' = langInput === 'en' ? 'en' : 'zh';
+
+    const disabledInput = await ask(
+      '\n要禁用的 Skill ID（逗号分隔，留空跳过）\n可选: ' +
+        ALL_SKILLS.map((s) => s.id).join(', ') +
+        '\n> '
+    );
+    const disabledSkills = disabledInput
+      ? disabledInput
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => ALL_SKILLS.some((sk) => sk.id === s))
+      : [];
+
+    const customTriggersInput = await ask(
+      '\n自定义触发词（格式: 缩写=skill-id，逗号分隔，留空跳过）\n例如: cr=code-review,fix=debug\n> '
+    );
+    const customTriggers: Record<string, string> = {};
+    if (customTriggersInput) {
+      for (const pair of customTriggersInput.split(',')) {
+        const [key, val] = pair.split('=').map((s) => s.trim());
+        if (key && val && ALL_SKILLS.some((sk) => sk.id === val)) {
+          customTriggers[key] = val;
+        }
+      }
+    }
+
+    rl.close();
+
+    const config = {
+      lang,
+      ...(disabledSkills.length > 0 ? { disabledSkills } : {}),
+      ...(Object.keys(customTriggers).length > 0 ? { customTriggers } : {}),
+    };
+
+    writeConfig(config, dir);
+
+    console.log('\n✅ 已生成 .ethanrc.json：');
+    console.log(JSON.stringify(config, null, 2));
+    console.log(`\n文件路径：${configPath}`);
+    console.log('\n💡 提示：现在运行 ethan install --platform <platform> 将使用此配置\n');
   });
 
 program.parse(process.argv);

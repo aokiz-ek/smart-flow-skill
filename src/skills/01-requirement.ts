@@ -6,6 +6,7 @@ export const requirementSkill: SkillDefinition = {
   nameEn: 'requirement_understanding',
   order: 1,
   description: '深度解析用户需求，消除歧义，输出结构化需求文档',
+  descriptionEn: 'Deeply analyze requirements, eliminate ambiguity, output structured requirement doc',
   detailDescription: `当用户提出需求时，执行深度需求理解流程：分析核心目标、识别隐含需求、
 消除歧义点，最终输出结构化的需求确认文档，确保开发方向正确。`,
   triggers: [
@@ -19,6 +20,9 @@ export const requirementSkill: SkillDefinition = {
     '开发一个',
     '/需求理解',
     '@ethan 需求',
+    'requirement analysis',
+    'analyze requirements',
+    '@ethan requirement',
   ],
   steps: [
     {

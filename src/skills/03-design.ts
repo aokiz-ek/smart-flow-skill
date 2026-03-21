@@ -6,6 +6,7 @@ export const designSkill: SkillDefinition = {
   nameEn: 'solution_design',
   order: 3,
   description: '输出技术方案设计文档，包含架构选择、接口设计、数据模型和关键决策说明',
+  descriptionEn: 'Output architecture design, API design, and data model',
   detailDescription: `在需求明确、任务拆解完成后，进行技术方案设计：选择合适的技术架构、
 设计 API 接口、规划数据模型、说明关键技术决策和权衡，输出可直接指导实现的设计文档。`,
   triggers: [
@@ -19,6 +20,9 @@ export const designSkill: SkillDefinition = {
     'API 设计',
     '/方案设计',
     '@ethan 设计',
+    'solution design',
+    'tech design',
+    '@ethan design',
   ],
   steps: [
     {

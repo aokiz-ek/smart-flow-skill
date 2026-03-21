@@ -1,5 +1,15 @@
 import type { SkillDefinition, BuildContext } from '../skills/types';
 
+/** 取技能描述：有英文版且当前语言为 en 则用英文 */
+function desc(skill: SkillDefinition, isEn: boolean): string {
+  return isEn && skill.descriptionEn ? skill.descriptionEn : skill.description;
+}
+
+/** 取技能显示名：英文时用 nameEn（下划线→空格），中文时用 name */
+function skillName(skill: SkillDefinition, isEn: boolean): string {
+  return isEn ? skill.nameEn.replace(/_/g, ' ') : skill.name;
+}
+
 /**
  * 生成各平台 Markdown 规则文件
  * 支持：copilot、cline、lingma、codebuddy、windsurf、zed、jetbrains、continue、claude-code
@@ -34,6 +44,7 @@ export function renderMarkdown(ctx: BuildContext): string {
 /** VS Code Copilot：.github/copilot-instructions.md */
 function renderCopilot(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   return `# Ethan - Copilot Instructions (v${version})
 
@@ -44,7 +55,7 @@ You are equipped with the Ethan workflow assistant. When users mention any of th
 
 ## Available Skills
 
-${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
+${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
 
 ## General Rules
 
@@ -55,16 +66,16 @@ ${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
 `;
 }
 
-function renderCopilotSkill(skill: SkillDefinition): string {
+function renderCopilotSkill(skill: SkillDefinition, isEn: boolean): string {
   const steps = skill.steps
     .map((step, i) => `${i + 1}. **${step.title.replace(/^\d+\.\s*/, '')}**: ${step.content.split('\n')[0]}`)
     .join('\n');
 
-  return `### ${skill.order}. ${skill.name} (${skill.nameEn})
+  return `### ${skill.order}. ${skillName(skill, isEn)} (${skill.nameEn})
 
 **Triggers**: ${skill.triggers.map((t) => `\`${t}\``).join(', ')}
 
-**Goal**: ${skill.description}
+**Goal**: ${desc(skill, isEn)}
 
 **Steps**:
 ${steps}
@@ -75,11 +86,30 @@ ${steps}
 /** Cline：.clinerules */
 function renderCline(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
-  const skillsContent = skills.map(renderClineSkill).join('\n\n');
+  const isEn = ctx.lang === 'en';
+  const skillsContent = skills.map((s) => renderClineSkill(s, isEn)).join('\n\n');
+
+  if (isEn) {
+    return `# Ethan v${version}
+# Generated: ${generatedAt}
+
+Ethan - Your AI Workflow Assistant. When you see any trigger keyword below, execute the corresponding skill workflow.
+
+## Skill Triggers
+${skills.map((s) => `- **${skillName(s, true)}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
+
+---
+
+${skillsContent}
+
+---
+Rules: Follow steps in order. Do not skip. Output per skill template.
+`;
+  }
 
   return `# Ethan v${version}
 # Generated: ${generatedAt}
-# Source: https://github.com/your-org/ethan-skill
+# Source: https://github.com/aokiz-ek/smart-flow-skill
 
 Ethan。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
@@ -95,8 +125,18 @@ ${skillsContent}
 `;
 }
 
-function renderClineSkill(skill: SkillDefinition): string {
+function renderClineSkill(skill: SkillDefinition, isEn: boolean): string {
   const stepsContent = skill.steps.map((step) => `${step.title}\n${step.content}`).join('\n\n');
+  if (isEn) {
+    return `## ${skillName(skill, true)} (${skill.id})
+
+Triggers: ${skill.triggers.slice(0, 4).join(' | ')}
+Goal: ${desc(skill, true)}
+
+${stepsContent}
+
+Output: ${skill.outputFormat}`;
+  }
   return `## ${skill.name}
 
 触发：${skill.triggers.slice(0, 4).join(' | ')}
@@ -110,6 +150,28 @@ ${stepsContent}
 /** 通义灵码：.lingma/rules/*.md（结构简洁） */
 function renderLingma(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
+
+  if (isEn) {
+    return `# Ethan v${version}
+
+> Generated: ${generatedAt}
+
+## Overview
+
+${skills.length} standardized workflow skills. Match trigger keywords to execute the corresponding workflow.
+
+## Skill List
+
+${skills.map((s) => `### ${s.order}. ${skillName(s, true)}\n- **Triggers**: ${s.triggers.slice(0, 5).join(', ')}\n- **Goal**: ${desc(s, true)}\n- **Steps**: ${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' → ')}`).join('\n\n')}
+
+## Rules
+
+1. Detect intent and match trigger keywords
+2. Follow Skill steps in order
+3. Output per skill template
+`;
+  }
 
   return `# Ethan v${version}
 
@@ -150,33 +212,35 @@ ${stepsList}
 /** 腾讯 CodeBuddy：CODEBUDDY.md（内容精简） */
 function renderCodeBuddy(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   return `# Ethan v${version}
 
-Ethan - Your AI Workflow Assistant | 生成时间：${generatedAt}
+Ethan - Your AI Workflow Assistant | Generated: ${generatedAt}
 
 ## Skills
 
 ${skills
   .map(
-    (s) => `### ${s.order}. ${s.name}
-触发词：${s.triggers.slice(0, 3).join(' / ')}
-说明：${s.description}
-步骤：${s.steps.map((step) => step.title).join(' → ')}
-输出：${s.outputFormat}`
+    (s) => `### ${s.order}. ${skillName(s, isEn)}
+${isEn ? 'Triggers' : '触发词'}：${s.triggers.slice(0, 3).join(' / ')}
+${isEn ? 'Goal' : '说明'}：${desc(s, isEn)}
+${isEn ? 'Steps' : '步骤'}：${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' → ')}
+${isEn ? 'Output' : '输出'}：${s.outputFormat}`
   )
   .join('\n\n')}
 
-## 规则
-- 根据用户输入自动匹配触发词，执行对应 Skill
-- 严格按步骤顺序执行，不省略关键步骤
-- 输出格式遵循各 Skill 模板定义
+## ${isEn ? 'Rules' : '规则'}
+- ${isEn ? 'Auto-match trigger keywords and execute the corresponding Skill' : '根据用户输入自动匹配触发词，执行对应 Skill'}
+- ${isEn ? 'Follow steps in order without skipping' : '严格按步骤顺序执行，不省略关键步骤'}
+- ${isEn ? 'Output per skill template' : '输出格式遵循各 Skill 模板定义'}
 `;
 }
 
 /** Windsurf：.windsurf/rules/smart-flow.md（类 Copilot 格式） */
 function renderWindsurf(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   return `# Ethan - Windsurf Rules (v${version})
 
@@ -187,7 +251,7 @@ You are equipped with the Ethan workflow assistant for Windsurf. When users ment
 
 ## Available Skills
 
-${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
+${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
 
 ## General Rules
 
@@ -201,11 +265,12 @@ ${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
 /** Zed：smart-flow.rules（精简纯文本，无复杂 Markdown 结构） */
 function renderZed(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   const skillLines = skills
     .map(
       (s) =>
-        `${s.order}. ${s.name} [${s.triggers.slice(0, 3).join('/')}]\n   ${s.description}\n   Steps: ${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' > ')}`
+        `${s.order}. ${skillName(s, isEn)} [${s.triggers.slice(0, 3).join('/')}]\n   ${desc(s, isEn)}\n   Steps: ${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' > ')}`
     )
     .join('\n\n');
 
@@ -222,6 +287,7 @@ Rules: Follow steps in order. Output per skill template. Auto-detect intent from
 /** JetBrains AI：.github/ai-instructions.md（类 Copilot） */
 function renderJetBrains(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   return `# Ethan - JetBrains AI Instructions (v${version})
 
@@ -232,7 +298,7 @@ You are equipped with the Ethan workflow assistant for JetBrains AI. When users 
 
 ## Available Skills
 
-${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
+${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
 
 ## General Rules
 
@@ -246,11 +312,30 @@ ${skills.map((s) => renderCopilotSkill(s)).join('\n\n')}
 /** Continue：.continuerules（类 Cline 格式） */
 function renderContinue(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
-  const skillsContent = skills.map(renderClineSkill).join('\n\n');
+  const isEn = ctx.lang === 'en';
+  const skillsContent = skills.map((s) => renderClineSkill(s, isEn)).join('\n\n');
+
+  if (isEn) {
+    return `# Ethan v${version}
+# Generated: ${generatedAt}
+
+Ethan (Continue). Execute the matching skill workflow when trigger keywords are detected.
+
+## Skill Triggers
+${skills.map((s) => `- **${skillName(s, true)}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
+
+---
+
+${skillsContent}
+
+---
+Rules: Follow steps in order. Output per skill template.
+`;
+  }
 
   return `# Ethan v${version}
 # Generated: ${generatedAt}
-# Source: https://github.com/your-org/ethan-skill
+# Source: https://github.com/aokiz-ek/smart-flow-skill
 
 Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
@@ -269,6 +354,7 @@ ${skillsContent}
 /** Claude Code：CLAUDE.md（详细步骤格式，充分利用长上下文） */
 function renderClaudeCode(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
+  const isEn = ctx.lang === 'en';
 
   const skillsContent = skills
     .map((s) => {
@@ -279,14 +365,14 @@ function renderClaudeCode(ctx: BuildContext): string {
       const triggersLine = s.triggers.map((t) => `\`${t}\``).join(', ');
       const notesLine =
         s.notes && s.notes.length > 0
-          ? `\n\n**注意事项**:\n${s.notes.map((n) => `- ${n}`).join('\n')}`
+          ? `\n\n**${isEn ? 'Notes' : '注意事项'}**:\n${s.notes.map((n) => `- ${n}`).join('\n')}`
           : '';
 
-      return `### ${s.order}. ${s.name} (\`${s.id}\`)
+      return `### ${s.order}. ${skillName(s, isEn)} (\`${s.id}\`)
 
-**描述**: ${s.description}
+**${isEn ? 'Description' : '描述'}**: ${desc(s, isEn)}
 
-**触发词**: ${triggersLine}
+**${isEn ? 'Triggers' : '触发词'}**: ${triggersLine}
 
 **执行步骤**:
 

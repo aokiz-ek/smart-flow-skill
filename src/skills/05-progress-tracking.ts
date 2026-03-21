@@ -6,6 +6,7 @@ export const progressTrackingSkill: SkillDefinition = {
   nameEn: 'progress_tracking',
   order: 5,
   description: '实时更新任务状态，识别阻塞风险，保持项目透明度',
+  descriptionEn: 'Real-time task status update, identify blocking risks',
   detailDescription: `在项目执行过程中持续跟踪进度：更新任务状态、识别延期风险、
 记录阻塞原因、预测完成时间，确保团队对项目状态保持一致认知。`,
   triggers: [
@@ -19,6 +20,9 @@ export const progressTrackingSkill: SkillDefinition = {
     '还剩什么',
     '/进度跟踪',
     '@ethan 进度',
+    'progress tracking',
+    'progress update',
+    '@ethan progress',
   ],
   steps: [
     {

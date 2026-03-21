@@ -6,6 +6,7 @@ export const debugSkill: SkillDefinition = {
   nameEn: 'debug',
   order: 9,
   description: '系统性排查故障，通过假设验证和 5 Why 定位根因，输出临时/永久/预防三层方案',
+  descriptionEn: 'Hypothesis-driven debugging with 5-Why root cause analysis',
   detailDescription: `采用结构化方法排查故障：先描述现象建立假设，再逐一验证缩小范围，
 用 5 Why 挖掘根本原因，最终输出涵盖临时缓解、永久修复和预防措施的完整排查报告。`,
   triggers: [
@@ -19,6 +20,8 @@ export const debugSkill: SkillDefinition = {
     '程序崩溃',
     '/故障排查',
     '@ethan debug',
+    'troubleshoot',
+    '@ethan troubleshoot',
   ],
   steps: [
     {

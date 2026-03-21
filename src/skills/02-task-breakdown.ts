@@ -6,6 +6,7 @@ export const taskBreakdownSkill: SkillDefinition = {
   nameEn: 'task_breakdown',
   order: 2,
   description: '将复杂需求拆解为可执行的原子任务，建立依赖关系和优先级',
+  descriptionEn: 'Break down requirements into atomic tasks with dependency mapping',
   detailDescription: `将已理解的需求拆解为具体可执行的任务列表，建立任务间的依赖关系，
 评估复杂度，制定合理的执行顺序，为后续实现提供清晰路线图。`,
   triggers: [
@@ -18,6 +19,9 @@ export const taskBreakdownSkill: SkillDefinition = {
     '实现步骤',
     '/任务拆解',
     '@ethan 拆解',
+    'task breakdown',
+    'break down',
+    '@ethan breakdown',
   ],
   steps: [
     {

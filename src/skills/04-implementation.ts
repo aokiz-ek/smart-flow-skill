@@ -6,6 +6,7 @@ export const implementationSkill: SkillDefinition = {
   nameEn: 'implementation',
   order: 4,
   description: '按设计方案逐步实现代码，遵循最佳实践，同步记录实现决策',
+  descriptionEn: 'Implement step by step following the design plan with code self-check',
   detailDescription: `进入编码阶段，按任务拆解的顺序逐一实现功能：先写测试或接口定义，
 再实现核心逻辑，遵循 SOLID 原则和项目既有规范，对非显而易见的实现决策作简要注释。`,
   triggers: [
@@ -18,6 +19,9 @@ export const implementationSkill: SkillDefinition = {
     '开始开发',
     '/执行实现',
     '@ethan 实现',
+    'implementation',
+    'start implementing',
+    '@ethan implement',
   ],
   steps: [
     {

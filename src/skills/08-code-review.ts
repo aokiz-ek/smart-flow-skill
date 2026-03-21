@@ -6,6 +6,7 @@ export const codeReviewSkill: SkillDefinition = {
   nameEn: 'code_review',
   order: 8,
   description: '系统性审查代码变更，分级输出 Blocker/Major/Minor 问题，提升代码质量',
+  descriptionEn: 'Systematic code review with Blocker/Major/Minor classification',
   detailDescription: `对代码变更进行系统性审查，覆盖正确性、安全性、性能、可维护性和规范性五个维度，
 按 Blocker/Major/Minor 三级分类输出问题，并给出具体改进建议。`,
   triggers: [
@@ -19,6 +20,7 @@ export const codeReviewSkill: SkillDefinition = {
     '代码 review',
     '/代码审查',
     '@ethan review',
+    '@ethan code-review',
   ],
   steps: [
     {
