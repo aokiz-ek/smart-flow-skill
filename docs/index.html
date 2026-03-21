@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="10 个标准化工作流节点，11 个 AI 编辑器平台支持，让每一步都有据可依。" />
+  <meta name="description" content="10 个标准化工作流节点，11 个 AI 编辑器平台支持，14 个 CLI 命令，让每一步都有据可依。v1.1.0 新增交互式向导、多语言、Web UI 等高级功能。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -838,6 +838,176 @@
     .code-block pre .key     { color: var(--color-blue); }
 
     /* ============================================================
+       ADVANCED FEATURES SECTION
+    ============================================================ */
+    #advanced {
+      padding: var(--spacing-section) 40px;
+      background: #080808;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .adv-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-card);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform var(--transition-medium),
+                  box-shadow var(--transition-medium),
+                  border-color var(--transition-medium);
+      cursor: default;
+    }
+
+    .adv-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 24px rgba(191, 90, 242, 0.2),
+                  0 8px 32px rgba(0, 0, 0, 0.4);
+      border-color: var(--color-purple);
+    }
+
+    .adv-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .adv-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.2px;
+      line-height: 1.3;
+    }
+
+    .adv-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .adv-desc code,
+    .vscode-feat-desc code,
+    .cli-desc code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--color-blue);
+    }
+
+    /* ============================================================
+       CLI SHOWCASE SECTION
+    ============================================================ */
+    #cli {
+      padding: var(--spacing-section) 40px;
+    }
+
+    .cli-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .cli-item {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: border-color var(--transition-fast),
+                  background var(--transition-fast);
+    }
+
+    .cli-item:hover {
+      border-color: var(--color-border-hover);
+      background: var(--color-surface-hover);
+    }
+
+    .cli-cmd {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-blue);
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 220px;
+    }
+
+    .cli-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       VSCODE EXTENSION SECTION
+    ============================================================ */
+    #vscode {
+      padding: var(--spacing-section) 40px;
+      background: #080808;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .vscode-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .vscode-feat {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-card);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color var(--transition-fast);
+    }
+
+    .vscode-feat:hover {
+      border-color: var(--color-border-hover);
+    }
+
+    .vscode-feat-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .vscode-feat-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.2px;
+    }
+
+    .vscode-feat-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ============================================================
        FOOTER
     ============================================================ */
     #footer {
@@ -940,6 +1110,10 @@
       .skills-grid {
         grid-template-columns: repeat(4, 1fr);
       }
+
+      .adv-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 900px) {
@@ -961,6 +1135,14 @@
 
       .stat-item:nth-child(4) {
         border-top: 1px solid var(--color-border);
+      }
+
+      .cli-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .vscode-features {
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .footer-top {
@@ -1031,6 +1213,9 @@
       #platforms { padding: 80px 24px; }
       #pipeline { padding: 80px 24px; }
       #install { padding: 80px 24px; }
+      #advanced { padding: 80px 24px; }
+      #cli { padding: 80px 24px; }
+      #vscode { padding: 80px 24px; }
       #footer { padding: 48px 24px 32px; }
 
       .container { padding: 0 24px; }
@@ -1065,6 +1250,23 @@
         padding: 6px 12px;
       }
 
+      .adv-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cli-item {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .cli-cmd {
+        min-width: unset;
+      }
+
+      .vscode-features {
+        grid-template-columns: 1fr;
+      }
+
       .install-step {
         flex-direction: column;
         gap: 16px;
@@ -1094,6 +1296,10 @@
         grid-template-columns: 1fr;
       }
 
+      .adv-grid {
+        grid-template-columns: 1fr;
+      }
+
       .stat-number {
         font-size: 44px;
       }
@@ -1111,6 +1317,8 @@
     <ul class="nav-links">
       <li><a href="#skills">Skills</a></li>
       <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#advanced">高级功能</a></li>
+      <li><a href="#cli">CLI</a></li>
       <li><a href="#install">安装</a></li>
       <li><a href="#footer">文档</a></li>
     </ul>
@@ -1135,6 +1343,8 @@
   <div class="mobile-menu" id="mobileMenu" role="menu">
     <a href="#skills" role="menuitem">Skills</a>
     <a href="#pipeline" role="menuitem">Pipeline</a>
+    <a href="#advanced" role="menuitem">高级功能</a>
+    <a href="#cli" role="menuitem">CLI</a>
     <a href="#install" role="menuitem">安装</a>
     <a href="#footer" role="menuitem">文档</a>
     <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank" rel="noopener noreferrer" role="menuitem">GitHub</a>
@@ -1146,7 +1356,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Introducing Ethan</span>
+      <span>Ethan v1.1.0 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1154,7 +1364,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 个标准化工作流 &nbsp;·&nbsp; 11 个平台
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 个标准化工作流 &nbsp;·&nbsp; 11 个平台 &nbsp;·&nbsp; v1.1.0
     </p>
 
     <div class="hero-cta">
@@ -1195,8 +1405,8 @@
         <div class="stat-label">Pipelines</div>
       </div>
       <div class="stat-item reveal reveal-delay-3">
-        <div class="stat-number" data-target="5" data-suffix="">5</div>
-        <div class="stat-label">分类</div>
+        <div class="stat-number" data-target="14" data-suffix="">14</div>
+        <div class="stat-label">CLI 命令</div>
       </div>
     </div>
   </section>
@@ -1483,6 +1693,186 @@
   </section>
 
   <!-- ============================================================
+       ADVANCED FEATURES SECTION
+  ============================================================ -->
+  <section id="advanced" aria-label="高级功能">
+    <div class="section-header reveal">
+      <h2 class="section-title">高级功能</h2>
+      <p class="section-subtitle">v1.1.0 新增 — 更智能的工作流体验</p>
+    </div>
+
+    <div class="adv-grid">
+      <!-- Card 1 -->
+      <article class="adv-card reveal" aria-label="版本更新检测">
+        <div class="adv-icon" aria-hidden="true">🔄</div>
+        <div class="adv-title">版本更新检测</div>
+        <div class="adv-desc">每次启动自动静默检查 npm 新版本，进程退出时提示升级，无感知保持最新</div>
+      </article>
+
+      <!-- Card 2 -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="多语言支持">
+        <div class="adv-icon" aria-hidden="true">🌍</div>
+        <div class="adv-title">多语言支持</div>
+        <div class="adv-desc"><code>--lang en</code> 生成全英文规则文件，国际化团队开箱即用</div>
+      </article>
+
+      <!-- Card 3 -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="项目配置文件">
+        <div class="adv-icon" aria-hidden="true">⚙️</div>
+        <div class="adv-title">项目配置文件</div>
+        <div class="adv-desc"><code>ethan init</code> 生成 <code>.ethanrc.json</code>，支持禁用 Skill、自定义触发词</div>
+      </article>
+
+      <!-- Card 4 -->
+      <article class="adv-card reveal reveal-delay-3" aria-label="交互式向导">
+        <div class="adv-icon" aria-hidden="true">🚀</div>
+        <div class="adv-title">交互式向导</div>
+        <div class="adv-desc"><code>ethan run</code> 方向键选 Skill → 填写上下文 → 提示词一键复制到剪贴板</div>
+      </article>
+
+      <!-- Card 5 -->
+      <article class="adv-card reveal" aria-label="自动上下文注入">
+        <div class="adv-icon" aria-hidden="true">🔍</div>
+        <div class="adv-title">自动上下文注入</div>
+        <div class="adv-desc"><code>--auto-context</code> 扫描项目自动识别 React / Vue / TypeScript / Go 等技术栈</div>
+      </article>
+
+      <!-- Card 6 -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="自定义 Skill 插件">
+        <div class="adv-icon" aria-hidden="true">🧩</div>
+        <div class="adv-title">自定义 Skill 插件</div>
+        <div class="adv-desc"><code>.ethan/skills/*.yaml</code> 定义私有 Skill，<code>ethan skill new</code> 一键生成模板</div>
+      </article>
+
+      <!-- Card 7 -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="Skill Marketplace">
+        <div class="adv-icon" aria-hidden="true">📦</div>
+        <div class="adv-title">Skill Marketplace</div>
+        <div class="adv-desc"><code>ethan plugin install</code> 从 npm 安装社区 Skill 包，扩展工作流能力</div>
+      </article>
+
+      <!-- Card 8 -->
+      <article class="adv-card reveal reveal-delay-3" aria-label="Web UI Dashboard">
+        <div class="adv-icon" aria-hidden="true">🖥️</div>
+        <div class="adv-title">Web UI Dashboard</div>
+        <div class="adv-desc"><code>ethan serve</code> 启动本地可视化面板，展示 Skill 使用统计与 Pipeline 状态</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CLI COMMANDS SECTION
+  ============================================================ -->
+  <section id="cli" aria-label="CLI 命令参考">
+    <div class="section-header reveal">
+      <h2 class="section-title">14 个 CLI 命令</h2>
+      <p class="section-subtitle">覆盖安装、执行、调试到扩展的完整工具链</p>
+    </div>
+
+    <div class="cli-grid">
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan install</div>
+        <div class="cli-desc">安装规则文件到指定平台，支持 --platform / --lang / --auto-context</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan run</div>
+        <div class="cli-desc">交互式 Skill 执行向导，方向键选择 → 填写上下文 → 一键复制提示词</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan init</div>
+        <div class="cli-desc">生成项目配置文件 <code>.ethanrc.json</code>，自定义禁用项与触发词</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan serve</div>
+        <div class="cli-desc">启动本地 Web UI Dashboard，可视化 Skill 统计与 Pipeline 状态</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan list</div>
+        <div class="cli-desc">列出所有已加载的 Skill（含自定义插件）</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan validate</div>
+        <div class="cli-desc">校验所有规则文件是否与源码同步</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan mcp</div>
+        <div class="cli-desc">启动 MCP Server，暴露 10 个 Tool 给 AI 编辑器</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan pipeline list</div>
+        <div class="cli-desc">列出所有预定义 Pipeline</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan pipeline run &lt;id&gt;</div>
+        <div class="cli-desc">运行指定 Pipeline，支持 <code>-c</code> 注入上下文</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan doctor</div>
+        <div class="cli-desc">健康检查：校验环境、依赖与配置完整性</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan stats</div>
+        <div class="cli-desc">查看 Skill 使用统计（存储于 ~/.smart-flow-stats.json）</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan skill new &lt;name&gt;</div>
+        <div class="cli-desc">创建自定义 Skill 模板文件到 <code>.ethan/skills/</code></div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan plugin install &lt;pkg&gt;</div>
+        <div class="cli-desc">从 npm 安装社区 Skill 插件包</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan install --lang en</div>
+        <div class="cli-desc">安装英文版规则文件，适配国际化团队</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VSCODE EXTENSION SECTION
+  ============================================================ -->
+  <section id="vscode" aria-label="VS Code 扩展">
+    <div class="section-header reveal">
+      <h2 class="section-title">VS Code 扩展</h2>
+      <p class="section-subtitle">原生集成到编辑器，Skill 触手可及</p>
+    </div>
+
+    <div class="vscode-features">
+      <div class="vscode-feat reveal">
+        <div class="vscode-feat-icon" aria-hidden="true">🌲</div>
+        <div class="vscode-feat-title">Skill 侧边栏树</div>
+        <div class="vscode-feat-desc">按分类分组展示全部 Skill（需求侧 / 执行侧 / 跟踪侧 / 输出侧 / 质量侧），一眼掌握工作流节点</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-1">
+        <div class="vscode-feat-icon" aria-hidden="true">🔗</div>
+        <div class="vscode-feat-title">Pipeline 侧边栏树</div>
+        <div class="vscode-feat-desc">侧边栏直接展示三条 Pipeline，点击节点跳转对应 Skill 详情</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-2">
+        <div class="vscode-feat-icon" aria-hidden="true">⚡</div>
+        <div class="vscode-feat-title">状态栏快捷按钮</div>
+        <div class="vscode-feat-desc">编辑器底部状态栏显示 <code>⚡ Ethan</code>，单击快速打开 Skill QuickPick 选择器</div>
+      </div>
+      <div class="vscode-feat reveal">
+        <div class="vscode-feat-icon" aria-hidden="true">💬</div>
+        <div class="vscode-feat-title">10 个 chatParticipant 命令</div>
+        <div class="vscode-feat-desc">在 Copilot Chat 中使用 <code>@ethan /需求理解</code> 等 10 条斜杠命令直接激活对应 Skill</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-1">
+        <div class="vscode-feat-icon" aria-hidden="true">📋</div>
+        <div class="vscode-feat-title">QuickPick + 自动复制</div>
+        <div class="vscode-feat-desc">命令面板搜索并运行 Skill，执行后自动将提示词复制到剪贴板</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-2">
+        <div class="vscode-feat-icon" aria-hidden="true">🔧</div>
+        <div class="vscode-feat-title">一键安装规则文件</div>
+        <div class="vscode-feat-desc">通过扩展命令直接触发 <code>ethan install</code>，无需离开编辑器</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
        FOOTER
   ============================================================ -->
   <footer id="footer" role="contentinfo">
@@ -1495,6 +1885,9 @@
       <nav class="footer-nav" aria-label="页脚导航">
         <a href="#skills">Skills</a>
         <a href="#pipeline">Pipeline</a>
+        <a href="#advanced">高级功能</a>
+        <a href="#cli">CLI</a>
+        <a href="#vscode">VS Code</a>
         <a href="#install">安装</a>
         <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank" rel="noopener noreferrer">文档</a>
       </nav>
@@ -1511,7 +1904,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2025 Ethan &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.1.0 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 
