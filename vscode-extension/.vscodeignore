@@ -1,0 +1,16 @@
+.vscode/**
+.github/**
+src/**
+scripts/**
+rules/**
+docs/**
+node_modules/**
+*.ts
+*.map
+tsconfig*.json
+.eslintrc*
+eslint.config*
+.prettierrc*
+vitest.config*
+CHANGELOG.md
+**/*.test.js

@@ -4,10 +4,23 @@ import { routeTrigger } from '../router/trigger-router';
 import { registerCommands } from './commands';
 
 export function activate(context: vscode.ExtensionContext): void {
-  // 注册命令
-  registerCommands(context);
+  // Register commands and get back the tree-data providers + status bar item
+  const { skillsProvider, pipelinesProvider, statusBarItem } =
+    registerCommands(context);
 
-  // 注册 Chat Participant（@ethan）
+  // Register sidebar tree views
+  context.subscriptions.push(
+    vscode.window.createTreeView('ethan.skillsView', {
+      treeDataProvider: skillsProvider,
+      showCollapseAll: true,
+    }),
+    vscode.window.createTreeView('ethan.pipelinesView', {
+      treeDataProvider: pipelinesProvider,
+    }),
+    statusBarItem
+  );
+
+  // Register Chat Participant (@ethan)
   const participant = vscode.chat.createChatParticipant(
     'ethan',
     handleChatRequest
@@ -30,11 +43,11 @@ async function handleChatRequest(
 ): Promise<void> {
   const userMessage = request.prompt.trim();
 
-  // 根据命令名（/需求理解 等）或触发词路由
+  // Route by explicit /command name or by trigger keyword in the message
   let skill = null;
 
   if (request.command) {
-    // 用户通过 /命令 显式指定了 Skill
+    // User explicitly selected a Skill via /命令
     skill = ALL_SKILLS.find(
       (s) =>
         s.name === request.command ||
@@ -49,19 +62,21 @@ async function handleChatRequest(
   }
 
   if (!skill) {
-    // 未匹配到 Skill，显示帮助信息
+    // No matching Skill — show the help list
     stream.markdown('## Ethan Skills\n\n');
     stream.markdown('可用 Skill（输入对应触发词或使用 `/命令`）：\n\n');
     for (const s of ALL_SKILLS) {
       stream.markdown(`- **${s.name}**：${s.description}\n`);
-      stream.markdown('  触发词：`' + s.triggers.slice(0, 3).join('`、`') + '`\n\n');
+      stream.markdown(
+        '  触发词：`' + s.triggers.slice(0, 3).join('`、`') + '`\n\n'
+      );
     }
     return;
   }
 
   if (token.isCancellationRequested) return;
 
-  // 输出 Skill 执行内容
+  // Stream the Skill execution content
   stream.markdown(`# 执行 Skill：${skill.name}\n\n`);
   stream.markdown(`> ${skill.detailDescription}\n\n`);
 

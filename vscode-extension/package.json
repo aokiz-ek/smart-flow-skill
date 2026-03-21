@@ -3,7 +3,7 @@
   "displayName": "Ethan",
   "description": "Ethan - Your AI Workflow Assistant",
   "version": "1.0.0",
-  "publisher": "your-publisher",
+  "publisher": "aokiz",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -20,7 +20,7 @@
     "productivity"
   ],
   "activationEvents": [],
-  "main": "../dist/vscode/extension.js",
+  "main": "./dist/vscode/extension.js",
   "contributes": {
     "chatParticipants": [
       {
@@ -56,10 +56,45 @@
           {
             "name": "周报",
             "description": "根据本周工作内容自动生成结构化周报"
+          },
+          {
+            "name": "代码审查",
+            "description": "系统性审查代码，分级输出 Blocker/Major/Minor"
+          },
+          {
+            "name": "故障排查",
+            "description": "假设验证 + 5 Why 根因分析，三层解决方案"
+          },
+          {
+            "name": "技术调研",
+            "description": "加权评分矩阵 + POC 验证，输出有据可查的结论"
           }
         ]
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ethan-sidebar",
+          "title": "Ethan",
+          "icon": "$(wand)"
+        }
+      ]
+    },
+    "views": {
+      "ethan-sidebar": [
+        {
+          "id": "ethan.skillsView",
+          "name": "Skills",
+          "type": "tree"
+        },
+        {
+          "id": "ethan.pipelinesView",
+          "name": "Pipelines",
+          "type": "tree"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "ethan.install",
@@ -68,8 +103,30 @@
       {
         "command": "ethan.listSkills",
         "title": "Ethan: List Available Skills"
+      },
+      {
+        "command": "ethan.runSkill",
+        "title": "Ethan: Run Skill (Quick Pick)"
+      },
+      {
+        "command": "ethan.openDashboard",
+        "title": "Ethan: Open Dashboard"
+      },
+      {
+        "command": "ethan.refreshSkills",
+        "title": "Ethan: Refresh Skills",
+        "icon": "$(refresh)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ethan.refreshSkills",
+          "when": "view == ethan.skillsView",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -82,7 +139,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/ethan-skill.git"
+    "url": "https://github.com/aokiz-ek/smart-flow-skill.git"
   },
   "license": "MIT"
 }

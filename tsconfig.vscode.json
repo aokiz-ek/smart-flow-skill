@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/vscode",
-    "rootDir": "./src/vscode"
+    "outDir": "./vscode-extension/dist",
+    "rootDir": "./src"
   },
-  "include": ["src/vscode/**/*", "src/skills/**/*"]
+  "include": ["src/vscode/**/*", "src/skills/**/*", "src/router/**/*"],
+  "exclude": ["node_modules", "dist", "vscode-extension", "scripts", "src/**/*.test.ts"]
 }
