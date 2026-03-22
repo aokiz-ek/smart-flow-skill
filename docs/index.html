@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="10 个标准化工作流节点，11 个 AI 编辑器平台支持，40+ 个 CLI 命令。Git 集成、浏览器扩展、Skill 记忆库、自定义 Pipeline、插件 OS，让每一步都有据可依。v1.5.0" />
+  <meta name="description" content="Ethan v1.5.0 — 10 个标准化工作流 Skill，17 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。Git 集成、开发工具链、Skill 记忆库、估算复盘、统计排行、浏览器扩展、插件 OS，让每一步都有据可依。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1316,10 +1316,10 @@
 
     <ul class="nav-links">
       <li><a href="#skills">Skills</a></li>
-      <li><a href="#pipeline">Pipeline</a></li>
       <li><a href="#git">Git</a></li>
+      <li><a href="#devtools">Dev Tools</a></li>
       <li><a href="#mcp">MCP</a></li>
-      <li><a href="#advanced">高级功能</a></li>
+      <li><a href="#plugin-os">插件</a></li>
       <li><a href="#cli">CLI</a></li>
       <li><a href="#install">安装</a></li>
       <li><a href="#footer">文档</a></li>
@@ -1367,7 +1367,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 个标准化工作流 &nbsp;·&nbsp; 11 个平台 &nbsp;·&nbsp; v1.5.0
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 17 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.0
     </p>
 
     <div class="hero-cta">
@@ -2037,6 +2037,222 @@
   </section>
 
   <!-- ============================================================
+       DEV TOOLS SECTION
+  ============================================================ -->
+  <section id="devtools" aria-label="开发工具链">
+    <div class="section-header reveal">
+      <h2 class="section-title">开发工具链</h2>
+      <p class="section-subtitle">6 个日常开发提效命令，让 AI 融入每个编码环节</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="scan">
+        <div class="adv-icon" aria-hidden="true">🔎</div>
+        <div class="adv-title">ethan scan</div>
+        <div class="adv-desc"><code>--todo</code> 扫描全项目 TODO/FIXME/HACK 注释并分类汇总；<code>--deps</code> 检查 package.json 依赖的已知安全漏洞</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="explain">
+        <div class="adv-icon" aria-hidden="true">💡</div>
+        <div class="adv-title">ethan explain</div>
+        <div class="adv-desc">解释代码逻辑，<code>--lines 10-50</code> 指定行范围，<code>--level junior/senior/principal</code> 调整解释深度</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="test-case">
+        <div class="adv-icon" aria-hidden="true">🧪</div>
+        <div class="adv-title">ethan test-case</div>
+        <div class="adv-desc">为指定文件生成单元测试提示词，支持 <code>--framework vitest/jest/mocha</code> 和 <code>--coverage</code> 覆盖率要求</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="naming">
+        <div class="adv-icon" aria-hidden="true">🏷️</div>
+        <div class="adv-title">ethan naming</div>
+        <div class="adv-desc">输入功能描述，输出 camelCase / PascalCase / snake_case / kebab-case 多种命名候选，支持 <code>--lang en/zh</code> 和 <code>--count</code></div>
+      </article>
+
+      <article class="adv-card reveal" aria-label="readme">
+        <div class="adv-icon" aria-hidden="true">📄</div>
+        <div class="adv-title">ethan readme</div>
+        <div class="adv-desc">扫描项目 package.json / 目录结构 / 技术栈后生成 README 草稿，<code>--template library/cli/service</code> 选择模板类型</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="roast">
+        <div class="adv-icon" aria-hidden="true">🔥</div>
+        <div class="adv-title">ethan roast</div>
+        <div class="adv-desc">幽默吐槽代码质量，<code>--level mild/spicy/savage</code> 控制辣度，<code>--pr</code> 针对当前 PR diff 进行吐槽</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       MEMORY SECTION
+  ============================================================ -->
+  <section id="memory" aria-label="Skill 记忆库">
+    <div class="section-header reveal">
+      <h2 class="section-title">Skill 记忆库</h2>
+      <p class="section-subtitle">工作流知识沉淀 · 跨项目检索 · 自动归档</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="自动归档">
+        <div class="adv-icon" aria-hidden="true">💾</div>
+        <div class="adv-title">工作流自动归档</div>
+        <div class="adv-desc">每次 <code>ethan workflow done</code> 完成步骤后，步骤摘要自动写入 <code>.ethan/memory/</code>，无需手动操作</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="全文检索">
+        <div class="adv-icon" aria-hidden="true">🔍</div>
+        <div class="adv-title">全文搜索</div>
+        <div class="adv-desc"><code>ethan memory search &lt;keyword&gt;</code> 按标题 / 内容 / 标签模糊检索，同时搜索项目级（<code>.ethan/memory/</code>）和全局（<code>~/.ethan-memory/</code>）</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="手动添加">
+        <div class="adv-icon" aria-hidden="true">✏️</div>
+        <div class="adv-title">手动添加</div>
+        <div class="adv-desc"><code>ethan memory add --title "..." --content "..." --tags tag1,tag2</code>，支持 workflow / skill / custom 三种类型，随时记录任意知识</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="导出">
+        <div class="adv-icon" aria-hidden="true">📤</div>
+        <div class="adv-title">导出 Markdown</div>
+        <div class="adv-desc"><code>ethan memory export</code> 将所有记忆条目导出为 Markdown 文档，方便团队分享或存入 Wiki</div>
+      </article>
+
+      <article class="adv-card reveal" aria-label="MCP 集成">
+        <div class="adv-icon" aria-hidden="true">🤖</div>
+        <div class="adv-title">MCP: ethan_memory_search</div>
+        <div class="adv-desc">AI 编辑器通过 MCP 直接调用记忆库搜索，在编码过程中随时调取历史工作流经验，无需切换终端</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="双层存储">
+        <div class="adv-icon" aria-hidden="true">🗄️</div>
+        <div class="adv-title">双层存储</div>
+        <div class="adv-desc">项目级（<code>.ethan/memory/</code>）存储当前项目记忆，全局（<code>~/.ethan-memory/</code>）跨项目沉淀通用经验，搜索时两者合并返回</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ESTIMATION & RETRO SECTION
+  ============================================================ -->
+  <section id="estimate" aria-label="估算与复盘">
+    <div class="section-header reveal">
+      <h2 class="section-title">估算 & 复盘</h2>
+      <p class="section-subtitle">让研发节奏有迹可循，Sprint 数据驱动改进</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="三点估算">
+        <div class="adv-icon" aria-hidden="true">⏱️</div>
+        <div class="adv-title">三点工时估算</div>
+        <div class="adv-desc"><code>ethan estimate</code> 输入任务描述，输出乐观 / 正常 / 悲观三点估算（E = (O+4M+P)/6）和 T-shirt Size，支持小时 / 故事点 / 人天</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="迭代复盘">
+        <div class="adv-icon" aria-hidden="true">🔄</div>
+        <div class="adv-title">迭代复盘</div>
+        <div class="adv-desc"><code>ethan retro</code> 生成结构化复盘提示词，支持 <strong>4L</strong>（Liked/Learned/Lacked/Longed for）和 <strong>Start-Stop-Continue</strong> 格式</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="工作流关联">
+        <div class="adv-icon" aria-hidden="true">🔗</div>
+        <div class="adv-title">关联工作流数据</div>
+        <div class="adv-desc"><code>ethan retro --from-workflow</code> 自动读取当前工作流会话的步骤摘要，将实际执行情况注入复盘模板</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="MCP 估算">
+        <div class="adv-icon" aria-hidden="true">🤖</div>
+        <div class="adv-title">MCP: ethan_estimate</div>
+        <div class="adv-desc">AI 编辑器在需求分析阶段直接调用估算工具，在对话中生成三点估算报告，无需切换终端</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       STATS & LEADERBOARD SECTION
+  ============================================================ -->
+  <section id="stats-section" aria-label="使用统计与排行">
+    <div class="section-header reveal">
+      <h2 class="section-title">统计 & 排行榜</h2>
+      <p class="section-subtitle">量化 AI 使用习惯，激励团队持续精进</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="个人统计">
+        <div class="adv-icon" aria-hidden="true">📊</div>
+        <div class="adv-title">个人使用统计</div>
+        <div class="adv-desc"><code>ethan stats show</code> 展示各 Skill 调用频次 ASCII 条形图，记录连续使用天数（streak）与最长连续记录</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="团队排行">
+        <div class="adv-icon" aria-hidden="true">🏆</div>
+        <div class="adv-title">团队排行榜</div>
+        <div class="adv-desc"><code>ethan stats leaderboard</code> 读取 <code>~/.ethan-leaderboard.json</code>，展示团队成员使用排名，激励共同建立 AI 工作流习惯</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="连续天数">
+        <div class="adv-icon" aria-hidden="true">🔥</div>
+        <div class="adv-title">连续使用追踪</div>
+        <div class="adv-desc">统计数据自动记录每日使用，打印当前连续天数（current streak）和历史最长连续，养成 AI 工作流习惯</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="重置">
+        <div class="adv-icon" aria-hidden="true">🗑️</div>
+        <div class="adv-title">统计重置</div>
+        <div class="adv-desc"><code>ethan stats reset</code> 清空全部统计数据（存储于 <code>~/.smart-flow-stats.json</code>），支持团队新周期归零</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PLUGIN OS SECTION
+  ============================================================ -->
+  <section id="plugin-os" aria-label="插件 OS">
+    <div class="section-header reveal">
+      <h2 class="section-title">插件 OS</h2>
+      <p class="section-subtitle">发布、搜索、安装社区 Skill — 打造团队专属 Prompt 生态</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="发布插件">
+        <div class="adv-icon" aria-hidden="true">🚀</div>
+        <div class="adv-title">ethan plugin publish</div>
+        <div class="adv-desc">将本地 Skill 插件发布到 npm（或私有注册表），<code>--dry-run</code> 预检打包内容，命名规范 <code>ethan-skill-&lt;name&gt;</code></div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="搜索插件">
+        <div class="adv-icon" aria-hidden="true">🔍</div>
+        <div class="adv-title">ethan plugin search</div>
+        <div class="adv-desc">在 npm 搜索 <code>ethan-skill-*</code> 社区插件包，<code>-n &lt;limit&gt;</code> 控制返回数量，输出名称、版本、描述和下载量</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="安装插件">
+        <div class="adv-icon" aria-hidden="true">📦</div>
+        <div class="adv-title">ethan plugin install</div>
+        <div class="adv-desc">从 npm 安装社区 Skill 插件包，自动写入 <code>.ethanrc.json</code> 的 <code>plugins</code> 字段，下次 <code>ethan list</code> 即可看到扩展后的 Skill</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="私有注册表">
+        <div class="adv-icon" aria-hidden="true">🔒</div>
+        <div class="adv-title">私有注册表</div>
+        <div class="adv-desc"><code>ethan plugin registry --set &lt;url&gt;</code> 配置企业内部 npm 注册表，所有 plugin 命令优先从私有源查询，实现团队内部 Skill 共享</div>
+      </article>
+
+      <article class="adv-card reveal" aria-label="自定义触发词">
+        <div class="adv-icon" aria-hidden="true">⚡</div>
+        <div class="adv-title">自定义 YAML Pipeline</div>
+        <div class="adv-desc"><code>ethan pipeline-init --name my-flow</code> 生成 <code>.ethan/pipelines/my-flow.yaml</code> 模板，定义私有工作流，在 <code>workflow start</code> 时与内置 Pipeline 并排可选</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="项目配置">
+        <div class="adv-icon" aria-hidden="true">⚙️</div>
+        <div class="adv-title">.ethanrc.json 配置</div>
+        <div class="adv-desc"><code>ethan init</code> 生成配置文件，支持 <code>lang</code>（中/英）、<code>disabledSkills</code>（禁用 Skill）、<code>customTriggers</code>（自定义触发词）、<code>registry</code>（私有源）</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
        CLI COMMANDS SECTION
   ============================================================ -->
   <section id="cli" aria-label="CLI 命令参考">
@@ -2314,8 +2530,13 @@
       <nav class="footer-nav" aria-label="页脚导航">
         <a href="#skills">Skills</a>
         <a href="#pipeline">Pipeline</a>
-        <a href="#git">Git</a>
+        <a href="#git">Git 集成</a>
+        <a href="#devtools">Dev Tools</a>
         <a href="#mcp">MCP</a>
+        <a href="#memory">记忆库</a>
+        <a href="#estimate">估算复盘</a>
+        <a href="#stats-section">统计排行</a>
+        <a href="#plugin-os">插件 OS</a>
         <a href="#advanced">高级功能</a>
         <a href="#cli">CLI</a>
         <a href="#browser-ext">浏览器扩展</a>

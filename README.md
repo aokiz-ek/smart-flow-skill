@@ -1,56 +1,102 @@
-# Ethan
+# Ethan — Your AI Workflow Assistant
 
-**Ethan - Your AI Workflow Assistant**
+> 将工作流标准化为可分发的 AI Skill，覆盖开发全链路——从需求理解到代码发布，每一步都有据可依。
 
-将 10 个标准化工作流节点打包为可跨平台分发的 AI Skill，支持 11 个主流 AI 编辑器/IDE，让每一步都有据可依。
+[![npm](https://img.shields.io/npm/v/ethan-skill)](https://www.npmjs.com/package/ethan-skill)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 
 🌐 **官网**：[aokiz-ek.github.io/smart-flow-skill](https://aokiz-ek.github.io/smart-flow-skill/)
 
 ---
 
-## 功能概览
+## 功能一览
 
-### 10 个 Skill
+| 模块 | 内容 |
+|------|------|
+| **10 个 Skill** | 标准化工作流节点，覆盖需求→设计→实现→跟踪→输出→质量 |
+| **11 个平台** | Cursor / Copilot / Cline / Windsurf / Zed / JetBrains / Continue / Claude Code 等 |
+| **3 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量），有状态持久化推进 |
+| **17 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算 |
+| **40+ CLI 命令** | Git 集成、开发工具、记忆库、估算、插件 OS 全覆盖 |
+| **浏览器扩展** | Chrome/Edge MV3，GitHub PR 一键 Review + 右键菜单 |
+| **VS Code 扩展** | 侧边栏树、20 个命令、17 个 @ethan 斜杠命令 |
+| **插件 OS** | 发布/搜索/安装社区 Skill 插件，支持私有注册表 |
+
+---
+
+## 10 个 Skill
 
 | # | Skill | 分类 | 触发词（示例） | 说明 |
 |---|-------|------|--------------|------|
-| 1 | 需求理解 | 需求侧 | `需求理解`、`分析需求`、`@ethan 需求` | 深度解析需求，消除歧义，输出结构化需求文档 |
-| 2 | 任务拆解 | 需求侧 | `任务拆解`、`拆解任务`、`@ethan 拆解` | 将需求拆解为原子任务，建立依赖关系 |
-| 3 | 方案设计 | 执行侧 | `方案设计`、`技术方案`、`@ethan 设计` | 输出架构设计、接口设计、数据模型 |
-| 4 | 执行实现 | 执行侧 | `执行实现`、`开始实现`、`@ethan 实现` | 按设计方案逐步实现，含代码自检清单 |
-| 5 | 进度跟踪 | 跟踪侧 | `进度跟踪`、`进度更新`、`@ethan 进度` | 实时更新任务状态，识别阻塞风险 |
-| 6 | 任务报告 | 输出侧 | `任务报告`、`生成报告`、`@ethan 报告` | 生成成果报告含问题复盘和经验教训 |
-| 7 | 周报生成 | 输出侧 | `周报`、`生成周报`、`@ethan 周报` | 自动生成结构化周报，突出业务价值 |
+| 1 | 需求理解 | 需求侧 | `需求理解`、`分析需求` | 深度解析需求，消除歧义，输出结构化需求文档 |
+| 2 | 任务拆解 | 需求侧 | `任务拆解`、`拆解任务` | 将需求拆解为原子任务，建立依赖关系 |
+| 3 | 方案设计 | 执行侧 | `方案设计`、`技术方案` | 输出架构设计、接口设计、数据模型 |
+| 4 | 执行实现 | 执行侧 | `执行实现`、`开始实现` | 按设计方案逐步实现，含代码自检清单 |
+| 5 | 进度跟踪 | 跟踪侧 | `进度跟踪`、`进度更新` | 实时更新任务状态，识别阻塞风险 |
+| 6 | 任务报告 | 输出侧 | `任务报告`、`生成报告` | 生成成果报告含问题复盘和经验教训 |
+| 7 | 周报生成 | 输出侧 | `周报`、`生成周报` | 自动生成结构化周报，突出业务价值 |
 | 8 | 代码审查 | 质量侧 | `代码审查`、`code review`、`CR` | 系统性审查，分级输出 Blocker/Major/Minor |
 | 9 | 故障排查 | 质量侧 | `故障排查`、`debug`、`线上故障` | 假设验证 + 5 Why 根因分析，三层解决方案 |
 | 10 | 技术调研 | 需求侧 | `技术调研`、`技术选型`、`POC` | 加权评分矩阵 + POC 验证，输出有据可查的结论 |
 
-### 3 个 Pipeline（链式工作流）
+---
 
-| Pipeline | Skills | 适用场景 |
-|----------|--------|---------|
+## 3 个 Pipeline（链式工作流）
+
+| Pipeline ID | Skills | 适用场景 |
+|-------------|--------|---------|
 | `dev-workflow` | 需求理解 → 任务拆解 → 方案设计 → 执行实现 | 完整功能开发 |
 | `reporting` | 进度跟踪 → 任务报告 → 周报生成 | 项目汇报 |
 | `quality-workflow` | 代码审查 → 故障排查 | 质量保障 |
 
+自定义 Pipeline：在 `.ethan/pipelines/` 目录创建 YAML 文件，`ethan pipeline-init` 生成模板。
+
 ---
 
-## 安装
+## 快速开始
 
-### 一键安装（CLI）
+### 方式一：规则文件（推荐）
 
 ```bash
-# 安装到当前项目（所有平台）
-npx ethan-skill install --platform all
-
-# 安装到指定平台
+# 安装到当前项目（自动检测平台）
 npx ethan-skill install --platform cursor
+
+# 安装到多个平台
 npx ethan-skill install --platform copilot
 npx ethan-skill install --platform windsurf
-# ... 其他平台见下表
+
+# 生成英文版规则文件
+npx ethan-skill install --platform cursor --lang en
 ```
 
-### 支持的 11 个平台
+### 方式二：MCP Server（AI 编辑器原生集成）
+
+在 MCP 配置文件（如 `~/.cursor/mcp.json`）中添加：
+
+```json
+{
+  "mcpServers": {
+    "ethan": {
+      "command": "npx",
+      "args": ["ethan-skill", "mcp"]
+    }
+  }
+}
+```
+
+重启 AI 编辑器后，可使用全部 **17 个 MCP 工具**（详见下方 MCP 工具列表）。
+
+### 方式三：全局安装
+
+```bash
+npm install -g ethan-skill
+ethan install --platform cursor
+```
+
+---
+
+## 支持的 11 个平台
 
 | 平台 | 参数 | 安装目标文件 |
 |------|------|------------|
@@ -66,57 +112,238 @@ npx ethan-skill install --platform windsurf
 | Continue | `continue` | `.continuerules` |
 | Claude Code | `claude-code` | `CLAUDE.md` |
 
-### MCP Server
+---
 
-在 MCP 客户端配置文件（如 `~/.cursor/mcp.json`）中添加：
+## CLI 命令参考
 
-```json
-{
-  "mcpServers": {
-    "ethan": {
-      "command": "npx",
-      "args": ["ethan-skill", "mcp"]
-    }
-  }
-}
+### 核心命令
+
+```bash
+ethan install [--platform <platform>] [--lang en]   # 安装规则文件
+ethan list [--json]                                  # 列出所有 Skill
+ethan run                                            # 交互式 Skill 执行向导
+ethan init                                           # 生成 .ethanrc.json 配置文件
+ethan validate                                       # 校验 rules/ 与源码是否同步
+ethan doctor                                         # 环境与依赖健康检查
+ethan mcp                                            # 启动 MCP Server
+ethan serve                                          # 启动本地 Web UI Dashboard
 ```
 
-重启 AI 编辑器后，可使用 10 个独立 Skill tool + 1 个 Pipeline tool（`ethan_pipeline`）。
+### Git 集成（Phase 1）
 
-### VS Code 扩展
+```bash
+ethan commit [--type <type>]                         # 读取 staged diff → Conventional Commit 提交信息
+ethan review [--base <branch>]                       # 读取分支 diff → Blocker/Major/Minor Code Review
+ethan pr [--template feature|bugfix|hotfix]          # 生成 PR 标题 + 正文 + Checklist
+ethan standup [--days <n>] [--format]                # 根据提交历史生成站会发言稿
+ethan changelog [--from <tag>] [--to <tag>]          # 生成两 tag 间的 CHANGELOG
+```
 
-1. 下载 `dist/ethan-skill-*.vsix`
-2. VS Code → Extensions → `...` → Install from VSIX
-3. 在 Copilot Chat 中输入 `@ethan /需求理解 <你的需求>`
+### 开发工具（Phase 2）
+
+```bash
+ethan scan [--todo] [--deps]                         # 扫描 TODO/FIXME 或检查依赖安全漏洞
+ethan explain [file] [--lines <range>] [--level <level>]  # 解释代码（junior/senior/principal）
+ethan test-case <file> [--framework vitest] [--coverage]  # 生成单元测试提示词
+ethan naming <description> [--style] [--lang] [--count]   # 生成命名候选（camelCase/snake_case/...）
+ethan readme [--template library|cli|service]        # 扫描项目结构生成 README 草稿
+ethan roast [file] [--pr] [--level mild|spicy|savage] # 幽默吐槽代码质量
+```
+
+### 工作流（有状态推进）
+
+```bash
+ethan workflow start <pipeline> -c "任务描述" [--name <session>]  # 启动工作流会话（支持命名会话）
+ethan workflow done "本步摘要" [--name <session>]                  # 完成当前步骤，推进下一步
+ethan workflow status [--name <session>]                           # 查看进度看板
+ethan workflow reset [--name <session>]                            # 清除当前会话
+ethan workflow list [--sessions]                                    # 列出 Pipeline / 命名会话
+```
+
+### 运维增强（Phase 3）
+
+```bash
+ethan oncall [--severity P0|P1|P2] [--postmortem]    # 生成 On-call 排查 SOP
+ethan schedule add --cron "0 9 * * 1" --cmd "ethan standup"  # 添加定时任务
+ethan schedule list                                   # 查看定时任务
+ethan schedule remove <id>                            # 删除定时任务
+ethan hooks install [--hook pre-commit|commit-msg]    # 安装 Git Hook
+ethan hooks list                                      # 查看已安装 Hook
+ethan hooks remove <hook>                             # 移除 Git Hook
+```
+
+### Skill 记忆库（Phase 4）
+
+```bash
+ethan memory add --title "..." --content "..." [--tags tag1,tag2]  # 添加记忆条目
+ethan memory search <keyword>                         # 全文搜索（标题/内容/标签）
+ethan memory show <id>                                # 查看详情
+ethan memory list [--type workflow|skill|custom]      # 列出所有条目
+ethan memory export [--output file.md]                # 导出为 Markdown
+ethan memory remove <id>                              # 删除条目
+```
+
+> 工作流完成后（`ethan workflow done`）自动将步骤摘要归档到记忆库，无需手动添加。
+
+### 估算与复盘（Phase 4）
+
+```bash
+ethan estimate [--style hours|story-points|days] [--team <size>]  # 三点估算 + T-shirt Size
+ethan retro [--format 4l|ssc] [--from-workflow]       # 生成迭代复盘提示词
+```
+
+### 统计与排行（Phase 5）
+
+```bash
+ethan stats show                                      # 查看个人使用频次（ASCII 条形图）+ 连续天数
+ethan stats leaderboard                               # 团队排行榜（~/.ethan-leaderboard.json）
+ethan stats reset                                     # 清空统计数据
+```
+
+### Pipeline 管理
+
+```bash
+ethan pipeline list                                   # 列出所有内置 + 自定义 Pipeline
+ethan pipeline run <id> [-c "上下文"]                 # 运行 Pipeline
+ethan pipeline-init [--name my-pipeline]              # 生成自定义 YAML Pipeline 模板
+```
+
+### 插件 OS（Phase 6）
+
+```bash
+ethan plugin install <pkg>                            # 从 npm 安装社区 Skill 插件
+ethan plugin publish [--dry-run]                      # 发布本地插件到 npm / 私有注册表
+ethan plugin registry --set <url>                     # 配置私有插件注册表
+ethan plugin registry --show                          # 查看当前注册表配置
+ethan plugin search <keyword> [-n <limit>]            # 搜索社区插件（ethan-skill-*）
+```
 
 ---
 
-## CLI 命令
+## 17 个 MCP 工具
+
+配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue 等）可直接调用：
+
+| 工具名 | 说明 |
+|--------|------|
+| `requirement_understanding` | 需求理解 Skill |
+| `task_breakdown` | 任务拆解 Skill |
+| `solution_design` | 方案设计 Skill |
+| `implementation` | 执行实现 Skill |
+| `progress_tracking` | 进度跟踪 Skill |
+| `task_report` | 任务报告 Skill |
+| `weekly_report` | 周报生成 Skill |
+| `code_review` | 代码审查 Skill |
+| `debug` | 故障排查 Skill |
+| `tech_research` | 技术调研 Skill |
+| `ethan_pipeline` | 串联执行完整 Pipeline |
+| `ethan_workflow_next` | 推进工作流到下一步（传入摘要，返回下一步提示词） |
+| `ethan_workflow_status` | 查询工作流进度与当前步骤 |
+| `ethan_memory_search` | 搜索 Skill 记忆库（项目级 + 全局） |
+| `ethan_estimate` | 生成三点估算提示词（支持小时/故事点/人天） |
+| `ethan_git_commit` | 读取 staged diff → Conventional Commit 提示词 |
+| `ethan_git_review` | 读取分支 diff → Blocker/Major/Minor Review 提示词 |
+
+---
+
+## 浏览器扩展
+
+Chrome/Edge Manifest V3 扩展，将 Ethan 带入任意网页。
+
+**功能：**
+- **GitHub PR 一键 Review**：访问 PR 页面自动注入「⚡ Ethan Review」按钮，提取 PR 上下文生成完整 Code Review 提示词
+- **右键菜单**：选中代码/文本 → 右键 → Ethan → Review / Explain / Naming / PR Review
+- **Popup 面板**：6 个快捷操作 + 9 个 Skill 快捷按钮，所有提示词一键复制到剪贴板
+- **纯本地**：无服务器、无账号，所有提示词在本地生成
+
+**安装（开发者模式）：**
+
+1. Clone 仓库或下载 `browser-extension/` 目录
+2. Chrome/Edge → `chrome://extensions/` → 开启「开发者模式」
+3. 点击「加载已解压的扩展程序」→ 选择 `browser-extension/` 目录
+
+---
+
+## VS Code 扩展
+
+**安装：**
+1. 下载 `dist/ethan-skill-*.vsix`
+2. VS Code → Extensions → `...` → Install from VSIX
+
+**功能：**
+- **Skill 侧边栏树**：按分类分组展示 10 个 Skill，点击直接运行
+- **Pipeline 侧边栏树**：展示 3 条 Pipeline，点击查看详情
+- **17 个 @ethan 斜杠命令**：在 Copilot Chat 中使用 `@ethan /需求理解`、`@ethan /commit` 等
+- **20 个命令面板命令**：包含 Git、开发工具、记忆、估算、复盘等全系列
+- **状态栏快捷按钮**：底部状态栏 `⚡ Ethan`，单击打开 Skill 选择器
+
+---
+
+## 项目配置（`.ethanrc.json`）
 
 ```bash
-# 安装规则文件到当前项目
-npx ethan-skill install --platform all
+ethan init   # 在当前目录生成配置文件
+```
 
-# 列出所有 Skill（带分类信息）
-npx ethan-skill list
-npx ethan-skill list --json
+```json
+{
+  "lang": "zh",
+  "disabledSkills": ["weekly-report"],
+  "customTriggers": { "需求": "requirement-understanding" },
+  "plugins": ["ethan-skill-agile"],
+  "registry": "https://your-private-registry.com"
+}
+```
 
-# Pipeline 管理
-npx ethan-skill pipeline list
-npx ethan-skill pipeline run dev-workflow -c "开发用户登录功能"
+---
 
-# 验证 rules/ 与 src/skills/ 是否同步
-npx ethan-skill validate
+## 架构设计
 
-# 环境与文件健康检查
-npx ethan-skill doctor
+### 单一数据源（Single Source of Truth）
 
-# 使用频次统计
-npx ethan-skill stats
-npx ethan-skill stats --reset
+```
+src/skills/*.ts  ──→  [build-rules.ts]  ──→  rules/cursor/smart-flow.mdc
+                                         ──→  rules/copilot/copilot-instructions.md
+                                         ──→  rules/cline/.clinerules
+                                         ──→  rules/windsurf/.windsurf/rules/smart-flow.md
+                                         ──→  rules/zed/smart-flow.rules
+                                         ──→  rules/jetbrains/smart-flow.md
+                                         ──→  rules/continue/.continuerules
+                                         ──→  rules/claude-code/CLAUDE.md
+                                         ──→  ... （共 11 个平台）
+```
 
-# 启动 MCP Server
-npx ethan-skill mcp
+### 目录结构
+
+```
+ethan-skill/
+├── src/
+│   ├── skills/            # 单一数据源（10 Skill + pipeline 定义）
+│   │   ├── types.ts       # SkillDefinition、Platform、PipelineDefinition
+│   │   ├── index.ts       # ALL_SKILLS 导出
+│   │   ├── pipeline.ts    # PIPELINES + resolvePipeline()
+│   │   └── 01~10-*.ts     # 各 Skill 定义（含 category、nextSkill）
+│   ├── cli/               # 40+ CLI 命令入口
+│   │   ├── index.ts       # Commander.js 主程序
+│   │   └── config.ts      # .ethanrc.json 读写
+│   ├── git/               # Git 工具函数
+│   │   └── utils.ts       # getStagedDiff / getBranchDiff / truncateDiff 等
+│   ├── workflow/           # 有状态工作流引擎
+│   │   └── state.ts       # 会话持久化、Named Sessions、步骤推进
+│   ├── mcp/               # MCP Server（17 个工具）
+│   │   └── server.ts
+│   ├── router/            # 触发词路由
+│   ├── templates/         # 各平台渲染模板（11 个 case，强制穷举）
+│   ├── context/           # 项目技术栈自动检测
+│   ├── loader/            # 自定义 Skill YAML 加载器
+│   ├── server/            # Web UI Dashboard
+│   └── vscode/            # VS Code 扩展
+├── browser-extension/     # Chrome/Edge MV3 扩展
+├── vscode-extension/      # VS Code 扩展 manifest（20 命令、17 斜杠命令）
+├── rules/                 # 构建产物，11 个平台（提交到仓库）
+├── docs/                  # 官网（GitHub Pages）
+├── scripts/build/         # 构建脚本（build-rules.ts / build-vscode.ts）
+└── .ethan/                # 项目级运行时数据（workflow.json、memory/、pipelines/）
 ```
 
 ---
@@ -128,122 +355,58 @@ npx ethan-skill mcp
 - Node.js >= 18
 - npm >= 9
 
-### 安装依赖
+### 常用命令
 
 ```bash
-npm install
+npm install              # 安装依赖
+npm run build            # 编译 TypeScript → dist/
+npm run build:rules      # 生成 11 个平台规则文件
+npm run build:all        # 全量构建（build + build:rules）
+npm run dev              # 监视模式编译
+
+npm run lint             # ESLint 检查
+npm run lint:fix         # ESLint 自动修复
+npm run format           # Prettier 格式化
+
+npm test                 # 运行所有测试（Vitest）
+npm run test:watch       # 监视模式
+npm run test:coverage    # 覆盖率报告
 ```
-
-### 构建
-
-```bash
-npm run build          # 编译 TypeScript → dist/
-npm run build:rules    # 生成 11 个平台规则文件（rules/ 目录）
-npm run build:all      # 全量构建（build + build:rules）
-npm run dev            # 监视模式编译
-```
-
-### 代码质量
-
-```bash
-npm run lint           # ESLint 检查
-npm run lint:fix       # ESLint 自动修复
-npm run format         # Prettier 格式化
-npm run format:check   # Prettier 格式校验
-```
-
-### 测试
-
-```bash
-npm test               # 运行所有测试（Vitest，66 个测试用例）
-npm run test:watch     # 监视模式
-npm run test:coverage  # 生成覆盖率报告
-```
-
-测试覆盖范围：
-- **Skills 契约**：ALL_SKILLS 唯一性、步骤完整性、nextSkill 有效性
-- **Pipeline**：resolvePipeline 正确解析，skillIds 引用合法
-- **触发词路由**：精确/模糊/大小写/空串/trim 场景
-- **模板渲染**：11 个平台 × 输出正确性
 
 ### 修改 Skill 内容
 
 1. 编辑 `src/skills/0X-skill-name.ts`
-2. 运行 `npm run build:rules` 重新生成规则文件
-3. 运行 `npm test` 确认测试通过
+2. `npm run build:rules` 重新生成规则文件
+3. `npm test` 确认测试通过
 4. 提交 `src/` 和 `rules/` 目录变更
 
 ### 添加新 Skill
 
-1. 创建 `src/skills/0X-new-skill.ts`，实现 `SkillDefinition` 接口（含 `category`、`nextSkill`）
-2. 在 `src/skills/index.ts` 的 `ALL_SKILLS` 数组末尾添加
-3. 运行 `npm run build:rules && npm test`
+1. 创建 `src/skills/0X-new-skill.ts`，实现 `SkillDefinition`（含 `category`、`nextSkill`）
+2. 在 `src/skills/index.ts` 的 `ALL_SKILLS` 末尾追加
+3. `npm run build:rules && npm test`
 
 ### 添加新平台
 
-1. 在 `src/skills/types.ts` 的 `Platform` 联合类型中添加新值
-2. 在 `src/templates/copilot-md.template.ts` 的 `switch` 中添加对应 `case`（无 default，TypeScript 强制穷举）
-3. 在 `scripts/build/build-rules.ts` 中添加 `writeFile` 调用
-4. 在 `src/cli/index.ts` 的 `platformMap` 中添加安装路径
+1. 在 `src/skills/types.ts` 的 `Platform` 联合类型添加新值
+2. 在 `src/templates/copilot-md.template.ts` 的 `switch` 中添加 `case`（无 `default`，TypeScript 强制穷举）
+3. 在 `scripts/build/build-rules.ts` 添加 `writeFile` 调用
+4. 在 `src/cli/index.ts` 的 `platformMap` 添加安装路径
 
 ---
 
-## 架构设计
+## 版本历史
 
-### 单一数据源（Single Source of Truth）
-
-```
-src/skills/*.ts  →  [build-rules.ts]  →  rules/cursor/smart-flow.mdc
-                                      →  rules/cursor/.cursorrules
-                                      →  rules/copilot/copilot-instructions.md
-                                      →  rules/cline/.clinerules
-                                      →  rules/lingma/smart-flow.md
-                                      →  rules/codebuddy/CODEBUDDY.md
-                                      →  rules/windsurf/.windsurf/rules/smart-flow.md
-                                      →  rules/zed/smart-flow.rules
-                                      →  rules/jetbrains/smart-flow.md
-                                      →  rules/continue/.continuerules
-                                      →  rules/claude-code/CLAUDE.md
-```
-
-所有内容存放在 TypeScript 源文件，构建时生成各平台文件，避免多处同步。`rules/` 目录提交到仓库供直接使用。
-
-### 目录结构
-
-```
-ethan-skill/
-├── src/
-│   ├── skills/          # 单一数据源（10 个 Skill + pipeline 定义）
-│   │   ├── types.ts     # SkillDefinition、Platform、PipelineDefinition 接口
-│   │   ├── index.ts     # ALL_SKILLS 导出入口
-│   │   ├── pipeline.ts  # PIPELINES + resolvePipeline()
-│   │   └── 01~10-*.ts   # 各 Skill 定义
-│   ├── router/          # 触发词路由（routeTrigger）
-│   ├── templates/       # 各平台渲染模板
-│   ├── cli/             # CLI 入口（install/list/validate/pipeline/doctor/stats/mcp）
-│   ├── vscode/          # VS Code 扩展
-│   └── mcp/             # MCP Server（含 ethan_pipeline tool）
-├── rules/               # 构建产物，11 个平台（提交到仓库）
-├── docs/                # 官网（GitHub Pages）
-├── scripts/build/       # 构建脚本
-└── vscode-extension/    # VS Code 扩展 manifest
-```
-
----
-
-## 版本管理
-
-使用 [Changesets](https://github.com/changesets/changesets) 管理版本：
-
-```bash
-npx changeset          # 添加变更记录
-npx changeset version  # 升版本号
-npm run build:all
-npm publish
-```
+| 版本 | 主要变更 |
+|------|---------|
+| **v1.5.0** | MCP 新增 4 工具（git commit/review/memory search/estimate）；VS Code 扩展 17 斜杠命令；插件 OS（publish/registry/search）；浏览器扩展；自定义 YAML Pipeline；Stats 排行榜；记忆库；估算复盘 |
+| **v1.3.0** | Git 集成（commit/review/pr/standup/changelog）；开发工具（scan/explain/test-case/naming/readme/roast）；On-call、定时任务、Git Hooks |
+| **v1.2.0** | 新增代码审查、故障排查、技术调研 3 个 Skill；新增 Windsurf/Zed/JetBrains/Continue/Claude Code 5 个平台；validate/pipeline/doctor/stats 命令 |
+| **v1.1.0** | 有状态工作流（workflow start/done/status）；MCP Server；Web UI Dashboard；自动上下文检测 |
+| **v1.0.0** | 7 个 Skill；6 个平台（Cursor/Copilot/Cline/灵码/CodeBuddy）；CLI install/list |
 
 ---
 
 ## License
 
-MIT
+MIT © [aokiz](https://github.com/aokiz-ek)
