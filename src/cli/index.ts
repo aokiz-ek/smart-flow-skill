@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * npx ethan CLI
- * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run | workflow
+ * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run | workflow (start/done/status/reset/list/report)
  */
 
 import { Command } from 'commander';
@@ -1139,6 +1139,141 @@ workflowCmd
     }
     console.log('\n' + '─'.repeat(60));
     console.log('\n启动工作流：ethan workflow start <pipeline-id> -c "任务描述"\n');
+  });
+
+workflowCmd
+  .command('report')
+  .description('生成当前工作流的完成报告（Markdown 格式）')
+  .option('--out <file>', '输出到文件（默认打印到终端）')
+  .option('--all', '包含未完成步骤（默认只展示已完成步骤）')
+  .action(async (options: { out?: string; all?: boolean }) => {
+    const { loadSession, calcProgress } = await import('../workflow/state');
+
+    const session = loadSession(process.cwd());
+    if (!session) {
+      console.error('\n❌ 未找到工作流会话。运行 ethan workflow start 启动工作流。\n');
+      process.exit(1);
+    }
+
+    const doneSteps = session.steps.filter((s) => s.status === 'done');
+    const progress = calcProgress(session);
+
+    // 计算总耗时
+    let duration = '';
+    if (doneSteps.length > 0) {
+      const first = session.steps.find((s) => s.startedAt ?? s.completedAt);
+      const last = doneSteps[doneSteps.length - 1];
+      if (first && last.completedAt) {
+        const startMs = new Date(first.startedAt ?? session.createdAt).getTime();
+        const endMs = new Date(last.completedAt).getTime();
+        const diffMin = Math.round((endMs - startMs) / 60000);
+        duration = diffMin < 1 ? '< 1 分钟' : `${diffMin} 分钟`;
+      }
+    }
+
+    const fmt = (iso: string) => iso.slice(0, 19).replace('T', ' ');
+    const statusIcon: Record<string, string> = {
+      done: '✅', 'in-progress': '▶️', pending: '⬜', skipped: '⏭️',
+    };
+
+    const lines: string[] = [];
+
+    // ── 标题 ──────────────────────────────────────────────────────────────
+    lines.push(`# 工作流报告：${session.pipelineName}`);
+    lines.push('');
+
+    // ── 元信息 ────────────────────────────────────────────────────────────
+    lines.push('## 概览');
+    lines.push('');
+    lines.push(`| 字段 | 值 |`);
+    lines.push(`|------|----|`);
+    lines.push(`| Pipeline | \`${session.pipelineId}\` |`);
+    lines.push(`| Session ID | \`${session.id}\` |`);
+    lines.push(`| 任务背景 | ${session.initialContext} |`);
+    lines.push(`| 创建时间 | ${fmt(session.createdAt)} |`);
+    lines.push(`| 最后更新 | ${fmt(session.updatedAt)} |`);
+    if (duration) lines.push(`| 总耗时 | ${duration} |`);
+    lines.push(`| 进度 | ${progress}%（${doneSteps.length}/${session.steps.length} 步完成）|`);
+    lines.push(`| 状态 | ${session.completed ? '🎉 已全部完成' : '🔄 进行中'} |`);
+    lines.push('');
+
+    // ── 步骤详情 ──────────────────────────────────────────────────────────
+    lines.push('## 步骤详情');
+    lines.push('');
+
+    const stepsToShow = options.all
+      ? session.steps
+      : session.steps.filter((s) => s.status === 'done' || s.status === 'skipped');
+
+    if (stepsToShow.length === 0) {
+      lines.push('_暂无已完成步骤。_');
+    } else {
+      for (let i = 0; i < session.steps.length; i++) {
+        const step = session.steps[i];
+        if (!options.all && step.status !== 'done' && step.status !== 'skipped') continue;
+
+        const icon = statusIcon[step.status] ?? '⬜';
+        const skill = ALL_SKILLS.find((s) => s.id === step.skillId);
+        const skillName = skill ? `${skill.name}（${step.skillId}）` : step.skillId;
+
+        lines.push(`### ${icon} 第 ${i + 1} 步：${skillName}`);
+        lines.push('');
+
+        if (step.startedAt) lines.push(`- **开始时间**：${fmt(step.startedAt)}`);
+        if (step.completedAt) lines.push(`- **完成时间**：${fmt(step.completedAt)}`);
+        if (step.startedAt && step.completedAt) {
+          const mins = Math.round(
+            (new Date(step.completedAt).getTime() - new Date(step.startedAt).getTime()) / 60000
+          );
+          if (mins > 0) lines.push(`- **耗时**：${mins} 分钟`);
+        }
+        lines.push('');
+
+        if (step.summary) {
+          lines.push('**产出摘要：**');
+          lines.push('');
+          lines.push(`> ${step.summary.replace(/\n/g, '\n> ')}`);
+          lines.push('');
+        } else if (step.status === 'done') {
+          lines.push('_（本步无摘要记录）_');
+          lines.push('');
+        }
+      }
+    }
+
+    // ── 未完成步骤（仅在进行中时显示） ────────────────────────────────────
+    if (!session.completed && !options.all) {
+      const remaining = session.steps.filter(
+        (s) => s.status === 'pending' || s.status === 'in-progress'
+      );
+      if (remaining.length > 0) {
+        lines.push('## 待完成步骤');
+        lines.push('');
+        for (const step of remaining) {
+          const icon = statusIcon[step.status] ?? '⬜';
+          const skill = ALL_SKILLS.find((s) => s.id === step.skillId);
+          const skillName = skill ? skill.name : step.skillId;
+          lines.push(`- ${icon} ${skillName}（\`${step.skillId}\`）`);
+        }
+        lines.push('');
+      }
+    }
+
+    // ── 尾注 ──────────────────────────────────────────────────────────────
+    lines.push('---');
+    lines.push('');
+    lines.push(`_由 [Ethan](https://github.com/aokiz-ek/smart-flow-skill) v${pkg.version} 生成 · ${new Date().toISOString().slice(0, 10)}_`);
+    lines.push('');
+
+    const report = lines.join('\n');
+
+    if (options.out) {
+      const outPath = path.resolve(process.cwd(), options.out);
+      fs.writeFileSync(outPath, report, 'utf-8');
+      console.log(`\n✅ 报告已保存到：${outPath}\n`);
+    } else {
+      console.log('\n' + report);
+    }
   });
 
 program.parse(process.argv);
