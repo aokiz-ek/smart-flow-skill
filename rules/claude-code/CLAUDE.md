@@ -1,6 +1,6 @@
-# Ethan v1.3.0
+# Ethan v1.4.0
 
-> Auto-generated from src/skills/ | 2026-03-22T13:18:56.032Z
+> Auto-generated from src/skills/ | 2026-03-22T13:28:33.946Z
 > Do not edit manually. Source: src/skills/
 
 ## Ethan

@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
  * npx ethan CLI
- * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run | workflow (start/done/status/reset/list/report)
+ * 命令：install | list | mcp | validate | pipeline | doctor | stats (show/leaderboard/reset) | init | run | workflow
  *       commit | review | pr | standup | changelog
  *       scan | explain | test-case | naming | readme | roast
  *       oncall | schedule (add/list/remove) | hooks (install/list/remove)
+ *       memory (add/search/show/list/export/remove) | estimate | retro | pipeline-init
  */
 
 import { Command } from 'commander';
@@ -76,7 +77,8 @@ const STATS_FILE = path.join(os.homedir(), '.ethan-stats.json');
 function readStats(): Record<string, number> {
   try {
     if (fs.existsSync(STATS_FILE)) {
-      return JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'));
+      const raw = JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'));
+      return raw.usage || raw;
     }
   } catch {
     // ignore parse errors
@@ -86,7 +88,18 @@ function readStats(): Record<string, number> {
 
 function writeStats(stats: Record<string, number>): void {
   try {
-    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf-8');
+    // 合并到 v2 格式
+    const existing = (() => {
+      try {
+        if (fs.existsSync(STATS_FILE)) {
+          const raw = JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'));
+          if (raw.usage) return raw;
+        }
+      } catch { /* ignore */ }
+      return { usage: {}, streak: { current: 0, best: 0, lastDate: '' }, dailyLog: {} };
+    })();
+    existing.usage = stats;
+    fs.writeFileSync(STATS_FILE, JSON.stringify(existing, null, 2), 'utf-8');
   } catch {
     // ignore write errors
   }
@@ -638,46 +651,6 @@ program
     }
   });
 
-// ─── stats 命令 ─────────────────────────────────────────────────────────────
-program
-  .command('stats')
-  .description('查看 Skill 使用频次统计')
-  .option('--reset', '清空统计数据')
-  .action((options) => {
-    if (options.reset) {
-      writeStats({});
-      console.log('✅ 统计数据已清空');
-      return;
-    }
-
-    const stats = readStats();
-    const entries = Object.entries(stats).sort(([, a], [, b]) => b - a);
-
-    if (entries.length === 0) {
-      console.log('\n📊 暂无使用记录（运行 pipeline run 命令后将记录使用频次）\n');
-      return;
-    }
-
-    const maxCount = Math.max(...entries.map(([, v]) => v));
-    const BAR_WIDTH = 30;
-
-    console.log('\n📊 Ethan Skill 使用频次\n');
-    console.log('─'.repeat(60));
-
-    for (const [skillId, count] of entries) {
-      const skill = ALL_SKILLS.find((s) => s.id === skillId);
-      const name = skill ? skill.name : skillId;
-      const barLen = Math.round((count / maxCount) * BAR_WIDTH);
-      const bar = '█'.repeat(barLen);
-      const label = name.padEnd(12);
-      console.log(`  ${label} ${bar} ${count}`);
-    }
-
-    const total = entries.reduce((sum, [, v]) => sum + v, 0);
-    console.log('─'.repeat(60));
-    console.log(`  Total executions: ${total}\n`);
-  });
-
 // ─── serve 命令（Web UI Dashboard） ─────────────────────────────────────────
 program
   .command('serve')
@@ -898,11 +871,35 @@ workflowCmd
     }
 
     const id = pipelineId ?? 'dev-workflow';
-    const resolved = resolvePipeline(id);
+    let resolved = resolvePipeline(id);
+
+    // 尝试从自定义 YAML pipeline 加载
+    if (!resolved) {
+      const customPipelines = loadCustomPipelines(process.cwd());
+      const custom = customPipelines.find((p) => p.id === id);
+      if (custom) {
+        const customSkills = custom.skillIds
+          .map((sid) => ALL_SKILLS.find((s) => s.id === sid))
+          .filter((s): s is NonNullable<typeof s> => s !== null);
+        if (customSkills.length > 0) {
+          resolved = {
+            pipeline: {
+              id: custom.id,
+              name: custom.name,
+              description: custom.description,
+              skillIds: custom.skillIds,
+            },
+            skills: customSkills,
+          };
+        }
+      }
+    }
 
     if (!resolved) {
+      const customPipelines = loadCustomPipelines(process.cwd());
+      const allIds = [...PIPELINES.map((p) => p.id), ...customPipelines.map((p) => p.id)];
       console.error(`Unknown pipeline: ${id}`);
-      console.error(`Available: ${PIPELINES.map((p) => p.id).join(' | ')}`);
+      console.error(`Available: ${allIds.join(' | ')}`);
       process.exit(1);
     }
 
@@ -1002,6 +999,15 @@ workflowCmd
 
     const nextStep = markStepDone(session, stepSummary, process.cwd());
     const progress = calcProgress(session);
+
+    // 自动归档到 Skill Memory（T16）
+    archiveWorkflowToMemory(
+      session.id,
+      currentStep.skillId,
+      session.pipelineName,
+      stepSummary,
+      process.cwd()
+    );
 
     if (!nextStep) {
       console.log('\n🎉 恭喜！工作流全部完成！');
@@ -2068,7 +2074,7 @@ program
   .option('--severity <level>', '严重程度：P0（全站不可用）| P1（核心功能受损）| P2（局部影响）', 'P1')
   .option('-d, --desc <description>', '故障描述（现象、影响范围、触发时间）')
   .option('--postmortem', '生成事后复盘报告提示词（事故已解决后使用）')
-  .option('--no-copy', '不复制到剪贴板，直接打���')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
   .action((options) => {
     const desc = options.desc || '（请描述故障现象、影响用户范围和触发时间）';
     const severity = options.severity || 'P1';
@@ -2080,7 +2086,7 @@ program
     };
 
     if (options.postmortem) {
-      const prompt = `你是一名 SRE 工程师，请帮我撰写事后复盘报告（Postmortem���。
+      const prompt = `你是一名 SRE 工程师，请帮我撰写事后复盘报告（Postmortem）。
 
 ## 事故信息
 - **严重程度**：${severity}（${severityGuide[severity] || '未知'}）
@@ -2398,6 +2404,650 @@ hooksCmd
     } else {
       console.log(`\n✅ 已移除 ${removed.length} 个 hook：${removed.join(', ')}\n`);
     }
+  });
+
+// ─── memory 命令（T16 Skill Memory）────────────────────────────────────────
+// 自动归档工作流输出，支持搜索、展示、导出
+// 存储位置：~/.ethan-memory/ (全局) 或 .ethan/memory/ (项目级)
+
+const GLOBAL_MEMORY_DIR = path.join(os.homedir(), '.ethan-memory');
+
+interface MemoryEntry {
+  id: string;
+  type: 'workflow' | 'skill' | 'manual';
+  skillId?: string;
+  pipelineId?: string;
+  title: string;
+  content: string;
+  tags: string[];
+  project?: string;
+  createdAt: string;
+}
+
+function getMemoryDir(global: boolean, cwd?: string): string {
+  return global ? GLOBAL_MEMORY_DIR : path.join(cwd || process.cwd(), '.ethan', 'memory');
+}
+
+function loadMemoryEntries(dir: string): MemoryEntry[] {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')) as MemoryEntry;
+      } catch {
+        return null;
+      }
+    })
+    .filter((e): e is MemoryEntry => e !== null)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+function saveMemoryEntry(entry: MemoryEntry, dir: string): void {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${entry.id}.json`);
+  fs.writeFileSync(file, JSON.stringify(entry, null, 2), 'utf-8');
+}
+
+/** 归档工作流会话 summary 到 memory（workflow done 后自动调用） */
+function archiveWorkflowToMemory(
+  sessionId: string,
+  skillId: string,
+  pipelineName: string,
+  summary: string,
+  cwd: string
+): void {
+  const dir = getMemoryDir(false, cwd);
+  const entry: MemoryEntry = {
+    id: `${Date.now().toString(36)}-${skillId}`,
+    type: 'workflow',
+    skillId,
+    pipelineId: pipelineName,
+    title: `[${pipelineName}] ${skillId} — ${summary.slice(0, 60)}`,
+    content: summary,
+    tags: [skillId, pipelineName],
+    project: path.basename(cwd),
+    createdAt: new Date().toISOString(),
+  };
+  saveMemoryEntry(entry, dir);
+}
+
+const memoryCmd = program.command('memory').description('Skill Memory：归档、搜索、展示 AI 工作产出');
+
+memoryCmd
+  .command('add <content>')
+  .description('手动添加一条记忆（内容支持多行，用引号包裹）')
+  .option('--title <title>', '记忆标题')
+  .option('--tags <tags>', '标签（逗号分隔）')
+  .option('--global', '存至全局 ~/.ethan-memory/（默认存项目级 .ethan/memory/）')
+  .action((content, options) => {
+    const dir = getMemoryDir(!!options.global);
+    const tags = options.tags ? options.tags.split(',').map((t: string) => t.trim()) : [];
+    const entry: MemoryEntry = {
+      id: Date.now().toString(36),
+      type: 'manual',
+      title: options.title || content.slice(0, 60),
+      content,
+      tags,
+      project: path.basename(process.cwd()),
+      createdAt: new Date().toISOString(),
+    };
+    saveMemoryEntry(entry, dir);
+    console.log(`\n✅ 记忆已保存：${entry.title}\n   ID: ${entry.id}\n`);
+  });
+
+memoryCmd
+  .command('search <keyword>')
+  .description('在记忆库中搜索关键词（标题 + 内容 + 标签）')
+  .option('--global', '搜索全局记忆库')
+  .option('--tag <tag>', '按标签过滤')
+  .option('-n, --limit <n>', '最多显示 N 条', '10')
+  .action((keyword, options) => {
+    const dir = getMemoryDir(!!options.global);
+    const entries = loadMemoryEntries(dir);
+    const kw = keyword.toLowerCase();
+    const limit = parseInt(options.limit, 10) || 10;
+
+    let results = entries.filter((e) => {
+      const matchKw =
+        e.title.toLowerCase().includes(kw) ||
+        e.content.toLowerCase().includes(kw) ||
+        e.tags.some((t) => t.toLowerCase().includes(kw));
+      const matchTag = options.tag ? e.tags.includes(options.tag) : true;
+      return matchKw && matchTag;
+    });
+
+    results = results.slice(0, limit);
+
+    if (results.length === 0) {
+      console.log(`\n🔍 未找到匹配 "${keyword}" 的记忆\n`);
+      return;
+    }
+
+    console.log(`\n🔍 找到 ${results.length} 条记忆（关键词："${keyword}"）\n`);
+    console.log('─'.repeat(60));
+    for (const e of results) {
+      const preview = e.content.length > 100 ? e.content.slice(0, 100) + '…' : e.content;
+      console.log(`\n  📌 ${e.title}`);
+      console.log(`     ID: ${e.id}  |  ${e.createdAt.slice(0, 10)}  |  标签：${e.tags.join(', ') || '无'}`);
+      console.log(`     ${preview}`);
+    }
+    console.log('\n' + '─'.repeat(60));
+    console.log(`\n💡 用 ethan memory show <id> 查看完整内容\n`);
+  });
+
+memoryCmd
+  .command('show <id>')
+  .description('展示一条记忆的完整内容')
+  .option('--global', '从全局记忆库读取')
+  .option('--no-copy', '不复制到剪贴板')
+  .action((id, options) => {
+    const dir = getMemoryDir(!!options.global);
+    const entries = loadMemoryEntries(dir);
+    const entry = entries.find((e) => e.id === id || e.id.startsWith(id));
+
+    if (!entry) {
+      console.error(`❌ 未找到 ID 为 "${id}" 的记忆`);
+      process.exit(1);
+    }
+
+    console.log(`\n📖 ${entry.title}`);
+    console.log(`   类型：${entry.type}  |  ${entry.createdAt.slice(0, 19).replace('T', ' ')}`);
+    if (entry.tags.length > 0) console.log(`   标签：${entry.tags.join(', ')}`);
+    console.log('\n' + '─'.repeat(60) + '\n');
+    console.log(entry.content);
+    console.log('\n' + '─'.repeat(60));
+
+    if (options.copy !== false) {
+      copyToClipboard(entry.content);
+      console.log('\n✅ 内容已复制到剪贴板\n');
+    }
+  });
+
+memoryCmd
+  .command('list')
+  .description('列出最近的记忆条目')
+  .option('--global', '列出全局记忆库')
+  .option('-n, --limit <n>', '显示条数', '20')
+  .option('--tag <tag>', '按标签过滤')
+  .action((options) => {
+    const dir = getMemoryDir(!!options.global);
+    let entries = loadMemoryEntries(dir);
+    if (options.tag) entries = entries.filter((e) => e.tags.includes(options.tag));
+    entries = entries.slice(0, parseInt(options.limit, 10) || 20);
+
+    if (entries.length === 0) {
+      console.log('\n📋 记忆库为空。使用 ethan memory add 或工作流自动归档。\n');
+      return;
+    }
+
+    console.log(`\n🧠 Skill Memory（${options.global ? '全局' : '项目'}，${entries.length} 条）\n`);
+    console.log('─'.repeat(60));
+    for (const e of entries) {
+      const icon = e.type === 'workflow' ? '🔄' : e.type === 'skill' ? '⚡' : '📝';
+      console.log(`  ${icon} [${e.id}]  ${e.title.slice(0, 55)}`);
+      console.log(`       ${e.createdAt.slice(0, 10)}  ${e.tags.join(' #') ? '#' + e.tags.join(' #') : ''}`);
+    }
+    console.log('\n' + '─'.repeat(60));
+    console.log('\n用 ethan memory search <keyword> 搜索，ethan memory show <id> 查看详情\n');
+  });
+
+memoryCmd
+  .command('export')
+  .description('导出记忆库为 Markdown 文件')
+  .option('--global', '导出全局记忆库')
+  .option('--out <file>', '输出文件路径', 'ethan-memory-export.md')
+  .option('--tag <tag>', '只导出指定标签')
+  .action((options) => {
+    const dir = getMemoryDir(!!options.global);
+    let entries = loadMemoryEntries(dir);
+    if (options.tag) entries = entries.filter((e) => e.tags.includes(options.tag));
+
+    if (entries.length === 0) {
+      console.log('\n📋 记忆库为空，无需导出。\n');
+      return;
+    }
+
+    const lines: string[] = [
+      `# Ethan Memory Export`,
+      ``,
+      `- **导出时间**：${new Date().toISOString().slice(0, 19).replace('T', ' ')}`,
+      `- **条目数**：${entries.length}`,
+      `- **范围**：${options.global ? '全局' : '项目级'}`,
+      ``,
+      `---`,
+      ``,
+    ];
+
+    for (const e of entries) {
+      lines.push(`## ${e.title}`);
+      lines.push(``);
+      lines.push(`- **ID**: \`${e.id}\``);
+      lines.push(`- **类型**: ${e.type}`);
+      lines.push(`- **时间**: ${e.createdAt.slice(0, 10)}`);
+      if (e.tags.length > 0) lines.push(`- **标签**: ${e.tags.map((t) => `\`${t}\``).join(' ')}`);
+      lines.push(``);
+      lines.push(e.content);
+      lines.push(``);
+      lines.push(`---`);
+      lines.push(``);
+    }
+
+    const outPath = path.resolve(process.cwd(), options.out);
+    fs.writeFileSync(outPath, lines.join('\n'), 'utf-8');
+    console.log(`\n✅ 已导出 ${entries.length} 条记忆到：${outPath}\n`);
+  });
+
+memoryCmd
+  .command('remove <id>')
+  .description('删除一条记忆')
+  .option('--global', '从全局记忆库删除')
+  .action((id, options) => {
+    const dir = getMemoryDir(!!options.global);
+    const entries = loadMemoryEntries(dir);
+    const entry = entries.find((e) => e.id === id || e.id.startsWith(id));
+
+    if (!entry) {
+      console.error(`❌ 未找到 ID 为 "${id}" 的记忆`);
+      process.exit(1);
+    }
+
+    const filePath = path.join(dir, `${entry.id}.json`);
+    fs.unlinkSync(filePath);
+    console.log(`\n✅ 已删除：${entry.title}\n`);
+  });
+
+// ─── estimate 命令（T17 Estimation）────────────────────────────────────────
+program
+  .command('estimate')
+  .description('任务工时估算：用三点估算法生成结构化评估提示词')
+  .option('-t, --task <task>', '任务描述')
+  .option('--style <style>', '估算方式：story-points | hours | t-shirt（S/M/L/XL）', 'hours')
+  .option('--team <size>', '团队规模（影响并行度评估）', '1')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    const task = options.task || '（请描述要估算的任务或功能）';
+    const style = options.style || 'hours';
+
+    const styleGuide: Record<string, string> = {
+      hours: '用工时（人天）估算，分 乐观/标准/悲观 三个场景，给出加权平均（PERT 公式：(O + 4M + P) / 6）',
+      'story-points': '用故事点（Fibonacci 数列：1/2/3/5/8/13/21）估算，基于复杂度和不确定性',
+      't-shirt': '用 T 恤尺码（XS / S / M / L / XL / XXL）给出快速相对估算，适合 backlog 梳理',
+    };
+
+    const prompt = `你是一名有丰富经验的工程估算专家，请对以下任务进行结构化工时评估。
+
+## 任务描述
+${task}
+
+## 团队信息
+- 团队规模：${options.team} 人
+- 估算单位：${styleGuide[style] || styleGuide['hours']}
+
+## 请按以下结构输出评估结果：
+
+### 1. 任务拆解（Work Breakdown Structure）
+将任务分解为子任务，每个子任务单独估算
+
+### 2. 风险识别
+| 风险项 | 概率 | 影响 | 缓解措施 |
+|--------|------|------|----------|
+
+### 3. 估算结果
+| 子任务 | 乐观 | 标准 | 悲观 | 加权平均 |
+|--------|------|------|------|----------|
+| ...    |      |      |      |          |
+| **合计** |    |      |      | **X.X 天** |
+
+### 4. 关键假设
+（哪些条件成立，估算才有效）
+
+### 5. 建议缓冲
+（基于风险，建议增加 X% 缓冲，总估算约 Y 天）
+
+### 6. 置信区间
+（80% 置信度范围：X - Y 天）
+
+请给出完整评估，并在最后说明最大不确定因素是什么。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ 估算提示词已复制到剪贴板（${style} 模式）\n`);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── retro 命令（T17 Retrospective）────────────────────────────────────────
+program
+  .command('retro')
+  .description('迭代复盘：生成回顾会议提示词 / 总结报告')
+  .option('--sprint <name>', '迭代/Sprint 名称或编号')
+  .option('--format <fmt>', '格式：4l（4L 回顾）| starfish（海星）| mad-sad-glad | start-stop-continue', '4l')
+  .option('--from-workflow', '从当前工作流会话读取上下文（自动填充完成内容）')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action(async (options) => {
+    const sprint = options.sprint || '本次迭代';
+    const fmt = options.format || '4l';
+
+    let workflowContext = '';
+    if (options.fromWorkflow) {
+      const { loadSession, calcProgress } = await import('../workflow/state');
+      const session = loadSession(process.cwd());
+      if (session) {
+        const progress = calcProgress(session);
+        const doneSteps = session.steps
+          .filter((s) => s.status === 'done')
+          .map((s) => `- ${s.skillId}：${s.summary || '（无摘要）'}`)
+          .join('\n');
+        workflowContext = `\n## 工作流上下文\n- Pipeline：${session.pipelineName}\n- 进度：${progress}%\n- 已完成步骤：\n${doneSteps}\n`;
+      }
+    }
+
+    const formatGuide: Record<string, string> = {
+      '4l': `使用 **4L 回顾框架**：
+- **Liked（喜欢的）**：哪些做得好、值得保留？
+- **Learned（学到的）**：获得了哪些新知识或经验？
+- **Lacked（缺少的）**：哪些该有但没有的？
+- **Longed For（期望的）**：希望在下个迭代中改进的？`,
+      starfish: `使用 **海星回顾框架**：
+- **Keep（继续）**：效果好，继续做
+- **Less（减少）**：有一定效果，但可以少做
+- **More（增加）**：效果好，应该多做
+- **Start（开始）**：还没做但应该开始
+- **Stop（停止）**：没有效果，应该停止`,
+      'mad-sad-glad': `使用 **Mad/Sad/Glad 情绪回顾**：
+- **Mad（令人烦恼的）**：让团队沮丧或愤怒的事情
+- **Sad（令人遗憾的）**：可以更好但没做到的
+- **Glad（令人开心的）**：做得好、值得庆祝的`,
+      'start-stop-continue': `使用 **Start/Stop/Continue 框架**：
+- **Start**：应该开始做的新事情
+- **Stop**：应该停止的无效做法
+- **Continue**：应该继续保持的做法`,
+    };
+
+    const guide = formatGuide[fmt] || formatGuide['4l'];
+
+    const prompt = `你是一名敏捷教练，请帮助团队对"${sprint}"进行回顾总结。
+${workflowContext}
+## 回顾框架
+
+${guide}
+
+## 请输出以下内容：
+
+### 1. 回顾会议引导提问
+（针对本框架各维度，给出 3-5 个引导团队讨论的开放性问题）
+
+### 2. 回顾报告模板
+（按框架结构，提供可填写的模板，每项有举例说明）
+
+### 3. 行动项建议格式
+| 问题 | 根因 | 行动项 | 负责人 | 截止 |
+|------|------|--------|--------|------|
+
+### 4. 下次迭代目标（OKR 式）
+- **目标（O）**：...
+- **关键结果（KR）**：...
+
+请以鼓励、积极的基调引导回顾，关注改进而非批评。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ 迭代复盘提示词已复制到剪贴板（${fmt} 框架）\n`);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── stats 扩展（T22 Stats Leaderboard）────────────────────────────────────
+// 扩展 stats 命令为 stats 子命令组，添加 leaderboard 和 streak 功能
+
+interface StatsData {
+  usage: Record<string, number>;
+  streak: {
+    current: number;
+    best: number;
+    lastDate: string;
+  };
+  dailyLog: Record<string, string[]>; // date → skill ids used
+}
+
+function readStatsV2(): StatsData {
+  try {
+    if (fs.existsSync(STATS_FILE)) {
+      const raw = JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'));
+      // 向上兼容旧格式（纯 Record<string, number>）
+      if (raw.usage) return raw as StatsData;
+      return { usage: raw as Record<string, number>, streak: { current: 0, best: 0, lastDate: '' }, dailyLog: {} };
+    }
+  } catch { /* ignore */ }
+  return { usage: {}, streak: { current: 0, best: 0, lastDate: '' }, dailyLog: {} };
+}
+
+function writeStatsV2(data: StatsData): void {
+  try {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch { /* ignore */ }
+}
+
+/** 记录使用并更新连续使用天数 */
+function trackUsageWithStreak(skillId: string): void {
+  const data = readStatsV2();
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 使用次数
+  data.usage[skillId] = (data.usage[skillId] || 0) + 1;
+
+  // 每日日志
+  if (!data.dailyLog[today]) data.dailyLog[today] = [];
+  if (!data.dailyLog[today].includes(skillId)) data.dailyLog[today].push(skillId);
+
+  // Streak 计算
+  const lastDate = data.streak.lastDate;
+  if (lastDate === today) {
+    // 当天已经记录，无需更新 streak
+  } else if (lastDate === '') {
+    data.streak.current = 1;
+    data.streak.best = 1;
+    data.streak.lastDate = today;
+  } else {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (lastDate === yesterday) {
+      data.streak.current += 1;
+      data.streak.best = Math.max(data.streak.best, data.streak.current);
+    } else {
+      // 断签
+      data.streak.current = 1;
+    }
+    data.streak.lastDate = today;
+  }
+
+  writeStatsV2(data);
+}
+
+const statsCmd = program.command('stats').description('查看 Skill 使用频次统计和连续使用天数');
+
+statsCmd
+  .command('show')
+  .description('显示 ASCII 条形图统计（默认命令）')
+  .option('--reset', '清空统计数据')
+  .action((options) => {
+    if (options.reset) {
+      fs.writeFileSync(STATS_FILE, JSON.stringify({ usage: {}, streak: { current: 0, best: 0, lastDate: '' }, dailyLog: {} }, null, 2), 'utf-8');
+      console.log('\n✅ 统计数据已清空\n');
+      return;
+    }
+
+    const data = readStatsV2();
+    const usage = data.usage;
+
+    if (Object.keys(usage).length === 0) {
+      console.log('\n📊 暂无使用记录。运行任意 Skill 后会自动记录。\n');
+      return;
+    }
+
+    const sorted = Object.entries(usage).sort((a, b) => b[1] - a[1]);
+    const max = sorted[0][1];
+
+    console.log('\n📊 Skill 使用统计\n');
+    console.log('─'.repeat(60));
+    for (const [id, count] of sorted) {
+      const bar = '█'.repeat(Math.round((count / max) * 30));
+      const skill = ALL_SKILLS.find((s) => s.id === id);
+      const label = skill ? `${skill.name}` : id;
+      console.log(`  ${label.padEnd(14)}  ${bar.padEnd(30)} ${count}`);
+    }
+    console.log('─'.repeat(60));
+    console.log(`\n  🔥 连续使用：${data.streak.current} 天  |  最长连续：${data.streak.best} 天\n`);
+  });
+
+statsCmd
+  .command('leaderboard')
+  .description('显示使用排行榜 + 连续天数 + 日历热图')
+  .option('--top <n>', '显示前 N 名', '5')
+  .action((options) => {
+    const data = readStatsV2();
+    const usage = data.usage;
+    const top = parseInt(options.top, 10) || 5;
+
+    console.log('\n🏆 Ethan Leaderboard\n');
+    console.log('─'.repeat(60));
+
+    // ── 排行榜 ──────────────────────────────────────────────────────────────
+    const sorted = Object.entries(usage).sort((a, b) => b[1] - a[1]).slice(0, top);
+    const medals = ['🥇', '🥈', '🥉', '4️⃣ ', '5️⃣ '];
+    if (sorted.length === 0) {
+      console.log('  暂无记录\n');
+    } else {
+      console.log('\n  Top Skills\n');
+      sorted.forEach(([id, count], i) => {
+        const skill = ALL_SKILLS.find((s) => s.id === id);
+        const name = skill ? skill.name : id;
+        const bar = '▰'.repeat(Math.min(count, 20));
+        console.log(`  ${medals[i] || `${i + 1}. `}  ${name.padEnd(12)}  ${bar} ${count}次`);
+      });
+    }
+
+    // ── 连续天数 ────────────────────────────────────────────────────────────
+    console.log('\n  Streak\n');
+    const streakBar = '🔥'.repeat(Math.min(data.streak.current, 7));
+    console.log(`  当前：${data.streak.current} 天  ${streakBar}`);
+    console.log(`  最长：${data.streak.best} 天`);
+    if (data.streak.lastDate) console.log(`  最后使用：${data.streak.lastDate}`);
+
+    // ── 近 7 天热图 ─────────────────────────────────────────────────────────
+    console.log('\n  近 7 天活跃度\n');
+    const today = new Date();
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    const heatRow = days
+      .map((d) => {
+        const count = (data.dailyLog[d] || []).length;
+        if (count === 0) return '⬜';
+        if (count === 1) return '🟩';
+        if (count <= 3) return '🟨';
+        return '🟥';
+      })
+      .join(' ');
+    const dayLabels = days.map((d) => d.slice(5)).join('  ');
+    console.log(`  ${heatRow}`);
+    console.log(`  ${dayLabels}`);
+
+    console.log('\n' + '─'.repeat(60));
+    const total = Object.values(usage).reduce((a, b) => a + b, 0);
+    console.log(`\n  总计使用 ${total} 次  |  覆盖 ${Object.keys(usage).length} 个 Skills\n`);
+  });
+
+statsCmd
+  .command('reset')
+  .description('清空所有统计数据')
+  .action(() => {
+    const data: StatsData = { usage: {}, streak: { current: 0, best: 0, lastDate: '' }, dailyLog: {} };
+    writeStatsV2(data);
+    console.log('\n✅ 统计数据已清空\n');
+  });
+
+// ─── pipeline 扩展（T20 Structured Pipeline with YAML support）──────────────
+// YAML pipeline 支持：用户可以在 .ethan/pipelines/ 放自定义 pipeline YAML
+
+interface CustomPipelineYaml {
+  id: string;
+  name: string;
+  description: string;
+  skillIds: string[];
+  outputSchema?: Record<string, { type: string; description?: string; required?: boolean }>;
+}
+
+function loadCustomPipelines(cwd: string): CustomPipelineYaml[] {
+  const dir = path.join(cwd, '.ethan', 'pipelines');
+  if (!fs.existsSync(dir)) return [];
+
+  const results: CustomPipelineYaml[] = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'))) {
+    try {
+      // 简单的 YAML 解析（仅支持内置 Pipeline YAML 格式，不依赖 js-yaml）
+      const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
+      // 使用 js-yaml（已在 dependencies 中）
+      const yaml = require('js-yaml');
+      const parsed = yaml.load(raw) as CustomPipelineYaml;
+      if (parsed && parsed.id && parsed.skillIds) results.push(parsed);
+    } catch { /* ignore parse errors */ }
+  }
+  return results;
+}
+
+program
+  .command('pipeline-init')
+  .description('在 .ethan/pipelines/ 生成自定义 Pipeline YAML 模板')
+  .option('--name <name>', 'Pipeline 名称（用于文件名）', 'my-pipeline')
+  .action((options) => {
+    const dir = path.join(process.cwd(), '.ethan', 'pipelines');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const filename = `${options.name}.yaml`;
+    const filePath = path.join(dir, filename);
+
+    if (fs.existsSync(filePath)) {
+      console.error(`❌ 文件已存在：${filePath}`);
+      process.exit(1);
+    }
+
+    const template = `# Ethan 自定义 Pipeline 定义
+# 放置在 .ethan/pipelines/ 目录下，ethan 自动加载
+
+id: ${options.name}
+name: 自定义工作流名称
+description: 这个 Pipeline 的描述
+
+# 引用的 Skill ID 列表（按执行顺序）
+# 可用 Skill ID：requirement-understanding | task-breakdown | solution-design
+#               implementation | progress-tracking | task-report | weekly-report
+#               code-review | debug | tech-research
+skillIds:
+  - requirement-understanding
+  - solution-design
+  - implementation
+
+# （可选）输出结构定义：每个字段对应 AI 需要输出的内容
+# outputSchema:
+#   featureSpec:
+#     type: string
+#     description: 需求规格说明书
+#     required: true
+#   designDoc:
+#     type: string
+#     description: 技术方案设计文档
+`;
+
+    fs.writeFileSync(filePath, template, 'utf-8');
+    console.log(`\n✅ 自定义 Pipeline 模板已生成：${filePath}`);
+    console.log(`\n💡 编辑后运行：ethan workflow start ${options.name} -c "任务描述"\n`);
   });
 
 program.parse(process.argv);
