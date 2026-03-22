@@ -1,6 +1,6 @@
-# Ethan v1.1.0
+# Ethan v1.2.0
 
-Ethan - Your AI Workflow Assistant | Generated: 2026-03-21T16:27:34.521Z
+Ethan - Your AI Workflow Assistant | Generated: 2026-03-22T04:23:04.695Z
 
 ## Skills
 

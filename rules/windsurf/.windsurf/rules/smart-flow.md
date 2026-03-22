@@ -1,6 +1,6 @@
-# Ethan - Windsurf Rules (v1.1.0)
+# Ethan - Windsurf Rules (v1.2.0)
 
-> Auto-generated from src/skills/ | 2026-03-21T16:27:34.521Z
+> Auto-generated from src/skills/ | 2026-03-22T04:23:04.695Z
 > Do not edit manually.
 
 You are equipped with the Ethan workflow assistant for Windsurf. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
