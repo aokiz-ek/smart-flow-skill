@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ethan</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="logo">⚡</div>
+    <div class="title-area">
+      <h1>Ethan</h1>
+      <p>AI Workflow Assistant</p>
+    </div>
+  </div>
+
+  <div class="section-label">快捷操作</div>
+  <div class="actions">
+    <button class="action-btn" data-action="review" title="对选中代码 Code Review">
+      🔍 Code Review
+    </button>
+    <button class="action-btn" data-action="explain" title="解释选中代码">
+      📖 解释代码
+    </button>
+    <button class="action-btn" data-action="pr-review" title="为当前 PR 生成 Review 提示词">
+      📋 PR Review
+    </button>
+    <button class="action-btn" data-action="commit" title="生成 Commit Message 提示词">
+      📝 Commit Msg
+    </button>
+    <button class="action-btn" data-action="naming" title="为选中内容生成命名建议">
+      🏷️ 命名建议
+    </button>
+    <button class="action-btn" data-action="standup" title="根据页面内容生成站会稿">
+      🗣️ 站会稿
+    </button>
+  </div>
+
+  <div class="section-label">Skills</div>
+  <div class="skills-grid" id="skills-grid">
+    <!-- Populated by popup.js -->
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank">GitHub</a>
+    <span>·</span>
+    <a href="#" id="settings-link">设置</a>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

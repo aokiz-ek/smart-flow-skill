@@ -14,6 +14,8 @@ export interface EthanConfig {
   customTriggers?: Record<string, string>;
   /** 已安装的插件包名列表 */
   plugins?: string[];
+  /** 私有 Skill 插件注册表 URL（T23 Prompt OS） */
+  registry?: string;
 }
 
 const CONFIG_FILE = '.ethanrc.json';

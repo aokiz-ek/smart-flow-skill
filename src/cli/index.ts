@@ -407,6 +407,150 @@ pluginCmd
     console.log(`\n✅ 插件 ${name} 已卸载\n`);
   });
 
+pluginCmd
+  .command('publish')
+  .description('将当前目录的自定义 Skill 打包并发布到 npm（Prompt OS 插件体系）')
+  .option('--dry-run', '只预览，不实际发布')
+  .action(async (options) => {
+    const cwd = process.cwd();
+    const skillsDir = path.join(cwd, '.ethan', 'skills');
+
+    // 检查是否有自定义 Skill
+    const { loadCustomSkills } = await import('../loader/custom-skill-loader');
+    const customSkills = loadCustomSkills(cwd);
+
+    if (customSkills.length === 0) {
+      console.error('\n❌ 当前项目没有自定义 Skill（.ethan/skills/ 目录为空或不存在）');
+      console.log('   使用 ethan skill new <name> 创建新 Skill\n');
+      process.exit(1);
+    }
+
+    // 检查 package.json
+    const pkgPath = path.join(cwd, 'package.json');
+    if (!fs.existsSync(pkgPath)) {
+      console.error('\n❌ 当前目录没有 package.json，无法发布到 npm\n');
+      process.exit(1);
+    }
+
+    const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    if (!pkgJson.name?.startsWith('ethan-') && !pkgJson.name?.startsWith('@')) {
+      console.log('\n⚠️  建议将包名设为 ethan-<your-skill-name> 格式，便于社区发现');
+    }
+
+    console.log(`\n📦 准备发布 Ethan 插件包\n`);
+    console.log(`   包名：${pkgJson.name || '(未设置)'}`);
+    console.log(`   版本：${pkgJson.version || '(未设置)'}`);
+    console.log(`   自定义 Skill 数量：${customSkills.length}`);
+    console.log(`\n   包含的 Skill：`);
+    for (const s of customSkills) {
+      console.log(`   - ${s.id}（${s.name}）`);
+    }
+
+    if (options.dryRun) {
+      console.log('\n🔍 Dry run 模式，不实际发布。\n');
+      console.log('发布清单 checklist：');
+      console.log('  ✅ 确认 package.json 中有 "ethan" 关键词（便于被发现）');
+      console.log('  ✅ 确认 .ethan/skills/ 目录存在且包含有效 Skill 定义');
+      console.log('  ✅ 确认 README.md 描述了插件用途和安装方法');
+      console.log('  ✅ 确认 main 字段指向正确的入口文件');
+      console.log('\n  运行 ethan plugin publish 实际发布\n');
+      return;
+    }
+
+    // 生成安装说明
+    const installGuide = `\n💡 发布成功后，其他用户可通过以下命令安装：\n   ethan plugin install ${pkgJson.name}\n`;
+
+    try {
+      const { execSync } = await import('child_process');
+      execSync('npm publish', { stdio: 'inherit', cwd });
+      console.log(installGuide);
+    } catch {
+      console.error('\n❌ 发布失败，请检查 npm 登录状态（npm login）\n');
+      process.exit(1);
+    }
+  });
+
+pluginCmd
+  .command('registry')
+  .description('管理私有 Skill 插件注册表')
+  .option('--set <url>', '设置私有注册表 URL')
+  .option('--unset', '移除私有注册表配置')
+  .option('--show', '显示当前注册表配置')
+  .action((options) => {
+    const config = readConfig(process.cwd());
+
+    if (options.show || (!options.set && !options.unset)) {
+      const registry = config.registry;
+      console.log('\n📋 插件注册表配置');
+      console.log('─'.repeat(40));
+      console.log(`  公共注册表：https://registry.npmjs.org（默认）`);
+      console.log(`  私有注册表：${registry || '（未配置）'}`);
+      console.log('\n配置方式：');
+      console.log('  ethan plugin registry --set https://your-registry.com');
+      console.log('  ethan plugin registry --unset\n');
+      return;
+    }
+
+    if (options.set) {
+      writeConfig({ ...config, registry: options.set }, process.cwd());
+      console.log(`\n✅ 私有注册表已设置为：${options.set}`);
+      console.log('   后续 ethan plugin install 将优先从此注册表安装\n');
+    }
+
+    if (options.unset) {
+      const { registry: _, ...rest } = config;
+      writeConfig(rest, process.cwd());
+      console.log('\n✅ 私有注册表配置已移除\n');
+      void _;
+    }
+  });
+
+pluginCmd
+  .command('search <keyword>')
+  .description('在 npm 上搜索 ethan- 前缀的插件包')
+  .option('-n, --limit <n>', '显示条数', '10')
+  .action(async (keyword, options) => {
+    console.log(`\n🔍 搜索 npm 插件：${keyword}...\n`);
+
+    try {
+      const https = await import('https');
+      const query = encodeURIComponent(`ethan-${keyword} keywords:ethan`);
+      const limit = parseInt(options.limit, 10) || 10;
+
+      const data = await new Promise<string>((resolve, reject) => {
+        const req = https.get(
+          `https://registry.npmjs.org/-/v1/search?text=${query}&size=${limit}`,
+          (res) => {
+            let body = '';
+            res.on('data', (chunk: Buffer) => body += chunk.toString());
+            res.on('end', () => resolve(body));
+          }
+        );
+        req.on('error', reject);
+        req.setTimeout(5000, () => { req.destroy(); reject(new Error('timeout')); });
+      });
+
+      const result = JSON.parse(data);
+      const packages = result.objects || [];
+
+      if (packages.length === 0) {
+        console.log(`  未找到匹配的 ethan 插件\n`);
+        return;
+      }
+
+      console.log(`找到 ${packages.length} 个插件：\n`);
+      console.log('─'.repeat(60));
+      for (const { package: pkg } of packages) {
+        console.log(`\n  📦 ${pkg.name}  v${pkg.version}`);
+        console.log(`     ${pkg.description || '无描述'}`);
+        console.log(`     安装：ethan plugin install ${pkg.name}`);
+      }
+      console.log('\n' + '─'.repeat(60) + '\n');
+    } catch (e) {
+      console.error(`\n❌ 搜索失败（需要网络连接）：${(e as Error).message}\n`);
+    }
+  });
+
 // ─── mcp 命令 ───────────────────────────────────────────────────────────────
 program
   .command('mcp')
