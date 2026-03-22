@@ -29,46 +29,23 @@
         "description": "Ethan - Your AI Workflow Assistant - 输入 @ethan 加触发词激活对应 Skill",
         "isSticky": true,
         "commands": [
-          {
-            "name": "需求理解",
-            "description": "深度解析用户需求，消除歧义，输出结构化需求文档"
-          },
-          {
-            "name": "任务拆解",
-            "description": "将复杂需求拆解为可执行的原子任务，建立依赖关系和优先级"
-          },
-          {
-            "name": "方案设计",
-            "description": "输出技术方案设计文档，包含架构选择、接口设计、数据模型"
-          },
-          {
-            "name": "执行实现",
-            "description": "按设计方案逐步实现代码，遵循最佳实践"
-          },
-          {
-            "name": "进度跟踪",
-            "description": "实时更新任务状态，识别阻塞风险，保持项目透明度"
-          },
-          {
-            "name": "任务报告",
-            "description": "任务完成后生成总结报告，记录成果、问题和经验教训"
-          },
-          {
-            "name": "周报",
-            "description": "根据本周工作内容自动生成结构化周报"
-          },
-          {
-            "name": "代码审查",
-            "description": "系统性审查代码，分级输出 Blocker/Major/Minor"
-          },
-          {
-            "name": "故障排查",
-            "description": "假设验证 + 5 Why 根因分析，三层解决方案"
-          },
-          {
-            "name": "技术调研",
-            "description": "加权评分矩阵 + POC 验证，输出有据可查的结论"
-          }
+          { "name": "需求理解", "description": "深度解析用户需求，消除歧义，输出结构化需求文档" },
+          { "name": "任务拆解", "description": "将复杂需求拆解为可执行的原子任务，建立依赖关系和优先级" },
+          { "name": "方案设计", "description": "输出技术方案设计文档，包含架构选择、接口设计、数据模型" },
+          { "name": "执行实现", "description": "按设计方案逐步实现代码，遵循最佳实践" },
+          { "name": "进度跟踪", "description": "实时更新任务状态，识别阻塞风险，保持项目透明度" },
+          { "name": "任务报告", "description": "任务完成后生成总结报告，记录成果、问题和经验教训" },
+          { "name": "周报", "description": "根据本周工作内容自动生成结构化周报" },
+          { "name": "代码审查", "description": "系统性审查代码，分级输出 Blocker/Major/Minor" },
+          { "name": "故障排查", "description": "假设验证 + 5 Why 根因分析，三层解决方案" },
+          { "name": "技术调研", "description": "加权评分矩阵 + POC 验证，输出有据可查的结论" },
+          { "name": "commit", "description": "读取 staged diff，生成 Conventional Commits 提交信息" },
+          { "name": "review", "description": "读取分支 diff，生成 Blocker/Major/Minor 分级 Code Review" },
+          { "name": "pr", "description": "基于提交日志生成 PR 标题、正文与 Checklist" },
+          { "name": "standup", "description": "根据近期提交历史生成站会发言稿" },
+          { "name": "estimate", "description": "根据任务描述生成三点估算和 T-shirt Size" },
+          { "name": "retro", "description": "生成迭代复盘提示词（4L / Start-Stop-Continue）" },
+          { "name": "oncall", "description": "生成 On-call 排查 SOP，支持 P0/P1/P2 级别" }
         ]
       }
     ],
@@ -96,27 +73,26 @@
       ]
     },
     "commands": [
-      {
-        "command": "ethan.install",
-        "title": "Ethan: Install Rules for Current Project"
-      },
-      {
-        "command": "ethan.listSkills",
-        "title": "Ethan: List Available Skills"
-      },
-      {
-        "command": "ethan.runSkill",
-        "title": "Ethan: Run Skill (Quick Pick)"
-      },
-      {
-        "command": "ethan.openDashboard",
-        "title": "Ethan: Open Dashboard"
-      },
-      {
-        "command": "ethan.refreshSkills",
-        "title": "Ethan: Refresh Skills",
-        "icon": "$(refresh)"
-      }
+      { "command": "ethan.install", "title": "Ethan: Install Rules for Current Project" },
+      { "command": "ethan.listSkills", "title": "Ethan: List Available Skills" },
+      { "command": "ethan.runSkill", "title": "Ethan: Run Skill (Quick Pick)" },
+      { "command": "ethan.openDashboard", "title": "Ethan: Open Dashboard" },
+      { "command": "ethan.refreshSkills", "title": "Ethan: Refresh Skills", "icon": "$(refresh)" },
+      { "command": "ethan.commit", "title": "Ethan: Generate Commit Message (Git)" },
+      { "command": "ethan.review", "title": "Ethan: Code Review — Blocker/Major/Minor (Git)" },
+      { "command": "ethan.pr", "title": "Ethan: Generate PR Description (Git)" },
+      { "command": "ethan.standup", "title": "Ethan: Generate Standup Script (Git)" },
+      { "command": "ethan.changelog", "title": "Ethan: Generate Changelog (Git)" },
+      { "command": "ethan.scan", "title": "Ethan: Scan TODOs & Dependencies" },
+      { "command": "ethan.explain", "title": "Ethan: Explain Code" },
+      { "command": "ethan.testCase", "title": "Ethan: Generate Test Cases" },
+      { "command": "ethan.naming", "title": "Ethan: Generate Naming Suggestions" },
+      { "command": "ethan.readme", "title": "Ethan: Generate README Draft" },
+      { "command": "ethan.roast", "title": "Ethan: Roast Code Quality" },
+      { "command": "ethan.oncall", "title": "Ethan: On-call SOP Generator" },
+      { "command": "ethan.memory", "title": "Ethan: Skill Memory Search" },
+      { "command": "ethan.estimate", "title": "Ethan: Estimation & T-shirt Sizing" },
+      { "command": "ethan.retro", "title": "Ethan: Sprint Retrospective" }
     ],
     "menus": {
       "view/title": [

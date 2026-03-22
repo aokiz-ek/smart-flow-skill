@@ -1317,7 +1317,8 @@
     <ul class="nav-links">
       <li><a href="#skills">Skills</a></li>
       <li><a href="#pipeline">Pipeline</a></li>
-      <li><a href="#workflow">工作流</a></li>
+      <li><a href="#git">Git</a></li>
+      <li><a href="#mcp">MCP</a></li>
       <li><a href="#advanced">高级功能</a></li>
       <li><a href="#cli">CLI</a></li>
       <li><a href="#install">安装</a></li>
@@ -1403,8 +1404,8 @@
         <div class="stat-label">平台</div>
       </div>
       <div class="stat-item reveal reveal-delay-2">
-        <div class="stat-number" data-target="3" data-suffix="">3</div>
-        <div class="stat-label">Pipelines</div>
+        <div class="stat-number" data-target="17" data-suffix="">17</div>
+        <div class="stat-label">MCP 工具</div>
       </div>
       <div class="stat-item reveal reveal-delay-3">
         <div class="stat-number" data-target="40" data-suffix="+">40+</div>
@@ -1692,6 +1693,81 @@
   </section>
 
   <!-- ============================================================
+       MCP TOOLS SECTION
+  ============================================================ -->
+  <section id="mcp" aria-label="MCP 工具">
+    <div class="section-header reveal">
+      <h2 class="section-title">17 个 MCP 工具</h2>
+      <p class="section-subtitle">AI 编辑器原生集成 · 配置一次，随处调用</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="Skill 工具">
+        <div class="adv-icon" aria-hidden="true">🎯</div>
+        <div class="adv-title">10 个 Skill 工具</div>
+        <div class="adv-desc">每个 Skill 对应一个 MCP Tool（如 <code>requirement_understanding</code>），AI 编辑器可直接调用，注入上下文后输出完整执行提示词</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="Pipeline 工具">
+        <div class="adv-icon" aria-hidden="true">🔗</div>
+        <div class="adv-title">ethan_pipeline</div>
+        <div class="adv-desc">一次调用串联执行整条 Pipeline（开发/汇报/质量工作流），将多个 Skill 输出合并为完整指令序列</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="工作流推进">
+        <div class="adv-icon" aria-hidden="true">⏩</div>
+        <div class="adv-title">ethan_workflow_next</div>
+        <div class="adv-desc">AI 编辑器完成某步骤后调用，传入摘要即可推进到下一步，返回包含前序上下文的完整提示词——实现 AI 驱动的工作流自动推进</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="工作流状态">
+        <div class="adv-icon" aria-hidden="true">📊</div>
+        <div class="adv-title">ethan_workflow_status</div>
+        <div class="adv-desc">查询当前工作流进度，返回各步骤完成状态与当前步骤提示词，让 AI 编辑器随时了解工作流全局状态</div>
+      </article>
+
+      <article class="adv-card reveal" aria-label="记忆库搜索">
+        <div class="adv-icon" aria-hidden="true">🧠</div>
+        <div class="adv-title">ethan_memory_search</div>
+        <div class="adv-desc">搜索 Skill 记忆库（项目级 <code>.ethan/memory/</code> + 全局 <code>~/.ethan-memory/</code>），按标题/内容/标签模糊匹配，返回最多 10 条历史归档</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="工时估算">
+        <div class="adv-icon" aria-hidden="true">⏱️</div>
+        <div class="adv-title">ethan_estimate</div>
+        <div class="adv-desc">输入任务描述，生成三点估算（乐观/正常/悲观）+ T-shirt Size 提示词，支持小时 / 故事点 / 人天三种单位</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="Git Commit">
+        <div class="adv-icon" aria-hidden="true">📝</div>
+        <div class="adv-title">ethan_git_commit</div>
+        <div class="adv-desc">读取项目 staged diff，生成 Conventional Commits 规范提交信息提示词，让 AI 编辑器直接辅助生成 commit 而无需切换终端</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="Git Review">
+        <div class="adv-icon" aria-hidden="true">🔍</div>
+        <div class="adv-title">ethan_git_review</div>
+        <div class="adv-desc">读取分支 diff，生成 Blocker/Major/Minor 分级 Code Review 提示词，AI 编辑器可在 PR 合并前直接触发代码审查</div>
+      </article>
+    </div>
+
+    <div style="margin-top:40px;background:#111;border:1px solid #222;border-radius:12px;padding:24px 28px;">
+      <div style="font-size:13px;color:#666;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">快速接入 MCP Server</div>
+      <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:16px 20px;">
+        <code style="font-size:13px;color:#e5e7eb;white-space:pre;">{
+  <span style="color:#60a5fa;">"mcpServers"</span>: {
+    <span style="color:#60a5fa;">"ethan"</span>: {
+      <span style="color:#60a5fa;">"command"</span>: <span style="color:#34d399;">"npx"</span>,
+      <span style="color:#60a5fa;">"args"</span>: [<span style="color:#34d399;">"ethan-skill"</span>, <span style="color:#34d399;">"mcp"</span>]
+    }
+  }
+}</code>
+      </div>
+      <div style="font-size:12px;color:#555;margin-top:10px;">添加到 Cursor / Cline / Continue 的 MCP 配置文件后，AI 编辑器可直接调用全部 17 个工具</div>
+    </div>
+  </section>
+
+  <!-- ============================================================
        INSTALL SECTION
   ============================================================ -->
   <section id="install" aria-label="安装指南">
@@ -1879,6 +1955,84 @@
         <div class="adv-title">插件 OS</div>
         <div class="adv-desc"><code>ethan plugin publish / registry / search</code> — 发布私有 Skill 包到 npm，配置私有注册表，搜索社区插件，打造团队专属 Prompt 生态</div>
       </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       GIT INTEGRATION SECTION
+  ============================================================ -->
+  <section id="git" aria-label="Git 智能集成">
+    <div class="section-header reveal">
+      <h2 class="section-title">Git 智能集成</h2>
+      <p class="section-subtitle">自动读取 diff & 日志，生成规范化 Git 产出物</p>
+    </div>
+
+    <div class="adv-grid">
+      <article class="adv-card reveal" aria-label="Commit">
+        <div class="adv-icon" aria-hidden="true">📝</div>
+        <div class="adv-title">ethan commit</div>
+        <div class="adv-desc">读取 <code>git diff --staged</code>，生成符合 <strong>Conventional Commits</strong> 规范的提交信息，支持 --type 强制类型</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="Code Review">
+        <div class="adv-icon" aria-hidden="true">🔍</div>
+        <div class="adv-title">ethan review</div>
+        <div class="adv-desc">读取当前分支 diff，输出 <strong>Blocker / Major / Minor</strong> 分级 Code Review 提示词，支持 --base 指定基准分支</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="PR Description">
+        <div class="adv-icon" aria-hidden="true">🔀</div>
+        <div class="adv-title">ethan pr</div>
+        <div class="adv-desc">解析提交日志，生成 PR 标题 + 正文 + Checklist，支持 <code>--template feature / bugfix / hotfix</code></div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-3" aria-label="Standup">
+        <div class="adv-icon" aria-hidden="true">🗣️</div>
+        <div class="adv-title">ethan standup</div>
+        <div class="adv-desc">读取最近 N 天提交历史，生成昨日 / 今日 / 阻碍结构的站会发言稿，<code>--days</code> 自定义范围</div>
+      </article>
+
+      <article class="adv-card reveal" aria-label="Changelog">
+        <div class="adv-icon" aria-hidden="true">📋</div>
+        <div class="adv-title">ethan changelog</div>
+        <div class="adv-desc">根据两个 tag 间提交生成标准 CHANGELOG，按 feat / fix / chore 自动分组，支持 --from / --to 指定范围</div>
+      </article>
+
+      <article class="adv-card reveal reveal-delay-1" aria-label="MCP Git Tools">
+        <div class="adv-icon" aria-hidden="true">🤖</div>
+        <div class="adv-title">MCP: ethan_git_commit / review</div>
+        <div class="adv-desc">AI 编辑器（Cursor / Cline）通过 MCP 直接调用 Git 工具，无需切换终端，实时读取当前项目 diff 生成提示词</div>
+      </article>
+    </div>
+
+    <div style="margin-top:40px;background:#111;border:1px solid #222;border-radius:12px;padding:24px 28px;">
+      <div style="font-size:13px;color:#666;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:16px;">Git 命令速查</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan commit [--type feat]</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成 Conventional Commit 提交信息</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan review [--base main]</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">分级 Code Review 提示词</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan pr [--template feature]</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成 PR 标题与正文</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan standup [--days 3]</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成站会发言稿</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan changelog --from v1.0.0</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成两个 tag 间的 CHANGELOG</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#22c55e;">MCP: ethan_git_commit / ethan_git_review</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">AI 编辑器直接调用 Git 工具</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2160,6 +2314,8 @@
       <nav class="footer-nav" aria-label="页脚导航">
         <a href="#skills">Skills</a>
         <a href="#pipeline">Pipeline</a>
+        <a href="#git">Git</a>
+        <a href="#mcp">MCP</a>
         <a href="#advanced">高级功能</a>
         <a href="#cli">CLI</a>
         <a href="#browser-ext">浏览器扩展</a>
