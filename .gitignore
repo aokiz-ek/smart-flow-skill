@@ -11,3 +11,11 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Editor local config (installed by ethan install)
+.cursor/
+.cursorrules
+.continuerules
+.clinerules
+.windsurf/
+.ethan/
