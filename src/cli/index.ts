@@ -1,17 +1,36 @@
 #!/usr/bin/env node
 /**
  * npx ethan CLI
- * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run
+ * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run | workflow
  */
 
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { spawnSync } from 'child_process';
 import { ALL_SKILLS } from '../skills/index';
 import type { Platform, BuildContext } from '../skills/types';
 import { checkForUpdates } from './update-check';
 import { readConfig, writeConfig, getConfigPath } from './config';
+
+// ─── 剪贴板工具函数（不经过 shell，避免 backtick 命令注入） ─────────────────
+function copyToClipboard(text: string): boolean {
+  try {
+    if (process.platform === 'darwin') {
+      spawnSync('pbcopy', [], { input: text, encoding: 'utf-8' });
+      return true;
+    } else if (process.platform === 'win32') {
+      spawnSync('clip', [], { input: text, encoding: 'utf-8', shell: false });
+      return true;
+    } else {
+      spawnSync('xclip', ['-selection', 'clipboard'], { input: text, encoding: 'utf-8' });
+      return true;
+    }
+  } catch {
+    return false;
+  }
+}
 
 // ─── 加载自定义 Skill（透明合并到 ALL_SKILLS） ───────────────────────────────
 async function getActiveSkills() {
@@ -743,21 +762,13 @@ program
     note(prompt, isEn ? 'Your Prompt' : '你的提示词');
 
     // 尝试复制到剪贴板
-    try {
-      const { execSync } = await import('child_process');
-      const cmd =
-        process.platform === 'darwin'
-          ? `echo ${JSON.stringify(prompt)} | pbcopy`
-          : process.platform === 'win32'
-            ? `echo ${JSON.stringify(prompt)} | clip`
-            : `echo ${JSON.stringify(prompt)} | xclip -selection clipboard`;
-      execSync(cmd, { stdio: 'pipe' });
+    if (copyToClipboard(prompt)) {
       outro(
         isEn
           ? '✅ Prompt copied to clipboard! Paste it into your AI editor.'
           : '✅ 提示词已复制到剪贴板！粘贴到你的 AI 编辑器中使用。'
       );
-    } catch {
+    } else {
       outro(
         isEn
           ? '✅ Done! Copy the prompt above and paste it into your AI editor.'
@@ -839,6 +850,295 @@ program
     console.log(JSON.stringify(config, null, 2));
     console.log(`\n文件路径：${configPath}`);
     console.log('\n💡 提示：现在运行 ethan install --platform <platform> 将使用此配置\n');
+  });
+
+// ─── workflow 命令（有状态一键工作流） ──────────────────────────────────────
+const workflowCmd = program.command('workflow').description('有状态工作流执行：一键推进各阶段任务');
+
+workflowCmd
+  .command('start [pipelineId]')
+  .description('启动工作流会话（默认 dev-workflow），输出第一步提示词')
+  .option('-c, --context <context>', '初始任务上下文', '')
+  .action(async (pipelineId: string | undefined, options: { context: string }) => {
+    const {
+      loadSession,
+      createSession,
+      buildStepPrompt,
+      calcProgress,
+    } = await import('../workflow/state');
+    const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
+
+    // 检查是否已有进行中的 session
+    const existing = loadSession(process.cwd());
+    if (existing && !existing.completed) {
+      console.log('\n⚠️  已有进行中的工作流：');
+      console.log(`   Pipeline: ${existing.pipelineName}`);
+      console.log(`   进度: ${calcProgress(existing)}%`);
+      console.log('\n💡 使用 ethan workflow status 查看进度');
+      console.log('   使用 ethan workflow reset 重置后再启动新工作流\n');
+      return;
+    }
+
+    const id = pipelineId ?? 'dev-workflow';
+    const resolved = resolvePipeline(id);
+
+    if (!resolved) {
+      console.error(`Unknown pipeline: ${id}`);
+      console.error(`Available: ${PIPELINES.map((p) => p.id).join(' | ')}`);
+      process.exit(1);
+    }
+
+    const { pipeline, skills } = resolved;
+
+    // 交互式获取上下文（如果未传）
+    let context = options.context.trim();
+    if (!context) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const ask = (q: string): Promise<string> =>
+        new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+      console.log(`\n🚀 启动工作流：${pipeline.name}`);
+      console.log(`   ${pipeline.description}\n`);
+      context = await ask('请描述你的任务背景（例如：实现用户登录功能，支持 JWT 认证）：\n> ');
+      rl.close();
+      if (!context) {
+        console.error('\n❌ 任务上下文不能为空\n');
+        process.exit(1);
+      }
+    }
+
+    const session = createSession(pipeline, context, process.cwd());
+    const firstStep = session.steps[0];
+    const firstSkill = skills[0];
+
+    console.log(`\n🚀 工作流已启动：${pipeline.name}`);
+    console.log(`   ID: ${session.id}`);
+    console.log(`   共 ${session.steps.length} 步\n`);
+    console.log('─'.repeat(60));
+
+    const prompt = buildStepPrompt(session, firstStep, firstSkill);
+    console.log('\n' + prompt + '\n');
+    console.log('─'.repeat(60));
+
+    // 复制到剪贴板
+    if (copyToClipboard(prompt)) {
+      console.log('\n✅ 提示词已复制到剪贴板！粘贴到你的 AI 编辑器中执行。');
+    }
+
+    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"\n`);
+
+    // 记录使用统计
+    const stats = readStats();
+    stats[firstSkill.id] = (stats[firstSkill.id] || 0) + 1;
+    writeStats(stats);
+  });
+
+workflowCmd
+  .command('done [summary]')
+  .description('完成当前步骤，传入本步摘要，自动推进到下一步')
+  .action(async (summary: string | undefined) => {
+    const {
+      loadSession,
+      markStepDone,
+      buildStepPrompt,
+      getCurrentStep,
+      getCurrentStepIndex,
+      calcProgress,
+    } = await import('../workflow/state');
+    const { resolvePipeline } = await import('../skills/pipeline');
+
+    const session = loadSession(process.cwd());
+    if (!session) {
+      console.error('\n❌ 未找到进行中的工作流。运行 ethan workflow start 启动。\n');
+      process.exit(1);
+    }
+    if (session.completed) {
+      console.log('\n🎉 工作流已全部完成！运行 ethan workflow reset 开始新工作流。\n');
+      return;
+    }
+
+    const currentStep = getCurrentStep(session);
+    if (!currentStep) {
+      console.error('\n❌ 未找到当前步骤，工作流状态异常。\n');
+      process.exit(1);
+    }
+
+    // 获取摘要（命令行参数 or 交互输入）
+    let stepSummary = summary?.trim() ?? '';
+    if (!stepSummary) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const ask = (q: string): Promise<string> =>
+        new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+      const currentIdx = getCurrentStepIndex(session);
+      console.log(`\n✅ 完成第 ${currentIdx + 1} 步：${currentStep.skillId}`);
+      stepSummary = await ask('请输入本步执行摘要（将作为下一步的上下文）：\n> ');
+      rl.close();
+      if (!stepSummary) {
+        console.error('\n❌ 摘要不能为空\n');
+        process.exit(1);
+      }
+    }
+
+    const nextStep = markStepDone(session, stepSummary, process.cwd());
+    const progress = calcProgress(session);
+
+    if (!nextStep) {
+      console.log('\n🎉 恭喜！工作流全部完成！');
+      console.log(`   Pipeline: ${session.pipelineName}`);
+      console.log(`   进度: ${progress}%`);
+      console.log(`\n📄 运行 ethan workflow status 查看完整报告`);
+      console.log(`   运行 ethan workflow reset 开始新工作流\n`);
+      return;
+    }
+
+    // 加载下一步 Skill 信息
+    const resolved = resolvePipeline(session.pipelineId);
+    if (!resolved) {
+      console.error('\n❌ 无法加载 Pipeline 信息\n');
+      process.exit(1);
+    }
+    const nextSkill = resolved.skills.find((s) => s.id === nextStep.skillId);
+    if (!nextSkill) {
+      console.error(`\n❌ 未找到 Skill：${nextStep.skillId}\n`);
+      process.exit(1);
+    }
+
+    console.log(`\n✅ 已完成 ${session.steps.filter((s) => s.status === 'done').length}/${session.steps.length} 步（${progress}%）`);
+    console.log('─'.repeat(60));
+
+    const prompt = buildStepPrompt(session, nextStep, nextSkill);
+    console.log('\n' + prompt + '\n');
+    console.log('─'.repeat(60));
+
+    // 复制到剪贴板
+    if (copyToClipboard(prompt)) {
+      console.log('\n✅ 下一步提示词已复制到剪贴板！');
+    }
+
+    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"\n`);
+
+    // 记录使用统计
+    const stats = readStats();
+    stats[nextSkill.id] = (stats[nextSkill.id] || 0) + 1;
+    writeStats(stats);
+  });
+
+workflowCmd
+  .command('status')
+  .description('查看当前工作流进度看板')
+  .action(async () => {
+    const {
+      loadSession,
+      getCurrentStepIndex,
+      calcProgress,
+    } = await import('../workflow/state');
+
+    const session = loadSession(process.cwd());
+    if (!session) {
+      console.log('\n📋 当前目录暂无工作流会话。\n');
+      console.log('   ��行 ethan workflow start 启动新工作流\n');
+      return;
+    }
+
+    const progress = calcProgress(session);
+    const currentIdx = session.completed ? -1 : getCurrentStepIndex(session);
+
+    const statusIcon: Record<string, string> = {
+      'done': '✅',
+      'in-progress': '▶️ ',
+      'pending': '⬜',
+      'skipped': '⏭️ ',
+    };
+
+    console.log('\n📋 工作流进度看板');
+    console.log('─'.repeat(60));
+    console.log(`  Pipeline : ${session.pipelineName}`);
+    console.log(`  Session  : ${session.id}`);
+    console.log(`  创建时间  : ${session.createdAt.slice(0, 19).replace('T', ' ')}`);
+    console.log(`  更新时间  : ${session.updatedAt.slice(0, 19).replace('T', ' ')}`);
+    console.log(`  总进度   : [${'█'.repeat(Math.round(progress / 5))}${'░'.repeat(20 - Math.round(progress / 5))}] ${progress}%`);
+    console.log(`  状态     : ${session.completed ? '🎉 已完成' : `第 ${currentIdx + 1}/${session.steps.length} 步进行中`}`);
+    console.log('\n[步骤明细]\n');
+
+    for (let i = 0; i < session.steps.length; i++) {
+      const step = session.steps[i];
+      const icon = statusIcon[step.status] ?? '❓';
+      const isCurrent = i === currentIdx;
+      const marker = isCurrent ? ' ◀ 当前' : '';
+      console.log(`  ${icon} ${i + 1}. ${step.skillId}${marker}`);
+      if (step.summary) {
+        const preview = step.summary.length > 80 ? step.summary.slice(0, 80) + '…' : step.summary;
+        console.log(`       摘要：${preview}`);
+      }
+      if (step.completedAt) {
+        console.log(`       完成：${step.completedAt.slice(0, 19).replace('T', ' ')}`);
+      }
+    }
+
+    console.log('\n' + '─'.repeat(60));
+    if (session.completed) {
+      console.log('\n🎉 工作流已全部完成！运行 ethan workflow reset 开始新工作流\n');
+    } else {
+      console.log(`\n💡 当前任务背景：${session.initialContext}`);
+      console.log(`   完成当前步骤后运行：ethan workflow done "你的摘要"\n`);
+    }
+  });
+
+workflowCmd
+  .command('reset')
+  .description('清除当前工作流会话（不可恢复）')
+  .action(async () => {
+    const { loadSession, deleteSession, calcProgress } = await import('../workflow/state');
+
+    const session = loadSession(process.cwd());
+    if (!session) {
+      console.log('\n📋 当前目录无工作流会话，无需重置。\n');
+      return;
+    }
+
+    const progress = calcProgress(session);
+
+    // 简单确认
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string): Promise<string> =>
+      new Promise((resolve) => rl.question(q, (a) => resolve(a.trim().toLowerCase())));
+
+    console.log(`\n⚠️  即将重置工作流：${session.pipelineName}（进度 ${progress}%）`);
+    const confirm = await ask('确认重置？(y/N): ');
+    rl.close();
+
+    if (confirm !== 'y' && confirm !== 'yes') {
+      console.log('\n已取消重置。\n');
+      return;
+    }
+
+    deleteSession(process.cwd());
+    console.log('\n✅ 工作流已重置。运行 ethan workflow start 开始新工作流。\n');
+  });
+
+workflowCmd
+  .command('list')
+  .description('列出所有可用的工作流 Pipeline')
+  .action(async () => {
+    const { PIPELINES } = await import('../skills/pipeline');
+    const { loadSession, calcProgress } = await import('../workflow/state');
+
+    const current = loadSession(process.cwd());
+
+    console.log('\n🔄 可用工作流\n');
+    console.log('─'.repeat(60));
+    for (const p of PIPELINES) {
+      const isCurrent = current?.pipelineId === p.id && !current.completed;
+      const tag = isCurrent ? ` ◀ 进行中（${calcProgress(current!)}%）` : '';
+      console.log(`\n  ${p.id}${tag}`);
+      console.log(`  名称：${p.name}`);
+      console.log(`  描述：${p.description}`);
+      console.log(`  步骤：${p.skillIds.join(' → ')}`);
+    }
+    console.log('\n' + '─'.repeat(60));
+    console.log('\n启动工作流：ethan workflow start <pipeline-id> -c "任务描述"\n');
   });
 
 program.parse(process.argv);
