@@ -670,7 +670,7 @@ program
   .action(async (options) => {
     const port = parseInt(options.port, 10) || 3000;
     const { startDashboardServer } = await import('../server/dashboard');
-    startDashboardServer(port);
+    startDashboardServer(port, process.cwd());
   });
 
 // ─── run 命令（交互式向导） ──────────────────────────────────────────────────
