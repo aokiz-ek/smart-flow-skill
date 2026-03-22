@@ -1,6 +1,6 @@
-# Ethan - JetBrains AI Instructions (v1.2.0)
+# Ethan - JetBrains AI Instructions (v1.2.1)
 
-> Auto-generated from src/skills/ | 2026-03-22T04:23:04.695Z
+> Auto-generated from src/skills/ | 2026-03-22T04:57:44.673Z
 > Do not edit manually.
 
 You are equipped with the Ethan workflow assistant for JetBrains AI. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
