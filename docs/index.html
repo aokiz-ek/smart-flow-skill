@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="10 个标准化工作流节点，11 个 AI 编辑器平台支持，19 个 CLI 命令，让每一步都有据可依。v1.1.0 新增一键工作流执行、交互式向导、多语言、Web UI 等高级功能。" />
+  <meta name="description" content="10 个标准化工作流节点，11 个 AI 编辑器平台支持，40+ 个 CLI 命令。Git 集成、浏览器扩展、Skill 记忆库、自定义 Pipeline、插件 OS，让每一步都有据可依。v1.5.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1358,7 +1358,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Ethan v1.1.0 — Now Available</span>
+      <span>Ethan v1.5.0 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1366,7 +1366,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 个标准化工作流 &nbsp;·&nbsp; 11 个平台 &nbsp;·&nbsp; v1.1.0
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 个标准化工作流 &nbsp;·&nbsp; 11 个平台 &nbsp;·&nbsp; v1.5.0
     </p>
 
     <div class="hero-cta">
@@ -1407,7 +1407,7 @@
         <div class="stat-label">Pipelines</div>
       </div>
       <div class="stat-item reveal reveal-delay-3">
-        <div class="stat-number" data-target="19" data-suffix="">19</div>
+        <div class="stat-number" data-target="40" data-suffix="+">40+</div>
         <div class="stat-label">CLI 命令</div>
       </div>
     </div>
@@ -1778,7 +1778,7 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.1.0 新增 — 更智能的工作流体验</p>
+      <p class="section-subtitle">v1.5.0 — Git 集成、浏览器扩展、记忆库、插件 OS 全面升级</p>
     </div>
 
     <div class="adv-grid">
@@ -1837,6 +1837,48 @@
         <div class="adv-title">Web UI Dashboard</div>
         <div class="adv-desc"><code>ethan serve</code> 启动本地面板，可视化 Skill 统计、Pipeline 状态，并内置工作流进度看板（支持一键推进步骤）</div>
       </article>
+
+      <!-- Card 9 (NEW v1.5.0) -->
+      <article class="adv-card reveal" aria-label="Git 智能集成">
+        <div class="adv-icon" aria-hidden="true">🔀</div>
+        <div class="adv-title">Git 智能集成</div>
+        <div class="adv-desc"><code>ethan commit / review / pr / standup / changelog</code> — 自动读取 diff & 日志，生成 Conventional Commit、PR 描述、站会稿、CHANGELOG</div>
+      </article>
+
+      <!-- Card 10 (NEW v1.5.0) -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="开发工具链">
+        <div class="adv-icon" aria-hidden="true">🛠️</div>
+        <div class="adv-title">开发工具链</div>
+        <div class="adv-desc"><code>scan / explain / test-case / naming / readme / roast</code> — 扫描 TODO、解释代码、生成测试用例、命名建议、README 生成、代码吐槽</div>
+      </article>
+
+      <!-- Card 11 (NEW v1.5.0) -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="Skill 记忆库">
+        <div class="adv-icon" aria-hidden="true">🧠</div>
+        <div class="adv-title">Skill 记忆库</div>
+        <div class="adv-desc"><code>ethan memory add / search / export</code> — 工作流完成后自动归档上下文，支持跨项目检索，打通知识沉淀通路</div>
+      </article>
+
+      <!-- Card 12 (NEW v1.5.0) -->
+      <article class="adv-card reveal reveal-delay-3" aria-label="浏览器扩展">
+        <div class="adv-icon" aria-hidden="true">🌐</div>
+        <div class="adv-title">浏览器扩展</div>
+        <div class="adv-desc">Chrome/Edge MV3 扩展 — GitHub PR 页面注入「⚡ Ethan Review」按钮，右键菜单快速生成 AI 提示词，一键复制到剪贴板</div>
+      </article>
+
+      <!-- Card 13 (NEW v1.5.0) -->
+      <article class="adv-card reveal" aria-label="命名会话 & YAML Pipeline">
+        <div class="adv-icon" aria-hidden="true">🗂️</div>
+        <div class="adv-title">命名会话 & 自定义 Pipeline</div>
+        <div class="adv-desc"><code>--name &lt;session&gt;</code> 支持多并行工作流会话；<code>.ethan/pipelines/*.yaml</code> 定义私有 Pipeline，<code>ethan pipeline-init</code> 生成模板</div>
+      </article>
+
+      <!-- Card 14 (NEW v1.5.0) -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="插件 OS">
+        <div class="adv-icon" aria-hidden="true">🔌</div>
+        <div class="adv-title">插件 OS</div>
+        <div class="adv-desc"><code>ethan plugin publish / registry / search</code> — 发布私有 Skill 包到 npm，配置私有注册表，搜索社区插件，打造团队专属 Prompt 生态</div>
+      </article>
     </div>
   </section>
 
@@ -1845,8 +1887,8 @@
   ============================================================ -->
   <section id="cli" aria-label="CLI 命令参考">
     <div class="section-header reveal">
-      <h2 class="section-title">19 个 CLI 命令</h2>
-      <p class="section-subtitle">覆盖安装、执行、工作流、调试到扩展的完整工具链</p>
+      <h2 class="section-title">40+ 个 CLI 命令</h2>
+      <p class="section-subtitle">覆盖安装、Git 集成、开发工具、工作流、记忆、插件到扩展的完整工具链</p>
     </div>
 
     <div class="cli-grid">
@@ -1926,6 +1968,139 @@
         <div class="cli-cmd">ethan workflow list</div>
         <div class="cli-desc">列出所有可用工作流 Pipeline，标注当前进行中的会话</div>
       </div>
+
+      <!-- Phase 1: Git Integration -->
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan commit</div>
+        <div class="cli-desc">读取 staged diff，生成符合 Conventional Commits 规范的提交信息并写入剪贴板</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan review</div>
+        <div class="cli-desc">获取分支 diff，生成 Blocker/Major/Minor 分级代码审查提示词</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan pr</div>
+        <div class="cli-desc">基于提交日志生成 PR 标题 + 正文 + Checklist，支持 --template 指定模板</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan standup</div>
+        <div class="cli-desc">读取最近 N 天的提交历史，生成站会发言稿，支持 --days 和 --format</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan changelog</div>
+        <div class="cli-desc">根据两个 tag 间的提交生成 CHANGELOG，按 feat/fix/chore 分组</div>
+      </div>
+
+      <!-- Phase 2: Dev Tools -->
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan scan</div>
+        <div class="cli-desc">扫描项目的 TODO/FIXME/HACK 注释（--todo）或检查依赖安全漏洞（--deps）</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan explain [file]</div>
+        <div class="cli-desc">解释代码逻辑，支持 --lines 行范围和 --level 深度（junior/senior/principal）</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan test-case &lt;file&gt;</div>
+        <div class="cli-desc">为指定文件生成单元测试提示词，支持 --framework 和 --coverage 选项</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan naming &lt;desc&gt;</div>
+        <div class="cli-desc">为描述生成多种命名候选（camelCase / PascalCase / snake_case），支持 --lang 和 --count</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan readme</div>
+        <div class="cli-desc">扫描项目结构后生成 README 草稿，支持 --template library / cli / service</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan roast [file]</div>
+        <div class="cli-desc">幽默吐槽代���质量，支持 --level mild / spicy / savage 和 --pr 模式</div>
+      </div>
+
+      <!-- Phase 3: Workflow Enhancement -->
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan oncall</div>
+        <div class="cli-desc">生成 On-call 排查 SOP，支持 --severity P0/P1/P2 和 --postmortem 复盘模板</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan schedule add/list/remove</div>
+        <div class="cli-desc">管理 cron 定时任务，add 支持 --cron 表达式，安全调用系统 crontab</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan hooks install/list/remove</div>
+        <div class="cli-desc">管理 Git hooks（pre-commit / commit-msg / pre-push），支持追加或替换模式</div>
+      </div>
+
+      <!-- Phase 4: Team & Data -->
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan memory add/search/export</div>
+        <div class="cli-desc">Skill 记忆库：手动添加条目、全文搜索、导出 Markdown，工作流完成后自动归档</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan estimate</div>
+        <div class="cli-desc">从任务描述生成研发工时估算提示词，支持 --style hours/story-points 和 --team 人数</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan retro</div>
+        <div class="cli-desc">生成迭代复盘提示词，支持 4L / Start-Stop-Continue 等格式，--from-workflow 读取当前会话</div>
+      </div>
+
+      <!-- Phase 5: Stats & Pipeline -->
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan stats show/leaderboard/reset</div>
+        <div class="cli-desc">查看个人使用频次（ASCII 条形图）、连续使用天数、团队排行榜</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan pipeline-init</div>
+        <div class="cli-desc">生成 YAML Pipeline 模板到 <code>.ethan/pipelines/</code>，支持 --name 指定流程名称</div>
+      </div>
+
+      <!-- Phase 6: Plugin OS -->
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan plugin publish</div>
+        <div class="cli-desc">将本地 Skill 插件发布到 npm（或私有注册表），支持 --dry-run 预检</div>
+      </div>
+      <div class="cli-item reveal">
+        <div class="cli-cmd">ethan plugin registry</div>
+        <div class="cli-desc">配置私有 Skill 插件注册表 URL（--set / --unset / --show）</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan plugin search &lt;keyword&gt;</div>
+        <div class="cli-desc">在 npm 搜索 ethan-skill-* 插件包，-n 限制返回数量</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BROWSER EXTENSION SECTION
+  ============================================================ -->
+  <section id="browser-ext" aria-label="浏览器扩展">
+    <div class="section-header reveal">
+      <h2 class="section-title">浏览器扩展</h2>
+      <p class="section-subtitle">Chrome / Edge — 将 Ethan 带入任意网页</p>
+    </div>
+
+    <div class="vscode-features">
+      <div class="vscode-feat reveal">
+        <div class="vscode-feat-icon" aria-hidden="true">⚡</div>
+        <div class="vscode-feat-title">GitHub PR 一键 Review</div>
+        <div class="vscode-feat-desc">访问任意 GitHub PR 页面，页面头部自动注入「⚡ Ethan Review」按钮，提取 PR 上下文并生成完整 Code Review 提示词</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-1">
+        <div class="vscode-feat-icon" aria-hidden="true">🖱️</div>
+        <div class="vscode-feat-title">右键菜单快速触发</div>
+        <div class="vscode-feat-desc">选中任意代码或文字 → 右键 → Ethan ⚡ → 选择 Review / Explain / Naming / PR Review，即时生成提示词</div>
+      </div>
+      <div class="vscode-feat reveal reveal-delay-2">
+        <div class="vscode-feat-icon" aria-hidden="true">📋</div>
+        <div class="vscode-feat-title">Popup 快捷面板</div>
+        <div class="vscode-feat-desc">工具栏图标弹出 300px 面板：6 个快捷操作按钮 + 9 个 Skill 快捷键，所有提示词一键复制到剪贴板</div>
+      </div>
+      <div class="vscode-feat reveal">
+        <div class="vscode-feat-icon" aria-hidden="true">🔒</div>
+        <div class="vscode-feat-title">隐私安全 · 纯本地</div>
+        <div class="vscode-feat-desc">扩展不发送任何数据到服务器，所有提示词在本地生成后复制到剪贴板，无账号无追踪</div>
+      </div>
     </div>
   </section>
 
@@ -1987,6 +2162,7 @@
         <a href="#pipeline">Pipeline</a>
         <a href="#advanced">高级功能</a>
         <a href="#cli">CLI</a>
+        <a href="#browser-ext">浏览器扩展</a>
         <a href="#vscode">VS Code</a>
         <a href="#install">安装</a>
         <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank" rel="noopener noreferrer">文档</a>
@@ -2004,7 +2180,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2026 Ethan &nbsp;·&nbsp; v1.1.0 &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.0 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 
