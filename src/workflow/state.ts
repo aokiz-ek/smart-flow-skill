@@ -1,6 +1,6 @@
 /**
  * 工作流会话状态管理
- * 持久化到 .ethan/workflow.json
+ * 持久化到 .ethan/workflow.json（默认）或 .ethan/sessions/<name>.json（具名会话）
  */
 
 import * as fs from 'fs';
@@ -20,6 +20,8 @@ export interface WorkflowStep {
 
 export interface WorkflowSession {
   id: string;
+  /** 具名会话名称（可选，T12 Named Sessions） */
+  name?: string;
   pipelineId: string;
   pipelineName: string;
   /** 用户最初的任务上下文描述 */
@@ -33,14 +35,18 @@ export interface WorkflowSession {
 
 const WORKFLOW_DIR = '.ethan';
 const WORKFLOW_FILE = 'workflow.json';
+const SESSIONS_DIR = 'sessions';
 
-function getWorkflowPath(cwd: string): string {
+function getWorkflowPath(cwd: string, sessionName?: string): string {
+  if (sessionName) {
+    return path.join(cwd, WORKFLOW_DIR, SESSIONS_DIR, `${sessionName}.json`);
+  }
   return path.join(cwd, WORKFLOW_DIR, WORKFLOW_FILE);
 }
 
-/** 读取当前 session */
-export function loadSession(cwd: string = process.cwd()): WorkflowSession | null {
-  const filePath = getWorkflowPath(cwd);
+/** 读取当前 session（支持具名会话） */
+export function loadSession(cwd: string = process.cwd(), sessionName?: string): WorkflowSession | null {
+  const filePath = getWorkflowPath(cwd, sessionName);
   try {
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as WorkflowSession;
@@ -51,28 +57,49 @@ export function loadSession(cwd: string = process.cwd()): WorkflowSession | null
   return null;
 }
 
-/** 保存 session */
-export function saveSession(session: WorkflowSession, cwd: string = process.cwd()): void {
-  const dir = path.join(cwd, WORKFLOW_DIR);
+/** 保存 session（支持具名会话） */
+export function saveSession(session: WorkflowSession, cwd: string = process.cwd(), sessionName?: string): void {
+  const name = sessionName || session.name;
+  const filePath = getWorkflowPath(cwd, name);
+  const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   session.updatedAt = new Date().toISOString();
-  fs.writeFileSync(getWorkflowPath(cwd), JSON.stringify(session, null, 2), 'utf-8');
+  fs.writeFileSync(filePath, JSON.stringify(session, null, 2), 'utf-8');
 }
 
-/** 删除 session（reset） */
-export function deleteSession(cwd: string = process.cwd()): void {
-  const filePath = getWorkflowPath(cwd);
+/** 删除 session（reset，支持具名会话） */
+export function deleteSession(cwd: string = process.cwd(), sessionName?: string): void {
+  const filePath = getWorkflowPath(cwd, sessionName);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 }
 
-/** 创建新 session */
+/** 列出所有具名会话 */
+export function listNamedSessions(cwd: string = process.cwd()): WorkflowSession[] {
+  const sessionsDir = path.join(cwd, WORKFLOW_DIR, SESSIONS_DIR);
+  if (!fs.existsSync(sessionsDir)) return [];
+  return fs
+    .readdirSync(sessionsDir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(sessionsDir, f), 'utf-8')) as WorkflowSession;
+      } catch {
+        return null;
+      }
+    })
+    .filter((s): s is WorkflowSession => s !== null);
+}
+
+/** 创建新 session（支持具名会话） */
 export function createSession(
   pipeline: PipelineDefinition,
   initialContext: string,
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
+  sessionName?: string
 ): WorkflowSession {
   const session: WorkflowSession = {
     id: Date.now().toString(36),
+    name: sessionName,
     pipelineId: pipeline.id,
     pipelineName: pipeline.name,
     initialContext,
@@ -84,7 +111,7 @@ export function createSession(
     updatedAt: new Date().toISOString(),
     completed: false,
   };
-  saveSession(session, cwd);
+  saveSession(session, cwd, sessionName);
   return session;
 }
 
@@ -125,7 +152,7 @@ export function markStepDone(
     session.completed = true;
   }
 
-  saveSession(session, cwd);
+  saveSession(session, cwd, session.name);
   return nextIdx < session.steps.length ? session.steps[nextIdx] : null;
 }
 

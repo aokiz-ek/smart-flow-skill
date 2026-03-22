@@ -2,6 +2,9 @@
 /**
  * npx ethan CLI
  * 命令：install | list | mcp | validate | pipeline | doctor | stats | init | run | workflow (start/done/status/reset/list/report)
+ *       commit | review | pr | standup | changelog
+ *       scan | explain | test-case | naming | readme | roast
+ *       oncall | schedule (add/list/remove) | hooks (install/list/remove)
  */
 
 import { Command } from 'commander';
@@ -13,6 +16,19 @@ import { ALL_SKILLS } from '../skills/index';
 import type { Platform, BuildContext } from '../skills/types';
 import { checkForUpdates } from './update-check';
 import { readConfig, writeConfig, getConfigPath } from './config';
+import {
+  isGitRepo,
+  getStagedDiff,
+  getBranchDiff,
+  getStagedFiles,
+  getCurrentBranch,
+  getDefaultBranch,
+  getCommitLogSince,
+  getCommitRange,
+  getLatestTag,
+  getTags,
+  truncateDiff,
+} from '../git/utils';
 
 // ─── 剪贴板工具函数（不经过 shell，避免 backtick 命令注入） ─────────────────
 function copyToClipboard(text: string): boolean {
@@ -859,7 +875,8 @@ workflowCmd
   .command('start [pipelineId]')
   .description('启动工作流会话（默认 dev-workflow），输出第一步提示词')
   .option('-c, --context <context>', '初始任务上下文', '')
-  .action(async (pipelineId: string | undefined, options: { context: string }) => {
+  .option('-n, --name <name>', '具名会话（存至 .ethan/sessions/<name>.json，可并行多个工作流）')
+  .action(async (pipelineId: string | undefined, options: { context: string; name?: string }) => {
     const {
       loadSession,
       createSession,
@@ -868,11 +885,12 @@ workflowCmd
     } = await import('../workflow/state');
     const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
 
-    // 检查是否已有进行中的 session
-    const existing = loadSession(process.cwd());
+    // 检查是否已有进行中的 session（具名会话不覆盖默认）
+    const existing = loadSession(process.cwd(), options.name);
     if (existing && !existing.completed) {
       console.log('\n⚠️  已有进行中的工作流：');
       console.log(`   Pipeline: ${existing.pipelineName}`);
+      if (existing.name) console.log(`   会话名: ${existing.name}`);
       console.log(`   进度: ${calcProgress(existing)}%`);
       console.log('\n💡 使用 ethan workflow status 查看进度');
       console.log('   使用 ethan workflow reset 重置后再启动新工作流\n');
@@ -907,12 +925,13 @@ workflowCmd
       }
     }
 
-    const session = createSession(pipeline, context, process.cwd());
+    const session = createSession(pipeline, context, process.cwd(), options.name);
     const firstStep = session.steps[0];
     const firstSkill = skills[0];
 
     console.log(`\n🚀 工作流已启动：${pipeline.name}`);
     console.log(`   ID: ${session.id}`);
+    if (session.name) console.log(`   会话名: ${session.name}`);
     console.log(`   共 ${session.steps.length} 步\n`);
     console.log('─'.repeat(60));
 
@@ -925,7 +944,7 @@ workflowCmd
       console.log('\n✅ 提示词已复制到剪贴板！粘贴到你的 AI 编辑器中执行。');
     }
 
-    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"\n`);
+    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"${session.name ? ` --name ${session.name}` : ''}\n`);
 
     // 记录使用统计
     const stats = readStats();
@@ -936,7 +955,8 @@ workflowCmd
 workflowCmd
   .command('done [summary]')
   .description('完成当前步骤，传入本步摘要，自动推进到下一步')
-  .action(async (summary: string | undefined) => {
+  .option('-n, --name <name>', '具名会话名称')
+  .action(async (summary: string | undefined, options: { name?: string }) => {
     const {
       loadSession,
       markStepDone,
@@ -947,7 +967,7 @@ workflowCmd
     } = await import('../workflow/state');
     const { resolvePipeline } = await import('../skills/pipeline');
 
-    const session = loadSession(process.cwd());
+    const session = loadSession(process.cwd(), options.name);
     if (!session) {
       console.error('\n❌ 未找到进行中的工作流。运行 ethan workflow start 启动。\n');
       process.exit(1);
@@ -1016,7 +1036,7 @@ workflowCmd
       console.log('\n✅ 下一步提示词已复制到剪贴板！');
     }
 
-    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"\n`);
+    console.log(`\n💡 完成本步后，运行：ethan workflow done "你的本步摘要"${session.name ? ` --name ${session.name}` : ''}\n`);
 
     // 记录使用统计
     const stats = readStats();
@@ -1027,17 +1047,18 @@ workflowCmd
 workflowCmd
   .command('status')
   .description('查看当前工作流进度看板')
-  .action(async () => {
+  .option('-n, --name <name>', '具名会话名称')
+  .action(async (options: { name?: string }) => {
     const {
       loadSession,
       getCurrentStepIndex,
       calcProgress,
     } = await import('../workflow/state');
 
-    const session = loadSession(process.cwd());
+    const session = loadSession(process.cwd(), options.name);
     if (!session) {
       console.log('\n📋 当前目录暂无工作流会话。\n');
-      console.log('   ��行 ethan workflow start 启动新工作流\n');
+      console.log('   运行 ethan workflow start 启动新工作流\n');
       return;
     }
 
@@ -1055,6 +1076,7 @@ workflowCmd
     console.log('─'.repeat(60));
     console.log(`  Pipeline : ${session.pipelineName}`);
     console.log(`  Session  : ${session.id}`);
+    if (session.name) console.log(`  会话名   : ${session.name}`);
     console.log(`  创建时间  : ${session.createdAt.slice(0, 19).replace('T', ' ')}`);
     console.log(`  更新时间  : ${session.updatedAt.slice(0, 19).replace('T', ' ')}`);
     console.log(`  总进度   : [${'█'.repeat(Math.round(progress / 5))}${'░'.repeat(20 - Math.round(progress / 5))}] ${progress}%`);
@@ -1081,17 +1103,18 @@ workflowCmd
       console.log('\n🎉 工作流已全部完成！运行 ethan workflow reset 开始新工作流\n');
     } else {
       console.log(`\n💡 当前任务背景：${session.initialContext}`);
-      console.log(`   完成当前步骤后运行：ethan workflow done "你的摘要"\n`);
+      console.log(`   完成当前步骤后运行：ethan workflow done "你的摘要"${session.name ? ` --name ${session.name}` : ''}\n`);
     }
   });
 
 workflowCmd
   .command('reset')
   .description('清除当前工作流会话（不可恢复）')
-  .action(async () => {
+  .option('-n, --name <name>', '具名会话名称')
+  .action(async (options: { name?: string }) => {
     const { loadSession, deleteSession, calcProgress } = await import('../workflow/state');
 
-    const session = loadSession(process.cwd());
+    const session = loadSession(process.cwd(), options.name);
     if (!session) {
       console.log('\n📋 当前目录无工作流会话，无需重置。\n');
       return;
@@ -1114,16 +1137,38 @@ workflowCmd
       return;
     }
 
-    deleteSession(process.cwd());
+    deleteSession(process.cwd(), options.name);
     console.log('\n✅ 工作流已重置。运行 ethan workflow start 开始新工作流。\n');
   });
 
 workflowCmd
   .command('list')
-  .description('列出所有可用的工作流 Pipeline')
-  .action(async () => {
+  .description('列出所有可用的工作流 Pipeline 及进行中的具名会话')
+  .option('--sessions', '只列出所有具名会话（不列 Pipeline）')
+  .action(async (options: { sessions?: boolean }) => {
     const { PIPELINES } = await import('../skills/pipeline');
-    const { loadSession, calcProgress } = await import('../workflow/state');
+    const { loadSession, calcProgress, listNamedSessions } = await import('../workflow/state');
+
+    // ── 列出具名会话 ─────────────────────────────────────────────────────────
+    const namedSessions = listNamedSessions(process.cwd());
+    if (namedSessions.length > 0 || options.sessions) {
+      console.log('\n📂 具名会话\n');
+      console.log('─'.repeat(60));
+      if (namedSessions.length === 0) {
+        console.log('   暂无具名会话。使用 ethan workflow start --name <name> 创建。');
+      } else {
+        for (const s of namedSessions) {
+          const pct = calcProgress(s);
+          const statusLabel = s.completed ? '🎉 已完成' : `${pct}% 进行中`;
+          console.log(`\n  📌 ${s.name || s.id}  [${statusLabel}]`);
+          console.log(`     Pipeline: ${s.pipelineName}`);
+          console.log(`     背景: ${s.initialContext.slice(0, 60)}${s.initialContext.length > 60 ? '…' : ''}`);
+          console.log(`     更新: ${s.updatedAt.slice(0, 19).replace('T', ' ')}`);
+        }
+      }
+      console.log('\n' + '─'.repeat(60));
+      if (options.sessions) return;
+    }
 
     const current = loadSession(process.cwd());
 
@@ -1138,7 +1183,8 @@ workflowCmd
       console.log(`  步骤：${p.skillIds.join(' → ')}`);
     }
     console.log('\n' + '─'.repeat(60));
-    console.log('\n启动工作流：ethan workflow start <pipeline-id> -c "任务描述"\n');
+    console.log('\n启动工作流：ethan workflow start <pipeline-id> -c "任务描述"');
+    console.log('具名会话：  ethan workflow start <pipeline-id> --name <name> -c "任务描述"\n');
   });
 
 workflowCmd
@@ -1273,6 +1319,1084 @@ workflowCmd
       console.log(`\n✅ 报告已保存到：${outPath}\n`);
     } else {
       console.log('\n' + report);
+    }
+  });
+
+// ─── scan 命令（T06）────────────────────────────────────────────────────────
+program
+  .command('scan')
+  .description('扫描项目代码健康状况：TODO/FIXME、高频修改热点、过期依赖等')
+  .option('--todo', '只扫描 TODO / FIXME / HACK / XXX 注释')
+  .option('--deps', '只检查依赖过期情况（读取 package.json）')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    const cwd = process.cwd();
+
+    // ── TODO 扫描 ──────────────────────────────────────────────────────────
+    const todoResult = spawnSync(
+      'grep',
+      ['-rn', '--include=*.ts', '--include=*.js', '--include=*.tsx', '--include=*.jsx',
+        '--exclude-dir=node_modules', '--exclude-dir=dist', '--exclude-dir=.git',
+        '-E', '(TODO|FIXME|HACK|XXX):', '.'],
+      { encoding: 'utf-8', cwd }
+    );
+    const todoLines = (todoResult.stdout || '').trim().split('\n').filter(Boolean);
+
+    // ── 依赖检查 ────────────────────────────────────────────────────────────
+    let depsSection = '';
+    const pkgPath = path.join(cwd, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      const allDeps = {
+        ...pkgJson.dependencies,
+        ...pkgJson.devDependencies,
+      };
+      const depList = Object.entries(allDeps)
+        .map(([name, ver]) => `  ${name}: ${ver}`)
+        .join('\n');
+      depsSection = `\n## 当前依赖\n\`\`\`\n${depList}\n\`\`\`\n`;
+    }
+
+    if (options.deps && !options.todo) {
+      if (!depsSection) {
+        console.error('❌ 当前目录未找到 package.json');
+        process.exit(1);
+      }
+    }
+
+    const todoSection =
+      todoLines.length > 0
+        ? `\n## TODO / FIXME 注释（${todoLines.length} 条）\n\`\`\`\n${todoLines.slice(0, 50).join('\n')}${todoLines.length > 50 ? `\n[...还有 ${todoLines.length - 50} 条]` : ''}\n\`\`\`\n`
+        : '\n## TODO / FIXME 注释\n无\n';
+
+    const prompt = `你是一名代码质量工程师，请根据以下项目扫描结果给出改进建议。
+
+## 任务
+分析代码库的健康状况，输出优先级排序的改进建议清单。
+
+## 项目路径
+${cwd}
+${options.todo && !options.deps ? todoSection : options.deps && !options.todo ? depsSection : todoSection + depsSection}
+## 输出格式
+1. **健康评分**（0-100，含简短评语）
+2. **高优先级问题**（需立即处理）
+3. **中优先级建议**（本周内处理）
+4. **低优先级优化**（有时间再说）
+5. **总结**（一句话）
+
+请给出具体可操作的建议，每条建议说明原因和影响。`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ 扫描报告提示词已复制到剪贴板（${todoLines.length} 个 TODO）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── explain 命令（T07）─────────────────────────────────────────────────────
+program
+  .command('explain [file]')
+  .description('解释代码文件或指定行范围，生成易读解释提示词')
+  .option('--lines <range>', '行范围，如 10-50')
+  .option(
+    '--level <level>',
+    '解释深度：junior（入门）| senior（深度）| rubber-duck（橡皮鸭调试）',
+    'senior'
+  )
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((file, options) => {
+    let code = '';
+    let codeLabel = '';
+
+    if (file) {
+      const filePath = path.resolve(process.cwd(), file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`❌ 文件不存在：${filePath}`);
+        process.exit(1);
+      }
+      const allLines = fs.readFileSync(filePath, 'utf-8').split('\n');
+      if (options.lines) {
+        const [start, end] = options.lines.split('-').map(Number);
+        code = allLines.slice((start || 1) - 1, end || allLines.length).join('\n');
+        codeLabel = `${file}（第 ${start}-${end} 行）`;
+      } else {
+        code = allLines.join('\n');
+        codeLabel = file;
+      }
+    } else {
+      console.error('❌ 请提供文件路径，如：ethan explain src/utils.ts --lines 1-50');
+      process.exit(1);
+    }
+
+    const levelGuide: Record<string, string> = {
+      junior: '用简单直白的语言解释，避免术语，适合初级开发者理解',
+      senior: '深入分析设计意图、架构决策和潜在问题，适合有经验的开发者',
+      'rubber-duck': '像对橡皮鸭调试一样逐行解释，帮助理解代码执行流程和找出 bug',
+    };
+
+    const guide = levelGuide[options.level] || levelGuide['senior'];
+
+    const truncatedCode = code.length > 6000 ? code.slice(0, 6000) + '\n[...代码已截断...]' : code;
+
+    const prompt = `你是一名经验丰富的工程师，请解释以下代码。
+
+## 解释风格
+${guide}
+
+## 代码来源
+${codeLabel}
+
+## 代码
+\`\`\`
+${truncatedCode}
+\`\`\`
+
+## 输出格式
+1. **核心功能**（一句话）
+2. **逐块解析**（每个关键部分的作用）
+3. **关键技术点**（使用的设计模式/算法/API）
+4. **潜在问题或改进点**（若有）`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ 代码解释提示词已复制到剪贴板（${codeLabel}）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── test-case 命令（T08）───────────────────────────────────────────────────
+program
+  .command('test-case <file>')
+  .description('为源文件生成测试用例提示词')
+  .option(
+    '--framework <fw>',
+    '测试框架：vitest | jest | mocha | jasmine | pytest | go-test',
+    'vitest'
+  )
+  .option('--coverage <level>', '覆盖目标：basic | full | edge-cases', 'full')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((file, options) => {
+    const filePath = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ 文件不存在：${filePath}`);
+      process.exit(1);
+    }
+    const code = fs.readFileSync(filePath, 'utf-8');
+    const truncatedCode = code.length > 6000 ? code.slice(0, 6000) + '\n[...已截断...]' : code;
+
+    const coverageGuide: Record<string, string> = {
+      basic: '覆盖主要功能路径，确保 happy path 通过',
+      full: '覆盖所有分支（if/else/switch）、正常路径和错误路径',
+      'edge-cases': '重点覆盖边界条件：空值、极值、并发、异常抛出、类型异常等',
+    };
+
+    const prompt = `你是一名测试工程师，请为以下代码生成完整的测试用例。
+
+## 要求
+- **框架**：${options.framework}
+- **覆盖目标**：${coverageGuide[options.coverage] || coverageGuide['full']}
+- 每个测试用例包含：describe 描述、it/test 名称、arrange/act/assert 结构
+- 对异步代码使用 async/await
+- Mock 外部依赖（文件系统、网络请求、数据库等）
+
+## 源文件
+${file}
+
+## 源代码
+\`\`\`
+${truncatedCode}
+\`\`\`
+
+## 输出格式
+直接输出完整可运行的测试文件，包含所有 import 语句，使用 ${options.framework} 语法。
+文件名建议：${path.basename(file, path.extname(file))}.test${path.extname(file)}`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ 测试用例提示词已复制到剪贴板（${file}）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── naming 命令（T09）──────────────────────────────────────────────────────
+program
+  .command('naming <description>')
+  .description('根据描述生成命名候选（变量/函数/组件/文件等）')
+  .option('--style <style>', '命名风格：camelCase | PascalCase | snake_case | kebab-case | all', 'all')
+  .option('--lang <lang>', '语言上下文：ts | js | python | go | rust | java', 'ts')
+  .option('--count <n>', '每种类型生成几个候选', '5')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((description, options) => {
+    const count = parseInt(options.count, 10) || 5;
+    const styleGuide =
+      options.style === 'all'
+        ? '对每种命名类型（变量/函数/组件/文件/常量），同时提供 camelCase、PascalCase、snake_case 三种风格的候选'
+        : `使用 ${options.style} 风格`;
+
+    const prompt = `你是一名命名专家，擅长为代码元素起简洁、准确、符合惯例的名称。
+
+## 需求描述
+${description}
+
+## 要求
+- 语言/框架上下文：${options.lang}
+- 命名风格：${styleGuide}
+- 每种类型提供 ${count} 个候选，从最推荐到可接受排序
+- 每个候选附简短说明（为什么选这个名字）
+
+## 输出格式（Markdown 表格）
+
+### 变量名
+| 候选 | 风格 | 说明 |
+|------|------|------|
+
+### 函数/方法名
+| 候选 | 风格 | 说明 |
+|------|------|------|
+
+### 类/组件名
+| 候选 | 风格 | 说明 |
+|------|------|------|
+
+### 文件/模块名
+| 候选 | 风格 | 说明 |
+|------|------|------|
+
+### 常量名
+| 候选 | 风格 | 说明 |
+|------|------|------|
+
+最后给出你的 **最终推荐**（每类各一个，并说明理由）。`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ 命名建议提示词已复制到剪贴板\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── readme 命令（T10）──────────────────────────────────────────────────────
+program
+  .command('readme')
+  .description('扫描项目结构，生成 README 起草提示词')
+  .option('--template <tpl>', '模板类型：library | cli | webapp | api | monorepo', 'library')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    const cwd = process.cwd();
+
+    // 读取 package.json
+    const pkgPath = path.join(cwd, 'package.json');
+    let pkgInfo = '';
+    if (fs.existsSync(pkgPath)) {
+      const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      pkgInfo = `\n## package.json 信息\n- name: ${pkgJson.name || 'N/A'}\n- version: ${pkgJson.version || 'N/A'}\n- description: ${pkgJson.description || 'N/A'}\n- scripts: ${Object.keys(pkgJson.scripts || {}).join(', ') || 'N/A'}\n`;
+    }
+
+    // 获取目录结构（2层）
+    const treeResult = spawnSync('find', ['.', '-maxdepth', '2', '-not', '-path', '*/node_modules/*', '-not', '-path', '*/.git/*', '-not', '-path', '*/dist/*'], {
+      encoding: 'utf-8', cwd
+    });
+    const tree = (treeResult.stdout || '').trim().split('\n').slice(0, 60).join('\n');
+
+    const templateGuide: Record<string, string> = {
+      library: 'NPM 库 / SDK，包含：简介、安装、快速上手、API 文档、贡献指南',
+      cli: 'CLI 工具，包含：简介、安装、命令列表（表格）、使用示例、配置说明',
+      webapp: 'Web 应用，包含：简介、技术栈、本地开发、部署说明、截图区位占位',
+      api: 'REST/GraphQL API 服务，包含：简介、接口列表、认证方式、部署',
+      monorepo: 'Monorepo，包含：仓库结构、各包说明、开发工作流、发布流程',
+    };
+
+    const prompt = `你是一名技术写作者，请根据以下项目信息生成一份专业的 README.md。
+
+## 项目类型
+${options.template}（${templateGuide[options.template] || templateGuide['library']}）
+${pkgInfo}
+## 项目文件结构
+\`\`\`
+${tree}
+\`\`\`
+
+## 要求
+1. 使用中文（技术术语保持英文）
+2. 开头放 badges 占位（如 npm version / build status / license）
+3. 结构清晰，每个 section 有实质内容（不要空占位）
+4. 安装和使用示例务必给出真实的命令（根据 package.json 推断）
+5. 末尾加 License section
+
+请直接输出完整的 README.md 内容。`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ README 生成提示词已复制到剪贴板（${options.template} 模板）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── roast 命令（T11）───────────────────────────────────────────────────────
+program
+  .command('roast [file]')
+  .description('以幽默吐槽方式 Review 代码（带 --pr 则 roast 当前 PR diff）')
+  .option('--pr', '吐槽当前分支 PR diff')
+  .option('--level <level>', '毒舌程度：mild（温和）| spicy（辛辣）| savage（毒舌）', 'spicy')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((file, options) => {
+    let code = '';
+    let codeLabel = '';
+
+    if (options.pr) {
+      if (!isGitRepo()) {
+        console.error('❌ 当前目录不是 Git 仓库');
+        process.exit(1);
+      }
+      const base = getDefaultBranch();
+      code = truncateDiff(getBranchDiff(base), 6000);
+      codeLabel = `PR diff（${base}...${getCurrentBranch()}）`;
+    } else if (file) {
+      const filePath = path.resolve(process.cwd(), file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`❌ 文件不存在：${filePath}`);
+        process.exit(1);
+      }
+      const content = fs.readFileSync(filePath, 'utf-8');
+      code = content.length > 6000 ? content.slice(0, 6000) + '\n[...已截断...]' : content;
+      codeLabel = file;
+    } else {
+      console.error('❌ 请提供文件路径或使用 --pr 吐槽当前 PR');
+      process.exit(1);
+    }
+
+    const levelGuide: Record<string, string> = {
+      mild: '温和友善，用轻松的玩笑指出问题，像好朋友之间的调侃',
+      spicy: '辛辣直接，用夸张的比喻和反问揭露代码问题，但最终还是提出改进建议',
+      savage: '毒舌模式全开，像脱口秀演员一样无情吐槽，但每个槽点都有实质的改进建议（最后给个鼓励）',
+    };
+
+    const prompt = `你是一名资深工程师，同时也是个擅长代码吐槽的脱口秀演员。请对以下代码进行幽默的 Roast Review。
+
+## 毒舌程度
+${levelGuide[options.level] || levelGuide['spicy']}
+
+## 代码来源
+${codeLabel}
+
+## 代码 / Diff
+\`\`\`
+${code}
+\`\`\`
+
+## 输出要求
+1. **开场白**（一句毒舌的总结）
+2. **逐条吐槽**（每条格式：💀 [文件/函数名] 吐槽内容 → 实质改进建议）
+3. **最佳槽点**（评选本次 Roast 的 MVP 代码片段，附详细解释）
+4. **结语**（${options.level === 'savage' ? '狠狠骂完后给一句温暖鼓励' : '调侃中带着肯定'}）
+
+注意：毒舌只是形式，每个问题都要有实质的技术建议，这不是人身攻击！`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ Roast Review 提示词已复制到剪贴板（${options.level} 模式）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── commit 命令（T01）──────────────────────────────────────────────────────
+program
+  .command('commit')
+  .description('根据 git staged diff 生成 Commit Message 提示词，复制到剪贴板')
+  .option('--type <type>', '强制指定 commit 类型（feat/fix/docs/refactor/test/chore 等）')
+  .option('--emoji', '在 commit 类型前添加 Gitmoji')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    const stagedFiles = getStagedFiles();
+    if (stagedFiles.length === 0) {
+      console.error('❌ 暂存区为空，请先 git add 要提交的文件');
+      process.exit(1);
+    }
+
+    const diff = truncateDiff(getStagedDiff(), 6000);
+    const typeHint = options.type ? `\n\n**强制类型**：${options.type}` : '';
+    const emojiHint = options.emoji
+      ? '\n\n**输出格式**：在 type 前加 Gitmoji，例如 ✨ feat: ...'
+      : '';
+
+    const prompt = `你是一名经验丰富的工程师，请根据以下 Git staged diff 生成一条规范的 Commit Message。
+
+## 要求
+- 遵循 Conventional Commits 规范（type(scope): subject）
+- type 可选：feat / fix / docs / style / refactor / perf / test / chore / ci / build
+- subject 用中文或英文均可，简洁描述"做了什么"（≤50字）
+- 如果改动涉及多个关注点，可附 body（每行一个要点）${typeHint}${emojiHint}
+
+## 涉及文件
+${stagedFiles.map((f) => `- ${f}`).join('\n')}
+
+## Staged Diff
+\`\`\`diff
+${diff}
+\`\`\`
+
+请直接输出 Commit Message，不要额外解释。`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ Commit 提示词已复制到剪贴板（${stagedFiles.length} 个文件）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── review 命令（T02）──────────────────────────────────────────────────────
+program
+  .command('review')
+  .description('对 git diff 执行 Code Review，生成提示词复制到剪贴板')
+  .option('--focus <focus>', '重点关注方向（security/performance/style/logic）')
+  .option('--pr', '审查当前分支相对默认分支的完整 PR diff')
+  .option('--base <branch>', '与指定分支做对比（优先级高于 --pr）')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    let diff: string;
+    let diffLabel: string;
+
+    if (options.base) {
+      diff = getBranchDiff(options.base);
+      diffLabel = `分支对比：${options.base}...HEAD`;
+    } else if (options.pr) {
+      const base = getDefaultBranch();
+      diff = getBranchDiff(base);
+      diffLabel = `PR diff：${base}...HEAD`;
+    } else {
+      diff = getStagedDiff();
+      if (!diff) {
+        console.error('❌ 暂存区为空。请使用 --pr 或 --base <branch> 审查分支差异。');
+        process.exit(1);
+      }
+      diffLabel = 'staged diff';
+    }
+
+    if (!diff) {
+      console.error('❌ 未找到任何差异，无需 Review。');
+      process.exit(1);
+    }
+
+    const focusHint = options.focus
+      ? `\n\n**重点关注**：${options.focus}（请在该方向给出更深入的分析）`
+      : '';
+
+    const prompt = `你是一名资深工程师，请对以下代码变更进行系统性 Code Review。
+
+## Review 维度
+按以下顺序逐层分析，每个问题标注严重级别：
+- 🔴 **Blocker**：必须修复才能合并（正确性 / 安全漏洞 / 数据丢失风险）
+- 🟡 **Major**：强烈建议修复（性能 / 可维护性 / 明显不规范）
+- 🟢 **Minor**：可选优化（代码风格 / 命名 / 小的可读性问题）${focusHint}
+
+## 变更来源
+${diffLabel}（当前分支：${getCurrentBranch()}）
+
+## Diff
+\`\`\`diff
+${truncateDiff(diff, 8000)}
+\`\`\`
+
+## 输出格式
+1. **总体评价**（1-2句）
+2. **问题列表**（按 Blocker → Major → Minor 排列，每条格式：\`[文件:行号] 级别：描述 → 建议\`）
+3. **值得肯定的设计**（若有）
+4. **Review 结论**（通过 / 需修改后通过 / 需重大修改）`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ Code Review 提示词已复制到剪贴板（${diffLabel}）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── pr 命令（T03）───────────────────────────────────────────────────────────
+program
+  .command('pr')
+  .description('根据分支 diff 生成 PR 描述提示词')
+  .option('--base <branch>', '对比的目标分支（默认自动检测 main/master）')
+  .option('--out <file>', '将提示词写入文件（如 PR_DRAFT.md）')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    const base = options.base || getDefaultBranch();
+    const currentBranch = getCurrentBranch();
+
+    if (currentBranch === base) {
+      console.error(`❌ 当前已在 ${base} 分支，请切换到功能分支后再生成 PR 描述。`);
+      process.exit(1);
+    }
+
+    const diff = getBranchDiff(base);
+    if (!diff) {
+      console.error(`❌ 与 ${base} 分支相比没有差异，无需创建 PR。`);
+      process.exit(1);
+    }
+
+    const prompt = `你是一名经验丰富的工程师，请根据以下 Git diff 生成一份规范的 Pull Request 描述。
+
+## PR 信息
+- **当前分支**：${currentBranch}
+- **目标分支**：${base}
+
+## 要求
+生成包含以下结构的 PR 描述（Markdown 格式）：
+
+### ✨ 变更概述
+（1-3 句话，说明这个 PR 做了什么）
+
+### 📋 变更详情
+（分点列出主要改动）
+
+### 🧪 测试说明
+（如何验证这些改动，包括手动测试步骤）
+
+### 🔗 关联 Issue
+（如有，填写 "Closes #xxx" 或 "N/A"）
+
+### ⚠️ 注意事项
+（Reviewer 需要特别关注的地方，或部署注意事项）
+
+## Diff（${base}...${currentBranch}）
+\`\`\`diff
+${truncateDiff(diff, 8000)}
+\`\`\`
+
+请直接输出 PR 描述内容，使用 Markdown 格式，不要额外解释。`;
+
+    if (options.out) {
+      const outPath = path.resolve(process.cwd(), options.out);
+      fs.writeFileSync(outPath, prompt, 'utf-8');
+      console.log(`\n✅ PR 提示词已写入：${outPath}\n`);
+    } else if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ PR 描述提示词已复制到剪贴板（${base}...${currentBranch}）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── standup 命令（T04）─────────────────────────────────────────────────────
+program
+  .command('standup')
+  .description('根据最近 24h 的 git log 生成日报 / 站会稿')
+  .option('--since <time>', '查询时间范围（默认 "24 hours ago"）', '24 hours ago')
+  .option('--author <author>', '只统计指定作者的提交（默认当前 git user）')
+  .option(
+    '--format <format>',
+    '输出格式：standup（站会稿）| daily（日报）| brief（一句话）',
+    'standup'
+  )
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    // 默认使用 git config 中的 user.name
+    const authorResult = spawnSync('git', ['config', 'user.name'], { encoding: 'utf-8' });
+    const author = options.author || (authorResult.stdout || '').trim() || undefined;
+
+    const log = getCommitLogSince(options.since, author);
+    if (!log) {
+      console.log(`\n⚠️  在 "${options.since}" 内未找到任何提交记录。\n`);
+      process.exit(0);
+    }
+
+    const formatGuide: Record<string, string> = {
+      standup: `输出为站会发言稿，包含：
+1. **昨日完成**（根据 commit log 推断）
+2. **今日计划**（根据 commit 趋势合理推断 1-3 条）
+3. **阻塞 / 风险**（如有，否则填"无"）
+格式简洁，适合口头朗读（60-120字）`,
+      daily: `输出为日报，包含：
+1. **完成事项**（分条）
+2. **遗留 / 待处理**
+3. **明日计划**
+适合发送到工作群`,
+      brief: `用一句话总结今天的主要工作（≤30字）`,
+    };
+
+    const guide = formatGuide[options.format] || formatGuide['standup'];
+
+    const prompt = `你是一名工程师助手，请根据以下 Git 提交记录，生成${options.format === 'standup' ? '站会发言稿' : options.format === 'daily' ? '日报' : '工作简报'}。
+
+## 提交记录（${options.since} 至今）
+\`\`\`
+${log}
+\`\`\`
+
+## 要求
+${guide}
+
+请直接输出内容，不要解释格式。`;
+
+    if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ 站会 / 日报提示词已复制到剪贴板\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── changelog 命令（T05）───────────────────────────────────────────────────
+program
+  .command('changelog')
+  .description('根据 tag 区间的 commit log 生成 CHANGELOG 提示词')
+  .option('--from <tag>', '起始 tag（默认最新 tag）')
+  .option('--to <ref>', '结束 ref（默认 HEAD）', 'HEAD')
+  .option('--out <file>', '将提示词写入文件')
+  .option('--append', '追加到 --out 文件而非覆盖')
+  .option('--no-copy', '不复制到剪贴板，直接打印')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    const from = options.from || getLatestTag();
+    if (!from) {
+      console.error('❌ 未找到任何 tag，请使用 --from <tag> 指定起始点。');
+      process.exit(1);
+    }
+
+    const tags = getTags();
+    const log = getCommitRange(from, options.to);
+    if (!log) {
+      console.error(`❌ ${from}..${options.to} 之间没有新的提交。`);
+      process.exit(1);
+    }
+
+    const tagsInfo = tags.length > 0 ? `最近 tag：${tags.slice(0, 5).join(', ')}` : '';
+
+    const prompt = `你是一名技术写作者，请根据以下 Git commit log 生成规范的 CHANGELOG 内容。
+
+## 版本信息
+- **起始**：${from}
+- **结束**：${options.to}
+${tagsInfo ? `- **${tagsInfo}**` : ''}
+
+## 要求
+输出格式（Markdown）：
+\`\`\`
+## [版本号] - YYYY-MM-DD
+
+### ✨ Features
+- commit subject（去掉 feat: 前缀）
+
+### 🐛 Bug Fixes
+- commit subject（去掉 fix: 前缀）
+
+### 📝 Documentation
+- ...
+
+### ♻️ Refactor
+- ...
+
+### 🔧 Chore
+- ...
+\`\`\`
+
+规则：
+1. 按 Conventional Commits type 分类
+2. 跳过 merge commit 和无意义的 chore（如 bump version）
+3. 语言与 commit message 保持一致
+4. 如果 commit 没有规范 type 前缀，根据内容判断分类
+
+## Commit Log（${from}..${options.to}）
+\`\`\`
+${log}
+\`\`\`
+
+请直接输出 CHANGELOG 内容，不要额外说明。`;
+
+    if (options.out) {
+      const outPath = path.resolve(process.cwd(), options.out);
+      if (options.append && fs.existsSync(outPath)) {
+        const existing = fs.readFileSync(outPath, 'utf-8');
+        fs.writeFileSync(outPath, prompt + '\n\n---\n\n' + existing, 'utf-8');
+      } else {
+        fs.writeFileSync(outPath, prompt, 'utf-8');
+      }
+      console.log(`\n✅ CHANGELOG 提示词已写入：${outPath}\n`);
+    } else if (options.copy !== false) {
+      const ok = copyToClipboard(prompt);
+      console.log(`\n✅ CHANGELOG 提示词已复制到剪贴板（${from}..${options.to}）\n`);
+      if (!ok) console.log(prompt);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── oncall 命令（T13）──────────────────────────────────────────────────────
+program
+  .command('oncall')
+  .description('启动故障响应工作流，生成事故排查提示词')
+  .option('--severity <level>', '严重程度：P0（全站不可用）| P1（核心功能受损）| P2（局部影响）', 'P1')
+  .option('-d, --desc <description>', '故障描述（现象、影响范围、触发时间）')
+  .option('--postmortem', '生成事后复盘报告提示词（事故已解决后使用）')
+  .option('--no-copy', '不复制到剪贴板，直接打���')
+  .action((options) => {
+    const desc = options.desc || '（请描述故障现象、影响用户范围和触发时间）';
+    const severity = options.severity || 'P1';
+
+    const severityGuide: Record<string, string> = {
+      P0: '全站不可用 / 核心服务宕机，所有用户受影响，需立即处理',
+      P1: '核心功能受损（如登录、支付、核心 API），部分用户受影响',
+      P2: '非核心功能异常，影响范围有限，可在当天内处理',
+    };
+
+    if (options.postmortem) {
+      const prompt = `你是一名 SRE 工程师，请帮我撰写事后复盘报告（Postmortem���。
+
+## 事故信息
+- **严重程度**：${severity}（${severityGuide[severity] || '未知'}）
+- **故障描述**：${desc}
+
+## 复盘报告结构
+
+### 1. 事故摘要
+（一段话描述：发生了什么、影响了什么、持续多久）
+
+### 2. 事故时间线
+| 时间 | 事件 |
+|------|------|
+|      |      |
+
+### 3. 根本原因分析（5 Why）
+- Why 1：为什么故障发生？
+- Why 2：...
+- Why 3：...
+- Why 4：...
+- Why 5：根本原因
+
+### 4. 影响评估
+- 受影响用户数 / 请求数
+- 业务损失（可量化的部分）
+- SLA 影响
+
+### 5. 解决措施
+- **临时措施**（已执行）：
+- **永久修复**（已执行或计划）：
+
+### 6. 改进措施（Action Items）
+| 措施 | 负责人 | 截止日期 | 优先级 |
+|------|--------|----------|--------|
+
+### 7. 经验教训
+
+请根据上述信息，帮我补全这份复盘报告，对空白处提供建议填写方向。`;
+
+      if (options.copy !== false) {
+        copyToClipboard(prompt);
+        console.log(`\n✅ 复盘报告提示词已复制到剪贴板\n`);
+      } else {
+        console.log('\n' + prompt + '\n');
+      }
+      return;
+    }
+
+    const prompt = `你是一名经验丰富的 SRE / On-Call 工程师，正在处理一起生产故障。
+
+## 故障信息
+- **严重程度**：${severity}（${severityGuide[severity] || '未知'}）
+- **当前状态**：正在响应中
+
+## 故障现象
+${desc}
+
+## 请按照以下框架协助我进行故障排查：
+
+### Phase 1：快速评估（2 分钟内）
+1. **现象确认**：故障现象是否与描述一致？需要补充哪些关键信息？
+2. **影响范围**：受影响的服务 / 用户 / 区域
+3. **初步假设**：最可能的 3 个根因（按概率排序）
+
+### Phase 2：假设验证（逐一排查）
+对每个假设：
+- 验证方法（命令 / 指标 / 日志查询）
+- 期望结果 vs 实际结果
+- 结论（排除 / 确认）
+
+### Phase 3：解决方案
+- **立即止血**（最快恢复服务的临时措施）
+- **根治方案**（解决根本原因）
+- **预防措施**（防止复现）
+
+### Phase 4：复盘准备
+- 关键时间节点记录
+- 待填写的 Postmortem 模板框架
+
+请开始评估，首先告诉我需要哪些关键信息来锁定根因。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ 故障排查提示词已复制到剪贴板（${severity}）\n`);
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+  });
+
+// ─── schedule 命令（T14）────────────────────────────────────────────────────
+const scheduleCmd = program
+  .command('schedule')
+  .description('定时任务管理：将 ethan 命令加入 crontab（add/list/remove）');
+
+scheduleCmd
+  .command('add <command>')
+  .description('将 ethan 命令添加到 crontab（如：ethan standup --no-copy）')
+  .option('--cron <expr>', 'cron 表达式（默认：每天早上 9:00）', '0 9 * * 1-5')
+  .action((command, options) => {
+    if (process.platform === 'win32') {
+      console.error('❌ schedule 命令暂不支持 Windows（请使用任务计划程序）');
+      process.exit(1);
+    }
+
+    const ethanBin = process.execPath.replace('node', '') + 'ethan';
+    const fullCmd = `ethan ${command}`;
+    const cronLine = `${options.cron} ${fullCmd} # ethan-schedule`;
+
+    // 读取现有 crontab
+    const existing = spawnSync('crontab', ['-l'], { encoding: 'utf-8' });
+    const currentCron = existing.status === 0 ? (existing.stdout || '') : '';
+
+    if (currentCron.includes(fullCmd)) {
+      console.log(`\n⚠️  已存在相同的定时任务：${fullCmd}\n`);
+      process.exit(0);
+    }
+
+    const newCron = (currentCron.trimEnd() + '\n' + cronLine + '\n').trimStart();
+    const result = spawnSync('crontab', ['-'], { input: newCron, encoding: 'utf-8' });
+
+    if (result.status !== 0) {
+      console.error(`❌ 添加 crontab 失败：${result.stderr}`);
+      process.exit(1);
+    }
+
+    console.log(`\n✅ 已添加定时任务`);
+    console.log(`   时间：${options.cron}  （周一至周五 09:00）`);
+    console.log(`   命令：${fullCmd}`);
+    console.log(`\n💡 使用 ethan schedule list 查看所有任务\n`);
+    void ethanBin;
+  });
+
+scheduleCmd
+  .command('list')
+  .description('列出所有 ethan 定时任务')
+  .action(() => {
+    if (process.platform === 'win32') {
+      console.error('❌ schedule 命令暂不支持 Windows');
+      process.exit(1);
+    }
+    const result = spawnSync('crontab', ['-l'], { encoding: 'utf-8' });
+    const lines = (result.stdout || '').split('\n').filter((l) => l.includes('# ethan-schedule'));
+    if (lines.length === 0) {
+      console.log('\n📋 暂无 ethan 定时任务。使用 ethan schedule add 添加。\n');
+      return;
+    }
+    console.log(`\n📋 ethan 定时任务（${lines.length} 个）\n`);
+    lines.forEach((l, i) => {
+      const parts = l.replace('# ethan-schedule', '').trim().split(/\s+/);
+      const cronExpr = parts.slice(0, 5).join(' ');
+      const cmd = parts.slice(5).join(' ');
+      console.log(`  ${i + 1}. [${cronExpr}]  ${cmd}`);
+    });
+    console.log('');
+  });
+
+scheduleCmd
+  .command('remove <command>')
+  .description('移除 ethan 定时任务（匹配命令关键字）')
+  .action((command) => {
+    if (process.platform === 'win32') {
+      console.error('❌ schedule 命令暂不支持 Windows');
+      process.exit(1);
+    }
+    const result = spawnSync('crontab', ['-l'], { encoding: 'utf-8' });
+    const currentCron = result.status === 0 ? (result.stdout || '') : '';
+
+    const newCron = currentCron
+      .split('\n')
+      .filter((l) => !(l.includes(command) && l.includes('# ethan-schedule')))
+      .join('\n');
+
+    if (newCron === currentCron) {
+      console.log(`\n⚠️  未找到匹配的定时任务：${command}\n`);
+      return;
+    }
+
+    const writeResult = spawnSync('crontab', ['-'], { input: newCron, encoding: 'utf-8' });
+    if (writeResult.status !== 0) {
+      console.error(`❌ 移除失败：${writeResult.stderr}`);
+      process.exit(1);
+    }
+    console.log(`\n✅ 已移除包含 "${command}" 的定时任务\n`);
+  });
+
+// ─── init --hooks 命令（T15）────────────────────────────────────────────────
+// init 命令已存在，在此添加 --hooks 支持（通过修改现有 init action）
+// 由于无法直接 patch 已注册的 action，以独立命令方式实现 hooks 管理
+const hooksCmd = program
+  .command('hooks')
+  .description('Git Hook 集成：将 ethan 命令注入到 git hooks（install/remove/list）');
+
+hooksCmd
+  .command('install')
+  .description('安装 ethan git hooks（pre-commit / commit-msg / post-merge）')
+  .option('--pre-commit', '在 pre-commit 时运行 ethan scan（扫描代码健康）')
+  .option('--commit-msg', '在 commit-msg 时提示 ethan commit（生成 commit 建议）')
+  .option('--post-merge', '在 post-merge 时运行 ethan standup（更新站会稿）')
+  .option('--all', '安装全部三个 hooks')
+  .action((options) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+
+    const gitDir = spawnSync('git', ['rev-parse', '--git-dir'], { encoding: 'utf-8' }).stdout.trim();
+    const hooksDir = path.join(process.cwd(), gitDir, 'hooks');
+
+    if (!fs.existsSync(hooksDir)) fs.mkdirSync(hooksDir, { recursive: true });
+
+    const installed: string[] = [];
+
+    if (options.all || options.preCommit) {
+      const hookPath = path.join(hooksDir, 'pre-commit');
+      const hookContent = `#!/bin/sh
+# ethan-hook: pre-commit
+# 运行 ethan scan 检查代码健康（仅警告，不阻止提交）
+if command -v ethan &> /dev/null; then
+  ethan scan --no-copy 2>&1 | grep -E "⚠️|❌" || true
+fi
+`;
+      fs.writeFileSync(hookPath, hookContent, { mode: 0o755 });
+      installed.push('pre-commit');
+    }
+
+    if (options.all || options.commitMsg) {
+      const hookPath = path.join(hooksDir, 'commit-msg');
+      const hookContent = `#!/bin/sh
+# ethan-hook: commit-msg
+# 如果 commit message 太短（<10字符），提示使用 ethan commit
+MSG=$(cat "$1")
+if [ \${#MSG} -lt 10 ]; then
+  echo "⚠️  Commit message 太短（<10字符）。提示：运行 'ethan commit' 生成规范的 Commit Message"
+fi
+exit 0
+`;
+      fs.writeFileSync(hookPath, hookContent, { mode: 0o755 });
+      installed.push('commit-msg');
+    }
+
+    if (options.all || options.postMerge) {
+      const hookPath = path.join(hooksDir, 'post-merge');
+      const hookContent = `#!/bin/sh
+# ethan-hook: post-merge
+# merge 后自动提示生成站会稿
+if command -v ethan &> /dev/null; then
+  echo "\\n💡 已完成 merge，运行 'ethan standup' 生成站会稿"
+fi
+`;
+      fs.writeFileSync(hookPath, hookContent, { mode: 0o755 });
+      installed.push('post-merge');
+    }
+
+    if (installed.length === 0) {
+      console.log('\n💡 请指定要安装的 hook：--pre-commit | --commit-msg | --post-merge | --all\n');
+      process.exit(0);
+    }
+
+    console.log(`\n✅ 已安装 ${installed.length} 个 git hook：${installed.join(', ')}`);
+    console.log(`   路径：${hooksDir}\n`);
+  });
+
+hooksCmd
+  .command('list')
+  .description('列出当前项目已安装的 ethan git hooks')
+  .action(() => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+    const gitDir = spawnSync('git', ['rev-parse', '--git-dir'], { encoding: 'utf-8' }).stdout.trim();
+    const hooksDir = path.join(process.cwd(), gitDir, 'hooks');
+    const hookNames = ['pre-commit', 'commit-msg', 'post-merge', 'pre-push'];
+
+    console.log('\n🪝 ethan git hooks\n');
+    for (const hook of hookNames) {
+      const hookPath = path.join(hooksDir, hook);
+      if (fs.existsSync(hookPath)) {
+        const content = fs.readFileSync(hookPath, 'utf-8');
+        const isEthan = content.includes('ethan-hook');
+        console.log(`  ${isEthan ? '✅' : '⚪'} ${hook}${isEthan ? '  [ethan]' : ''}`);
+      } else {
+        console.log(`  ⬜ ${hook}  （未安装）`);
+      }
+    }
+    console.log('');
+  });
+
+hooksCmd
+  .command('remove [hook]')
+  .description('移除 ethan git hooks（不指定则移除所有）')
+  .action((hook) => {
+    if (!isGitRepo()) {
+      console.error('❌ 当前目录不是 Git 仓库');
+      process.exit(1);
+    }
+    const gitDir = spawnSync('git', ['rev-parse', '--git-dir'], { encoding: 'utf-8' }).stdout.trim();
+    const hooksDir = path.join(process.cwd(), gitDir, 'hooks');
+    const targets = hook ? [hook] : ['pre-commit', 'commit-msg', 'post-merge'];
+    const removed: string[] = [];
+
+    for (const h of targets) {
+      const hookPath = path.join(hooksDir, h);
+      if (fs.existsSync(hookPath)) {
+        const content = fs.readFileSync(hookPath, 'utf-8');
+        if (content.includes('ethan-hook')) {
+          fs.unlinkSync(hookPath);
+          removed.push(h);
+        }
+      }
+    }
+
+    if (removed.length === 0) {
+      console.log('\n⚠️  未找到 ethan git hooks\n');
+    } else {
+      console.log(`\n✅ 已移除 ${removed.length} 个 hook：${removed.join(', ')}\n`);
     }
   });
 

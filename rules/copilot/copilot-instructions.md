@@ -1,6 +1,6 @@
-# Ethan - Copilot Instructions (v1.2.1)
+# Ethan - Copilot Instructions (v1.3.0)
 
-> Auto-generated from src/skills/ | 2026-03-22T04:57:44.673Z
+> Auto-generated from src/skills/ | 2026-03-22T13:18:56.032Z
 > Do not edit manually.
 
 You are equipped with the Ethan workflow assistant. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.

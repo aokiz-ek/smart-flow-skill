@@ -2,7 +2,7 @@
   "name": "ethan-skill",
   "displayName": "Ethan",
   "description": "Ethan - Your AI Workflow Assistant",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "publisher": "aokiz",
   "engines": {
     "vscode": "^1.85.0"
