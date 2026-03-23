@@ -38,7 +38,11 @@ function copyToClipboard(text: string): boolean {
       spawnSync('pbcopy', [], { input: text, encoding: 'utf-8' });
       return true;
     } else if (process.platform === 'win32') {
-      spawnSync('clip', [], { input: text, encoding: 'utf-8', shell: false });
+      // clip.exe 以系统 ANSI 码页读取 stdin，UTF-8 直接传入会乱码
+      // 解决方案：传入 UTF-16LE + BOM，Windows 剪贴板原生支持 UTF-16
+      const bom = Buffer.from([0xff, 0xfe]);
+      const utf16 = Buffer.from(text, 'utf16le');
+      spawnSync('clip', [], { input: Buffer.concat([bom, utf16]), shell: false });
       return true;
     } else {
       spawnSync('xclip', ['-selection', 'clipboard'], { input: text, encoding: 'utf-8' });
