@@ -176,10 +176,28 @@ ${stepsContent}
 输出格式：${skill.outputFormat}`;
 }
 
-/** 通义灵码：.lingma/rules/*.md（结构简洁） */
+/** 通义灵码：.lingma/rules/*.md */
 function renderLingma(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const isEn = ctx.lang === 'en';
+
+  const activationRules = isEn
+    ? `## IMPORTANT: Skill Activation Rules
+
+1. At the start of every user message, scan for trigger keywords. If matched, **immediately activate that Skill** — no confirmation needed.
+2. Execute **every step in order** with full detail — do not skip or abbreviate.
+3. Output must follow each Skill's defined format template exactly.
+4. When the user names a Skill directly, activate it immediately.
+
+`
+    : `## 重要：Skill 激活规则
+
+1. 每条用户消息开头扫描触发词，匹配后**立即激活对应 Skill**，无需确认。
+2. **按步骤顺序逐步完整执行**，不跳步、不缩减、不省略。
+3. 输出严格遵循各 Skill 的格式模板。
+4. 用户明确说出 Skill 名称时，直接执行。
+
+`;
 
   if (isEn) {
     return `# Ethan v${version}
@@ -190,15 +208,9 @@ function renderLingma(ctx: BuildContext): string {
 
 ${skills.length} standardized workflow skills. Match trigger keywords to execute the corresponding workflow.
 
-## Skill List
+${activationRules}## Skill List
 
-${skills.map((s) => `### ${s.order}. ${skillName(s, true)}\n- **Triggers**: ${s.triggers.slice(0, 5).join(', ')}\n- **Goal**: ${desc(s, true)}\n- **Steps**: ${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' → ')}`).join('\n\n')}
-
-## Rules
-
-1. Detect intent and match trigger keywords
-2. Follow Skill steps in order
-3. Output per skill template
+${skills.map((s) => renderLingmaSkill(s, true)).join('\n\n---\n\n')}
 `;
   }
 
@@ -210,60 +222,127 @@ ${skills.map((s) => `### ${s.order}. ${skillName(s, true)}\n- **Triggers**: ${s.
 
 本规则提供 ${skills.length} 个标准化工作流节点（Skill），AI 助手根据用户输入的触发词自动执行对应流程。
 
-## Skill 列表
+${activationRules}## Skill 列表
 
-${skills.map((s) => renderLingmaSkill(s)).join('\n\n')}
-
-## 执行规则
-
-1. 检测用户意图，匹配触发词
-2. 严格按 Skill 定义的步骤执行
-3. 输出遵循各 Skill 的格式模板
-4. 上一个 Skill 完成后，提示用户进入下一个 Skill
+${skills.map((s) => renderLingmaSkill(s, false)).join('\n\n---\n\n')}
 `;
 }
 
-function renderLingmaSkill(skill: SkillDefinition): string {
-  const triggers = skill.triggers.slice(0, 5).join('、');
-  const stepsList = skill.steps
-    .map((step) => `  - ${step.title}`)
-    .join('\n');
+function renderLingmaSkill(skill: SkillDefinition, isEn: boolean): string {
+  const triggers = isEn
+    ? skill.triggers.slice(0, 5).join(', ')
+    : skill.triggers.slice(0, 5).join('、');
+
+  const stepsContent = skill.steps
+    .map((step, i) => {
+      const title = step.title.replace(/^\d+\.\s*/, '');
+      const lines = step.content.trim().split('\n').map((l) => `   ${l}`).join('\n');
+      return `${i + 1}. **${title}**\n${lines}`;
+    })
+    .join('\n\n');
+
+  const notesLine =
+    skill.notes && skill.notes.length > 0
+      ? `\n\n**${isEn ? 'Notes' : '注意事项'}**：\n${skill.notes.map((n) => `- ${n}`).join('\n')}`
+      : '';
+
+  if (isEn) {
+    return `### ${skill.order}. ${skillName(skill, true)}
+
+- **Triggers**: ${triggers}
+- **Goal**: ${desc(skill, true)}
+
+**Steps**:
+
+${stepsContent}
+
+**Output**: ${skill.outputFormat}${notesLine}`;
+  }
 
   return `### ${skill.order}. ${skill.name}
 
 - **触发词**：${triggers}
 - **目标**：${skill.description}
-- **步骤**：
-${stepsList}
-- **输出**：${skill.outputFormat}`;
+
+**步骤**：
+
+${stepsContent}
+
+**输出格式**：${skill.outputFormat}${notesLine}`;
 }
 
-/** 腾讯 CodeBuddy：CODEBUDDY.md（内容精简） */
+/** 腾讯 CodeBuddy：CODEBUDDY.md */
 function renderCodeBuddy(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const isEn = ctx.lang === 'en';
+
+  const activationRules = isEn
+    ? `## IMPORTANT: Skill Activation Rules
+
+1. At the start of every user message, scan for trigger keywords. If matched, **immediately activate that Skill** — no confirmation needed.
+2. Execute **every step in order** with full detail — do not skip or abbreviate.
+3. Output must follow each Skill's defined format template exactly.
+4. When the user names a Skill directly, activate it immediately.
+
+`
+    : `## 重要：Skill 激活规则
+
+1. 每条用户消息开头扫描触发词，匹配后**立即激活对应 Skill**，无需确认。
+2. **按步骤顺序逐步完整执行**，不跳步、不缩减。
+3. 输出严格遵循各 Skill 的格式模板。
+4. 用户明确说出 Skill 名称时，直接执行。
+
+`;
 
   return `# Ethan v${version}
 
 Ethan - Your AI Workflow Assistant | Generated: ${generatedAt}
 
-## Skills
+${activationRules}## Skills
 
-${skills
-  .map(
-    (s) => `### ${s.order}. ${skillName(s, isEn)}
-${isEn ? 'Triggers' : '触发词'}：${s.triggers.slice(0, 3).join(' / ')}
-${isEn ? 'Goal' : '说明'}：${desc(s, isEn)}
-${isEn ? 'Steps' : '步骤'}：${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' → ')}
-${isEn ? 'Output' : '输出'}：${s.outputFormat}`
-  )
-  .join('\n\n')}
-
-## ${isEn ? 'Rules' : '规则'}
-- ${isEn ? 'Auto-match trigger keywords and execute the corresponding Skill' : '根据用户输入自动匹配触发词，执行对应 Skill'}
-- ${isEn ? 'Follow steps in order without skipping' : '严格按步骤顺序执行，不省略关键步骤'}
-- ${isEn ? 'Output per skill template' : '输出格式遵循各 Skill 模板定义'}
+${skills.map((s) => renderCodeBuddySkill(s, isEn)).join('\n\n---\n\n')}
 `;
+}
+
+function renderCodeBuddySkill(skill: SkillDefinition, isEn: boolean): string {
+  const stepsContent = skill.steps
+    .map((step, i) => {
+      const title = step.title.replace(/^\d+\.\s*/, '');
+      const lines = step.content.trim().split('\n').map((l) => `   ${l}`).join('\n');
+      return `${i + 1}. **${title}**\n${lines}`;
+    })
+    .join('\n\n');
+
+  const notesLine =
+    skill.notes && skill.notes.length > 0
+      ? `\n\n**${isEn ? 'Notes' : '注意事项'}**：\n${skill.notes.map((n) => `- ${n}`).join('\n')}`
+      : '';
+
+  if (isEn) {
+    return `### ${skill.order}. ${skillName(skill, true)}
+
+**Triggers**: ${skill.triggers.slice(0, 4).join(' / ')}
+
+**Goal**: ${desc(skill, true)}
+
+**Steps**:
+
+${stepsContent}
+
+**Output**: ${skill.outputFormat}${notesLine}`;
+  }
+
+  return `### ${skill.order}. ${skill.name}
+
+**触发词**：${skill.triggers.slice(0, 4).join(' / ')}
+
+**目标**：${skill.description}
+
+**步骤**：
+
+${stepsContent}
+
+**输出格式**：${skill.outputFormat}${notesLine}`;
 }
 
 /** Windsurf：.windsurf/rules/smart-flow.md（YAML frontmatter + 强激活指令） */
@@ -297,25 +376,45 @@ ${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
 `;
 }
 
-/** Zed：smart-flow.rules（精简纯文本，无复杂 Markdown 结构） */
+/** Zed：smart-flow.rules（纯文本，包含完整步骤内容） */
 function renderZed(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const isEn = ctx.lang === 'en';
 
   const skillLines = skills
-    .map(
-      (s) =>
-        `${s.order}. ${skillName(s, isEn)} [${s.triggers.slice(0, 3).join('/')}]\n   ${desc(s, isEn)}\n   Steps: ${s.steps.map((step) => step.title.replace(/^\d+\.\s*/, '')).join(' > ')}`
-    )
-    .join('\n\n');
+    .map((s) => {
+      const stepsContent = s.steps
+        .map((step, i) => {
+          const title = step.title.replace(/^\d+\.\s*/, '');
+          const lines = step.content.trim().split('\n').map((l) => `      ${l}`).join('\n');
+          return `   ${i + 1}. ${title}\n${lines}`;
+        })
+        .join('\n\n');
+
+      return `${s.order}. ${skillName(s, isEn)} [${s.triggers.slice(0, 3).join('/')}]
+   ${desc(s, isEn)}
+
+${stepsContent}
+
+   Output: ${s.outputFormat}`;
+    })
+    .join('\n\n' + '-'.repeat(60) + '\n\n');
 
   return `Ethan v${version} | ${generatedAt}
 
-Workflow automation assistant. Match trigger keywords to execute the corresponding skill.
+Workflow automation assistant. IMPORTANT: When user message matches a trigger keyword below, immediately activate that skill and execute ALL steps in order. Do not skip steps. Output per skill template.
+
+${'='.repeat(60)}
 
 ${skillLines}
 
-Rules: Follow steps in order. Output per skill template. Auto-detect intent from user input.
+${'='.repeat(60)}
+
+Rules:
+- Scan trigger keywords at start of every message
+- Immediately activate matching Skill — no confirmation needed
+- Execute every step with full detail
+- Output follows each Skill's defined template
 `;
 }
 
