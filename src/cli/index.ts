@@ -31,6 +31,38 @@ import {
   truncateDiff,
 } from '../git/utils';
 
+// ─── 文件路径解析工具（兼容 Windows 正/反斜杠） ────────────────────────────
+/**
+ * 将用户传入的文件路径规范化后 resolve 到绝对路径。
+ * 解决 Git Bash 在 Windows 上把 src\api\foo.js 里的反斜杠当转义字符吃掉的问题：
+ *   - Git Bash: src\api\common\login.js → srcapicommonlogin.js （bash 已剥离，无法恢复）
+ *   - CMD / PowerShell: src\api\common\login.js → 正常，path.resolve 自动处理
+ * 建议用户在 Git Bash 下使用正斜杠：src/api/common/login.js
+ */
+function resolveFilePath(file: string): string {
+  // 将路径中的反斜杠统一替换为正斜杠，再交给 path.resolve
+  // （对 CMD/PowerShell 用户同样生效，保持一致）
+  const normalized = file.replace(/\\/g, '/');
+  return path.resolve(process.cwd(), normalized);
+}
+
+function assertFileExists(filePath: string, rawArg: string): void {
+  if (!fs.existsSync(filePath)) {
+    console.error(`❌ 文件不存在：${filePath}`);
+    // 如果路径看起来像是反斜杠被吞掉（无路径分隔符且包含典型路径词），给出提示
+    if (!rawArg.includes('/') && !rawArg.includes('\\')) {
+      console.error(
+        `   提示：在 Git Bash 中请使用正斜杠，例如：` +
+        `${rawArg.replace(/([a-z])([A-Z])/g, '$1/$2')}`
+      );
+      console.error(`   或者使用引号包裹路径："${rawArg}"`);
+    } else {
+      console.error(`   提示：Windows 路径请使用正斜杠，如 src/api/common/login.js`);
+    }
+    process.exit(1);
+  }
+}
+
 // ─── 剪贴板工具函数（不经过 shell，避免 backtick 命令注入） ─────────────────
 function copyToClipboard(text: string): boolean {
   try {
@@ -1565,11 +1597,8 @@ program
     let codeLabel = '';
 
     if (file) {
-      const filePath = path.resolve(process.cwd(), file);
-      if (!fs.existsSync(filePath)) {
-        console.error(`❌ 文件不存在：${filePath}`);
-        process.exit(1);
-      }
+      const filePath = resolveFilePath(file);
+      assertFileExists(filePath, file);
       const allLines = fs.readFileSync(filePath, 'utf-8').split('\n');
       if (options.lines) {
         const [start, end] = options.lines.split('-').map(Number);
@@ -1634,11 +1663,8 @@ program
   .option('--coverage <level>', '覆盖目标：basic | full | edge-cases', 'full')
   .option('--no-copy', '不复制到剪贴板，直接打印')
   .action((file, options) => {
-    const filePath = path.resolve(process.cwd(), file);
-    if (!fs.existsSync(filePath)) {
-      console.error(`❌ 文件不存在：${filePath}`);
-      process.exit(1);
-    }
+    const filePath = resolveFilePath(file);
+    assertFileExists(filePath, file);
     const code = fs.readFileSync(filePath, 'utf-8');
     const truncatedCode = code.length > 6000 ? code.slice(0, 6000) + '\n[...已截断...]' : code;
 
@@ -1816,11 +1842,8 @@ program
       code = truncateDiff(getBranchDiff(base), 6000);
       codeLabel = `PR diff（${base}...${getCurrentBranch()}）`;
     } else if (file) {
-      const filePath = path.resolve(process.cwd(), file);
-      if (!fs.existsSync(filePath)) {
-        console.error(`❌ 文件不存在：${filePath}`);
-        process.exit(1);
-      }
+      const filePath = resolveFilePath(file);
+      assertFileExists(filePath, file);
       const content = fs.readFileSync(filePath, 'utf-8');
       code = content.length > 6000 ? content.slice(0, 6000) + '\n[...已截断...]' : content;
       codeLabel = file;
