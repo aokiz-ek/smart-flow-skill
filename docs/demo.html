@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ethan 演示 — 看 AI 工作流如何运转</title>
+  <meta name="description" content="交互式演示：ethan commit、ethan review、workflow 工作流、MCP 工具，真实效果一键体验。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --color-bg: #000000;
+      --color-surface: #111111;
+      --color-surface-2: #161616;
+      --color-border: #222222;
+      --color-border-hover: #444444;
+      --color-text: #ffffff;
+      --color-text-secondary: #888888;
+      --color-text-tertiary: #444444;
+      --gradient-primary: linear-gradient(135deg, #007AFF 0%, #BF5AF2 100%);
+      --gradient-primary-text: linear-gradient(135deg, #007AFF, #BF5AF2);
+      --color-blue: #007AFF;
+      --color-green: #30D158;
+      --color-orange: #FF9F0A;
+      --color-purple: #BF5AF2;
+      --color-red: #FF375F;
+      --color-yellow: #FFD60A;
+      --font-system: -apple-system, "SF Pro Display", BlinkMacSystemFont, "Helvetica Neue", Inter, sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      --border-radius-card: 16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-system);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .gradient-text {
+      background: var(--gradient-primary-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── NAVBAR ── */
+    #navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .nav-logo {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: var(--gradient-primary-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 32px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--color-text); }
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--color-text); }
+
+    /* ── HERO ── */
+    .demo-hero {
+      padding: 140px 40px 80px;
+      text-align: center;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,122,255,0.12) 0%, transparent 70%);
+    }
+    .demo-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid rgba(0,122,255,0.3);
+      background: rgba(0,122,255,0.08);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-blue);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .demo-hero h1 {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .demo-hero p {
+      font-size: 20px;
+      color: var(--color-text-secondary);
+      max-width: 560px;
+      margin: 0 auto 40px;
+    }
+    .hero-btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 100px;
+      background: var(--gradient-primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      border-radius: 100px;
+      background: transparent;
+      color: var(--color-text);
+      font-size: 15px;
+      font-weight: 600;
+      border: 1px solid var(--color-border-hover);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--color-text-secondary); background: rgba(255,255,255,0.04); }
+
+    /* ── SCENARIO TABS ── */
+    .scenarios-section {
+      padding: 80px 40px 120px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .scenario-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .scenario-tabs::-webkit-scrollbar { display: none; }
+    .scenario-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px 8px 0 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+      background: transparent;
+      position: relative;
+      bottom: -1px;
+    }
+    .scenario-tab:hover { color: var(--color-text); }
+    .scenario-tab.active {
+      color: var(--color-text);
+      background: var(--color-surface);
+      border-color: var(--color-border);
+      border-bottom-color: var(--color-surface);
+    }
+    .scenario-tab .tab-icon { font-size: 16px; }
+
+    .scenario-panel { display: none; }
+    .scenario-panel.active { display: block; }
+
+    /* ── DEMO LAYOUT ── */
+    .demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── TERMINAL ── */
+    .terminal {
+      background: #0a0a0a;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: var(--font-mono);
+    }
+    .terminal-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #111;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .terminal-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    .terminal-dot.red { background: #FF5F57; }
+    .terminal-dot.yellow { background: #FEBC2E; }
+    .terminal-dot.green { background: #28C840; }
+    .terminal-title {
+      margin-left: 8px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-family: var(--font-system);
+    }
+    .terminal-body {
+      padding: 20px;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 320px;
+      position: relative;
+    }
+    .term-line { display: flex; gap: 0; }
+    .term-prompt { color: var(--color-green); margin-right: 8px; flex-shrink: 0; }
+    .term-cmd { color: #e2e8f0; }
+    .term-cmd .cmd-name { color: var(--color-blue); }
+    .term-cmd .cmd-arg { color: var(--color-orange); }
+    .term-cmd .cmd-flag { color: var(--color-purple); }
+    .term-output { color: var(--color-text-secondary); padding-left: 0; }
+    .term-output.success { color: var(--color-green); }
+    .term-output.warn { color: var(--color-orange); }
+    .term-output.error { color: var(--color-red); }
+    .term-output.highlight { color: var(--color-text); }
+    .term-output.dim { color: var(--color-text-tertiary); }
+    .term-section { color: var(--color-yellow); font-weight: bold; }
+    .term-blocker { color: var(--color-red); }
+    .term-major { color: var(--color-orange); }
+    .term-minor { color: var(--color-yellow); }
+    .term-ok { color: var(--color-green); }
+    .term-blank { height: 10px; }
+    .term-cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--color-green);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Play button overlay */
+    .terminal-play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      gap: 12px;
+      border-radius: 0 0 16px 16px;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .terminal-play-overlay.hidden { display: none; }
+    .play-btn {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+    .play-btn:hover { transform: scale(1.1); }
+    .play-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── OUTPUT PANEL ── */
+    .output-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .output-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .output-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .output-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .output-card-title span { color: var(--color-text); }
+    .output-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .output-status.generated {
+      background: rgba(48,209,88,0.15);
+      color: var(--color-green);
+    }
+    .output-status.pending {
+      background: rgba(255,159,10,0.15);
+      color: var(--color-orange);
+    }
+    .output-body {
+      padding: 20px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+    }
+    .output-body .ob-type { color: var(--color-blue); font-weight: bold; }
+    .output-body .ob-scope { color: var(--color-purple); }
+    .output-body .ob-subject { color: var(--color-text); }
+    .output-body .ob-body { color: #aaa; }
+    .output-body .ob-break { color: var(--color-red); }
+    .output-body .ob-tag { color: var(--color-orange); }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--color-text); }
+    .copy-btn.copied { color: var(--color-green); border-color: var(--color-green); }
+
+    /* ── DESCRIPTION CARD ── */
+    .desc-card {
+      background: linear-gradient(135deg, rgba(0,122,255,0.06) 0%, rgba(191,90,242,0.06) 100%);
+      border: 1px solid rgba(0,122,255,0.15);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .desc-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .desc-card p {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+    .desc-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .desc-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+    .desc-step-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── WORKFLOW VISUAL ── */
+    .workflow-visual {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .workflow-visual h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .wf-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .wf-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-border);
+      position: relative;
+    }
+    .wf-step:last-child { border-bottom: none; }
+    .wf-step-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .wf-step-icon.done { background: rgba(48,209,88,0.15); }
+    .wf-step-icon.active { background: rgba(0,122,255,0.15); }
+    .wf-step-icon.pending { background: rgba(255,255,255,0.05); }
+    .wf-step-content { flex: 1; }
+    .wf-step-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .wf-step-name.done { color: var(--color-text-secondary); }
+    .wf-step-name.active { color: var(--color-blue); }
+    .wf-step-name.pending { color: var(--color-text-tertiary); }
+    .wf-step-summary {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      line-height: 1.5;
+    }
+    .wf-step-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+    .wf-step-badge.done { background: rgba(48,209,88,0.15); color: var(--color-green); }
+    .wf-step-badge.active { background: rgba(0,122,255,0.15); color: var(--color-blue); }
+    .wf-step-badge.pending { background: rgba(255,255,255,0.05); color: var(--color-text-tertiary); }
+
+    /* ── CODE REVIEW PANEL ── */
+    .review-panels {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .review-item {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+    }
+    .review-item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .review-item-header.blocker { background: rgba(255,55,95,0.1); color: var(--color-red); border-bottom: 1px solid rgba(255,55,95,0.2); }
+    .review-item-header.major { background: rgba(255,159,10,0.1); color: var(--color-orange); border-bottom: 1px solid rgba(255,159,10,0.2); }
+    .review-item-header.minor { background: rgba(255,214,10,0.1); color: var(--color-yellow); border-bottom: 1px solid rgba(255,214,10,0.2); }
+    .review-item-header.good { background: rgba(48,209,88,0.1); color: var(--color-green); border-bottom: 1px solid rgba(48,209,88,0.2); }
+    .review-item-body {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+    .review-item-body code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--color-text);
+    }
+    .review-file-path {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 6px;
+    }
+    .review-fix {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      border-left: 2px solid var(--color-green);
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+    .review-fix strong { color: var(--color-green); }
+
+    /* ── MCP SECTION ── */
+    .mcp-demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .mcp-call-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .mcp-call-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      background: rgba(0,122,255,0.06);
+      border-bottom: 1px solid rgba(0,122,255,0.15);
+    }
+    .mcp-tool-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-blue);
+    }
+    .mcp-call-body {
+      padding: 16px 20px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      line-height: 1.7;
+    }
+    .mcp-key { color: var(--color-purple); }
+    .mcp-string { color: var(--color-green); }
+    .mcp-brace { color: var(--color-text-tertiary); }
+    .mcp-response {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .mcp-response-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      background: rgba(48,209,88,0.06);
+      border-bottom: 1px solid rgba(48,209,88,0.15);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-green);
+    }
+    .mcp-response-body {
+      padding: 16px 20px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+    }
+    .mcp-response-body h4 {
+      font-size: 14px;
+      color: var(--color-text);
+      margin-bottom: 12px;
+    }
+    .mcp-step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mcp-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .mcp-step-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(0,122,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--color-blue);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── BEFORE/AFTER SECTION ── */
+    .before-after-section {
+      padding: 80px 40px;
+      background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(191,90,242,0.06) 0%, transparent 70%);
+    }
+    .before-after-section h2 {
+      text-align: center;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+    }
+    .ba-subtitle {
+      text-align: center;
+      color: var(--color-text-secondary);
+      font-size: 18px;
+      margin-bottom: 64px;
+    }
+    .ba-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .ba-card {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+    }
+    .ba-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 24px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .ba-card-header.before-header {
+      background: rgba(255,55,95,0.08);
+      border-bottom: 1px solid rgba(255,55,95,0.2);
+      color: #FF375F;
+    }
+    .ba-card-header.after-header {
+      background: rgba(48,209,88,0.08);
+      border-bottom: 1px solid rgba(48,209,88,0.2);
+      color: #30D158;
+    }
+    .ba-card-body {
+      padding: 24px;
+      background: var(--color-surface);
+    }
+    .ba-content {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+    }
+    .ba-content .good { color: var(--color-green); }
+    .ba-content .bad { color: var(--color-red); }
+    .ba-content .neutral { color: var(--color-text-secondary); }
+    .ba-content .label { color: var(--color-blue); font-weight: bold; }
+    .ba-content .value { color: var(--color-text); }
+
+    /* ── INSTALL CTA ── */
+    .install-cta {
+      padding: 120px 40px;
+      text-align: center;
+    }
+    .install-cta h2 {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+    }
+    .install-cta p {
+      font-size: 18px;
+      color: var(--color-text-secondary);
+      margin-bottom: 40px;
+    }
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: var(--color-text);
+      margin-bottom: 32px;
+    }
+    .install-box .dollar { color: var(--color-green); }
+    .install-cta-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--color-border);
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-size: 16px;
+      font-weight: 700;
+      background: var(--gradient-primary-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--color-text); }
+
+    /* ── ANIMATE ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ── ANIMATION PROGRESS ── */
+    .anim-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-top: 1px solid var(--color-border);
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+    .anim-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--color-border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .anim-bar-fill {
+      height: 100%;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .anim-restart {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .anim-restart:hover { background: rgba(255,255,255,0.06); color: var(--color-text); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .demo-layout, .mcp-demo-layout, .ba-grid {
+        grid-template-columns: 1fr;
+      }
+      .demo-hero h1 { font-size: 42px; }
+      .before-after-section h2, .install-cta h2 { font-size: 36px; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+      #navbar { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav id="navbar">
+  <a href="index.html" class="nav-logo">Ethan</a>
+  <ul class="nav-links">
+    <li><a href="#git-demo" class="nav-tab-link" data-tab="git">Git 集成</a></li>
+    <li><a href="#review-demo" class="nav-tab-link" data-tab="review">Code Review</a></li>
+    <li><a href="#workflow-demo" class="nav-tab-link" data-tab="workflow">工作流</a></li>
+    <li><a href="#mcp-demo" class="nav-tab-link" data-tab="mcp">MCP</a></li>
+  </ul>
+  <a href="index.html" class="nav-back">← 返回首页</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="demo-hero">
+  <div class="demo-hero-badge">⚡ 交互演示</div>
+  <h1>看 Ethan<br><span class="gradient-text">如何工作</span></h1>
+  <p>点击播放，观看真实的 AI 工作流场景——从 git commit 到 code review，从工作流编排到 MCP 工具调用。</p>
+  <div class="hero-btn-row">
+    <button class="btn-primary" onclick="startAllAnimations()">▶ 开始演示</button>
+    <a href="index.html#install" class="btn-secondary">立即安装</a>
+  </div>
+</section>
+
+<!-- ── MAIN DEMO SCENARIOS ── -->
+<section class="scenarios-section">
+  <div class="scenario-tabs" role="tablist">
+    <button class="scenario-tab active" role="tab" data-tab="git" onclick="switchTab('git')">
+      <span class="tab-icon">🌿</span> Git 集成
+    </button>
+    <button class="scenario-tab" role="tab" data-tab="review" onclick="switchTab('review')">
+      <span class="tab-icon">🔍</span> Code Review
+    </button>
+    <button class="scenario-tab" role="tab" data-tab="workflow" onclick="switchTab('workflow')">
+      <span class="tab-icon">🔄</span> 工作流
+    </button>
+    <button class="scenario-tab" role="tab" data-tab="mcp" onclick="switchTab('mcp')">
+      <span class="tab-icon">🤖</span> MCP 工具
+    </button>
+    <button class="scenario-tab" role="tab" data-tab="stats" onclick="switchTab('stats')">
+      <span class="tab-icon">📊</span> 统计
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: GIT COMMIT
+  ═══════════════════════════════ -->
+  <div class="scenario-panel active" data-panel="git">
+    <div class="demo-layout">
+      <!-- Left: Terminal -->
+      <div>
+        <div class="terminal" id="terminal-git">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ~/my-project</div>
+          </div>
+          <div class="terminal-body" id="tbody-git">
+            <div class="terminal-play-overlay" id="overlay-git" onclick="playAnim('git')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+            <!-- animated content injected by JS -->
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-git"></div></div>
+            <button class="anim-restart" onclick="resetAnim('git')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Output -->
+      <div class="output-panel">
+        <div class="desc-card">
+          <h3>🌿 ethan commit</h3>
+          <p>读取 staged diff → 分析变更意图 → 生成符合 Conventional Commits 规范的提交信息，自动推断 type / scope / subject / body。</p>
+          <div class="desc-steps">
+            <div class="desc-step">
+              <div class="desc-step-num">1</div>
+              <div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan commit</code>，自动读取 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">git diff --staged</code></div>
+            </div>
+            <div class="desc-step">
+              <div class="desc-step-num">2</div>
+              <div>AI 分析变更，识别文件类型与修改意图</div>
+            </div>
+            <div class="desc-step">
+              <div class="desc-step-num">3</div>
+              <div>生成 2-3 个候选提交信息，按推荐度排序</div>
+            </div>
+            <div class="desc-step">
+              <div class="desc-step-num">4</div>
+              <div>一键复制，直接 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">git commit -m "..."</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="output-card" id="output-git">
+          <div class="output-card-header">
+            <div class="output-card-title">📋 生成的提交信息 <span>Conventional Commit</span></div>
+            <span class="output-status pending" id="status-git">等待运行</span>
+          </div>
+          <div class="output-body" id="obody-git" style="opacity:0.3">
+            <div>候选 1（推荐）</div>
+            <div class="ob-type">feat</div><div class="ob-scope">(auth)</div><div class="ob-subject">: add JWT refresh token rotation</div>
+            <div class="term-blank"></div>
+            <div class="ob-body"># BREAKING CHANGE: token TTL shortened from 7d to 1d</div>
+            <div class="ob-body"># refresh tokens now invalidated on use</div>
+            <div class="term-blank"></div>
+            <div>候选 2</div>
+            <div class="ob-type">feat</div><div class="ob-scope">(security)</div><div class="ob-subject">: implement token rotation for refresh flow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: CODE REVIEW
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="review">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-review">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ~/my-project</div>
+          </div>
+          <div class="terminal-body" id="tbody-review">
+            <div class="terminal-play-overlay" id="overlay-review" onclick="playAnim('review')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-review"></div></div>
+            <button class="anim-restart" onclick="resetAnim('review')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-panels" id="output-review" style="opacity:0.3;transition:opacity 0.5s">
+        <div class="review-item">
+          <div class="review-item-header blocker">🔴 Blocker — 必须修复才能合并</div>
+          <div class="review-item-body">
+            <div class="review-file-path">src/api/user.ts : 42</div>
+            SQL 查询直接拼接用户输入，存在 <strong>SQL 注入风险</strong>。<code>query(`SELECT * FROM users WHERE id = ${userId}`)</code> 应改为参数化查询。
+            <div class="review-fix"><strong>修复建议：</strong>使用 <code>query('SELECT * FROM users WHERE id = ?', [userId])</code></div>
+          </div>
+        </div>
+        <div class="review-item">
+          <div class="review-item-header major">🟠 Major — 强烈建议修复</div>
+          <div class="review-item-body">
+            <div class="review-file-path">src/services/auth.ts : 88</div>
+            <code>comparePassword</code> 使用了同步的 <code>bcrypt.compareSync</code>，在高并发场景下会阻塞事件循环，应改为异步版本。
+            <div class="review-fix"><strong>修复建议：</strong>改为 <code>await bcrypt.compare(password, hash)</code></div>
+          </div>
+        </div>
+        <div class="review-item">
+          <div class="review-item-header minor">🟡 Minor — 小改进</div>
+          <div class="review-item-body">
+            <div class="review-file-path">src/utils/validate.ts : 15</div>
+            函数 <code>checkEmail</code> 命名过于简短，建议改为 <code>validateEmailFormat</code>，更能体现意图。
+          </div>
+        </div>
+        <div class="review-item">
+          <div class="review-item-header good">✅ 亮点</div>
+          <div class="review-item-body">
+            <code>RefreshTokenService</code> 的令牌轮换逻辑设计清晰，数据库事务使用正确，避免了并发写入导致的竞争条件。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: WORKFLOW
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="workflow">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-workflow">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ~/my-project</div>
+          </div>
+          <div class="terminal-body" id="tbody-workflow">
+            <div class="terminal-play-overlay" id="overlay-workflow" onclick="playAnim('workflow')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-workflow"></div></div>
+            <button class="anim-restart" onclick="resetAnim('workflow')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="workflow-visual" id="wf-visual">
+          <h3>📋 dev-workflow 进度</h3>
+          <div class="wf-steps">
+            <div class="wf-step" id="wf-step-0">
+              <div class="wf-step-icon pending">📋</div>
+              <div class="wf-step-content">
+                <div class="wf-step-name pending">需求理解</div>
+                <div class="wf-step-summary">解析需求，消除歧义</div>
+              </div>
+              <span class="wf-step-badge pending">等待</span>
+            </div>
+            <div class="wf-step" id="wf-step-1">
+              <div class="wf-step-icon pending">🔀</div>
+              <div class="wf-step-content">
+                <div class="wf-step-name pending">任务拆解</div>
+                <div class="wf-step-summary">原子任务 + 依赖关系</div>
+              </div>
+              <span class="wf-step-badge pending">等待</span>
+            </div>
+            <div class="wf-step" id="wf-step-2">
+              <div class="wf-step-icon pending">🏗️</div>
+              <div class="wf-step-content">
+                <div class="wf-step-name pending">方案设计</div>
+                <div class="wf-step-summary">架构设计 + 接口定义</div>
+              </div>
+              <span class="wf-step-badge pending">等待</span>
+            </div>
+            <div class="wf-step" id="wf-step-3">
+              <div class="wf-step-icon pending">⚙️</div>
+              <div class="wf-step-content">
+                <div class="wf-step-name pending">执行实现</div>
+                <div class="wf-step-summary">逐步实现 + 代码自检</div>
+              </div>
+              <span class="wf-step-badge pending">等待</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: MCP
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="mcp">
+    <div class="mcp-demo-layout">
+      <div>
+        <div class="desc-card" style="margin-bottom:16px">
+          <h3>🤖 MCP Server 集成</h3>
+          <p>配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue）可直接在对话中调用 17 个 Ethan 工具，无需切换终端。</p>
+        </div>
+        <div class="mcp-call-card">
+          <div class="mcp-call-header">
+            <span>📡</span>
+            <span class="mcp-tool-name">ethan_workflow_next</span>
+            <span style="font-size:11px;color:var(--color-text-secondary);margin-left:auto">MCP Tool Call</span>
+          </div>
+          <div class="mcp-call-body">
+            <div><span class="mcp-brace">{</span></div>
+            <div>&nbsp;&nbsp;<span class="mcp-key">"summary"</span>: <span class="mcp-string">"已完成需求分析，确定核心功能为用户认证模块，包含登录/注册/找回密码，使用 JWT + Refresh Token 方案"</span>,</div>
+            <div>&nbsp;&nbsp;<span class="mcp-key">"cwd"</span>: <span class="mcp-string">"/Users/dev/my-project"</span></div>
+            <div><span class="mcp-brace">}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mcp-response">
+        <div class="mcp-response-header">
+          <span>✅</span> 工具返回 — 下一步执行提示词
+        </div>
+        <div class="mcp-response-body">
+          <h4>✅ 步骤 1（需求理解）已完成 → 进度 25%</h4>
+          <p style="font-size:13px;color:var(--color-text-tertiary);margin-bottom:16px">---</p>
+          <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">
+            <strong style="color:var(--color-text)">执行 Skill：任务拆解</strong>
+          </p>
+          <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">
+            <strong>前置上下文：</strong>需求已确定为用户认证模块（JWT + Refresh Token）
+          </p>
+          <div class="mcp-step-list">
+            <div class="mcp-step-row">
+              <div class="mcp-step-num">1</div>
+              <div style="font-size:13px;color:var(--color-text-secondary)">梳理所有子任务（登录/注册/找回密码/Token刷新/权限校验）</div>
+            </div>
+            <div class="mcp-step-row">
+              <div class="mcp-step-num">2</div>
+              <div style="font-size:13px;color:var(--color-text-secondary)">拆解为原子任务，估算工作量（S/M/L）</div>
+            </div>
+            <div class="mcp-step-row">
+              <div class="mcp-step-num">3</div>
+              <div style="font-size:13px;color:var(--color-text-secondary)">建立任务依赖关系图，识别关键路径</div>
+            </div>
+            <div class="mcp-step-row">
+              <div class="mcp-step-num">4</div>
+              <div style="font-size:13px;color:var(--color-text-secondary)">标记高风险任务（Token 安全存储、刷新并发竞争）</div>
+            </div>
+          </div>
+          <p style="margin-top:16px;font-size:12px;color:var(--color-text-tertiary)">
+            完成本步后，再次调用 <code style="font-family:var(--font-mono);background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan_workflow_next</code> 并传入摘要即可继续推进。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:16px;padding:24px">
+      <h3 style="font-size:14px;font-weight:600;color:var(--color-text-secondary);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">17 个可用 MCP 工具</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">requirement_understanding</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">task_breakdown</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">solution_design</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">implementation</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">code_review</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">debug</div>
+        <div style="padding:10px 14px;background:rgba(191,90,242,0.06);border:1px solid rgba(191,90,242,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-purple)">ethan_pipeline</div>
+        <div style="padding:10px 14px;background:rgba(191,90,242,0.06);border:1px solid rgba(191,90,242,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-purple)">ethan_workflow_next</div>
+        <div style="padding:10px 14px;background:rgba(191,90,242,0.06);border:1px solid rgba(191,90,242,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-purple)">ethan_workflow_status</div>
+        <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_memory_search</div>
+        <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_estimate</div>
+        <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_git_commit</div>
+        <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_git_review</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: STATS
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="stats">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-stats">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ethan stats show</div>
+          </div>
+          <div class="terminal-body" id="tbody-stats">
+            <div class="terminal-play-overlay" id="overlay-stats" onclick="playAnim('stats')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-stats"></div></div>
+            <button class="anim-restart" onclick="resetAnim('stats')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <h3>📊 ethan stats show</h3>
+        <p>追踪你的 Skill 使用频次，展示连续使用天数和 7 日热力图，帮助你了解工作习惯。</p>
+        <div class="desc-steps">
+          <div class="desc-step"><div class="desc-step-num">1</div><div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan stats show</code> — 个人统计</div></div>
+          <div class="desc-step"><div class="desc-step-num">2</div><div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan stats leaderboard</code> — 团队排行</div></div>
+          <div class="desc-step"><div class="desc-step-num">3</div><div>数据存储在 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">~/.ethan-stats.json</code>，本地私有</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BEFORE / AFTER ── -->
+<section class="before-after-section reveal">
+  <div style="max-width:1200px;margin:0 auto">
+    <h2>同一件事，<span class="gradient-text">两种结果</span></h2>
+    <p class="ba-subtitle">有 Ethan 和没有 Ethan 的差距</p>
+    <div class="ba-grid">
+      <div class="ba-card">
+        <div class="ba-card-header before-header">❌ 没有 Ethan</div>
+        <div class="ba-card-body">
+          <div class="ba-content">
+            <div class="bad">$ git commit -m "fix bug"</div>
+            <div class="neutral"># commit 信息随意，无法追溯</div>
+            <div class="term-blank"></div>
+            <div class="bad">$ # PR 描述：</div>
+            <div class="neutral"># "改了一些东西，请 review"</div>
+            <div class="term-blank"></div>
+            <div class="bad">$ # code review：</div>
+            <div class="neutral"># "LGTM" （没仔细看）</div>
+            <div class="term-blank"></div>
+            <div class="bad">$ # 周报：</div>
+            <div class="neutral"># 本周做了一些开发工作...</div>
+          </div>
+        </div>
+      </div>
+      <div class="ba-card">
+        <div class="ba-card-header after-header">✅ 有 Ethan</div>
+        <div class="ba-card-body">
+          <div class="ba-content">
+            <div class="good">$ ethan commit</div>
+            <div class="label">→ feat(auth): add JWT refresh token rotation</div>
+            <div class="term-blank"></div>
+            <div class="good">$ ethan pr --template feature</div>
+            <div class="label">→ 结构化 PR + Checklist + 影响范围</div>
+            <div class="term-blank"></div>
+            <div class="good">$ ethan review</div>
+            <div class="label">→ 🔴 Blocker x1 · 🟠 Major x2 · 🟡 Minor x3</div>
+            <div class="term-blank"></div>
+            <div class="good">$ ethan 周报</div>
+            <div class="label">→ 本周完成用户认证模块，包含...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTALL CTA ── -->
+<section class="install-cta">
+  <h2>准备好了？<span class="gradient-text">立即上手</span></h2>
+  <p>一行命令，所有场景全部解锁</p>
+  <div>
+    <div class="install-box">
+      <span class="dollar">$</span>
+      <span>npx ethan-skill install --platform cursor</span>
+    </div>
+  </div>
+  <div class="install-cta-btns">
+    <a href="index.html#install" class="btn-primary">查看完整安装指南 →</a>
+    <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank" rel="noopener noreferrer" class="btn-secondary">GitHub</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">Ethan</div>
+  <div class="footer-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#skills">Skills</a>
+    <a href="index.html#install">安装</a>
+    <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div style="font-size:12px;color:var(--color-text-tertiary)">MIT © aokiz</div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════ */
+function switchTab(tabName) {
+  document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.scenario-tab[data-tab="${tabName}"]`).classList.add('active');
+  document.querySelector(`.scenario-panel[data-panel="${tabName}"]`).classList.add('active');
+}
+
+document.querySelectorAll('.nav-tab-link').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const tab = link.dataset.tab;
+    switchTab(tab);
+    document.querySelector('.scenarios-section').scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+/* ══════════════════════════════════════════
+   ANIMATION ENGINE
+══════════════════════════════════════════ */
+const animations = {};
+let animTimers = {};
+
+function clearTerminal(id) {
+  const body = document.getElementById(`tbody-${id}`);
+  body.innerHTML = '';
+}
+
+function h(tag, cls, text) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (text !== undefined) el.innerHTML = text;
+  return el;
+}
+
+function appendLine(tbodyId, lineHtml, delay) {
+  return new Promise(resolve => {
+    const timer = setTimeout(() => {
+      const body = document.getElementById(`tbody-${tbodyId}`);
+      if (!body) { resolve(); return; }
+      const line = document.createElement('div');
+      line.innerHTML = lineHtml;
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+      resolve();
+    }, delay);
+    if (!animTimers[tbodyId]) animTimers[tbodyId] = [];
+    animTimers[tbodyId].push(timer);
+  });
+}
+
+function updateBar(id, pct) {
+  const bar = document.getElementById(`bar-${id}`);
+  if (bar) bar.style.width = pct + '%';
+}
+
+/* ── GIT COMMIT ANIMATION ── */
+async function animGit() {
+  const id = 'git';
+  clearTerminal(id);
+  updateBar(id, 0);
+  document.getElementById('status-git').textContent = '运行中...';
+  document.getElementById('status-git').className = 'output-status pending';
+  document.getElementById('obody-git').style.opacity = '0.3';
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">commit</span></span></div>`],
+    [400, `<div class="term-output">📋 读取 staged diff...</div>`],
+    [800, `<div class="term-output dim">  modified: src/auth/token.ts</div>`],
+    [1000,`<div class="term-output dim">  modified: src/auth/refresh.ts</div>`],
+    [1200,`<div class="term-output dim">  new file: src/auth/rotation.ts</div>`],
+    [1600,`<div class="term-blank"></div>`],
+    [1700,`<div class="term-output">🤖 分析变更意图...</div>`],
+    [2400,`<div class="term-output success">✅ 已生成 Conventional Commit 提示词</div>`],
+    [2800,`<div class="term-blank"></div>`],
+    [2900,`<div class="term-output highlight">候选 1（推荐）:</div>`],
+    [3200,`<div class="term-output term-ok">  feat(auth): add JWT refresh token rotation</div>`],
+    [3600,`<div class="term-blank"></div>`],
+    [3700,`<div class="term-output highlight">候选 2:</div>`],
+    [3900,`<div class="term-output term-ok">  feat(security): implement token rotation for refresh flow</div>`],
+    [4400,`<div class="term-blank"></div>`],
+    [4500,`<div class="term-output success">📋 提示词已复制到剪贴板</div>`],
+    [4800,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 5200) * 100));
+  }
+  updateBar(id, 100);
+  document.getElementById('status-git').textContent = '已生成';
+  document.getElementById('status-git').className = 'output-status generated';
+  document.getElementById('obody-git').style.opacity = '1';
+}
+
+/* ── CODE REVIEW ANIMATION ── */
+async function animReview() {
+  const id = 'review';
+  clearTerminal(id);
+  updateBar(id, 0);
+  document.getElementById('output-review').style.opacity = '0.3';
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">review</span> <span class="cmd-flag">--base main</span></span></div>`],
+    [500, `<div class="term-output">🔍 读取分支 diff (feature/auth vs main)...</div>`],
+    [1000,`<div class="term-output dim">  src/auth/token.ts (+89 -12)</div>`],
+    [1200,`<div class="term-output dim">  src/api/user.ts (+34 -5)</div>`],
+    [1400,`<div class="term-output dim">  src/services/auth.ts (+67 -23)</div>`],
+    [1900,`<div class="term-blank"></div>`],
+    [2000,`<div class="term-output">🤖 系统性审查中...</div>`],
+    [2800,`<div class="term-blank"></div>`],
+    [2900,`<div class="term-output term-blocker">🔴 Blocker x1</div>`],
+    [3100,`<div class="term-output term-major">🟠 Major x1</div>`],
+    [3300,`<div class="term-output term-minor">🟡 Minor x1</div>`],
+    [3500,`<div class="term-output term-ok">✅ 亮点 x1</div>`],
+    [3900,`<div class="term-blank"></div>`],
+    [4000,`<div class="term-output success">✅ Code Review 报告已生成</div>`],
+    [4300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 5000) * 100));
+  }
+  updateBar(id, 100);
+  document.getElementById('output-review').style.opacity = '1';
+}
+
+/* ── WORKFLOW ANIMATION ── */
+async function animWorkflow() {
+  const id = 'workflow';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  // reset wf steps
+  for (let i = 0; i < 4; i++) {
+    setWfStep(i, 'pending');
+  }
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow start</span> <span class="cmd-flag">dev-workflow</span> <span class="cmd-flag">-c "用户认证模块"</span></span></div>`],
+    [600, `<div class="term-output success">✅ 工作流已启动：dev-workflow</div>`],
+    [900, `<div class="term-output">📋 第 1 步 → 需求理解</div>`],
+    [1200,`<div class="term-output dim">  分析需求，消除歧义，输出结构化文档...</div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 8000) * 100));
+  }
+
+  setTimeout(() => setWfStep(0, 'active'), 900);
+
+  const lines2 = [
+    [2200,`<div class="term-blank"></div>`],
+    [2300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span> <span class="cmd-flag">"已梳理核心需求"</span></span></div>`],
+    [2900,`<div class="term-output success">✅ 步骤 1 完成 → 进度 25%</div>`],
+    [3200,`<div class="term-output">🔀 第 2 步 → 任务拆解</div>`],
+    [3600,`<div class="term-output dim">  拆解子任务，建立依赖关系...</div>`],
+  ];
+
+  for (const [delay, html] of lines2) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round(((delay + 2200) / 8000) * 100));
+  }
+
+  setTimeout(() => { setWfStep(0, 'done'); setWfStep(1, 'active'); }, 2900);
+
+  const lines3 = [
+    [5000,`<div class="term-blank"></div>`],
+    [5100,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow status</span></span></div>`],
+    [5600,`<div class="term-output highlight">进度: 50% (2/4 步骤完成)</div>`],
+    [5900,`<div class="term-output term-ok">  ✅ 需求理解</div>`],
+    [6100,`<div class="term-output term-ok">  ✅ 任务拆解</div>`],
+    [6300,`<div class="term-output" style="color:var(--color-blue)">  ▶️ 方案设计 ← 当前</div>`],
+    [6500,`<div class="term-output dim">  ⬜ 执行实现</div>`],
+    [7000,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines3) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round(((delay) / 7500) * 100));
+  }
+  setTimeout(() => { setWfStep(1, 'done'); setWfStep(2, 'active'); }, 5600);
+  updateBar(id, 100);
+}
+
+function setWfStep(idx, state) {
+  const step = document.getElementById(`wf-step-${idx}`);
+  if (!step) return;
+  const icon = step.querySelector('.wf-step-icon');
+  const name = step.querySelector('.wf-step-name');
+  const badge = step.querySelector('.wf-step-badge');
+  const labels = { done: '已完成', active: '进行中', pending: '等待' };
+  icon.className = `wf-step-icon ${state}`;
+  name.className = `wf-step-name ${state}`;
+  badge.className = `wf-step-badge ${state}`;
+  badge.textContent = labels[state];
+}
+
+/* ── STATS ANIMATION ── */
+async function animStats() {
+  const id = 'stats';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">stats show</span></span></div>`],
+    [500, `<div class="term-blank"></div>`],
+    [600, `<div class="term-output highlight">📊 Ethan 使用统计</div>`],
+    [800, `<div class="term-blank"></div>`],
+    [900, `<div class="term-output highlight">🔥 连续使用：<span style="color:#FF9F0A">12 天</span>  最长记录：<span style="color:#BF5AF2">28 天</span></div>`],
+    [1200,`<div class="term-blank"></div>`],
+    [1300,`<div class="term-output dim">Skill 使用频次（近 30 天）</div>`],
+    [1600,`<div class="term-output" style="color:#30D158">代码审查    ████████████████████ 42</div>`],
+    [1800,`<div class="term-output" style="color:#007AFF">需求理解    █████████████████    35</div>`],
+    [2000,`<div class="term-output" style="color:#BF5AF2">任务拆解    ███████████████      31</div>`],
+    [2200,`<div class="term-output" style="color:#FF9F0A">故障排查    ████████████         25</div>`],
+    [2400,`<div class="term-output" style="color:#30D158">周报生成    ██████████           20</div>`],
+    [2600,`<div class="term-output dim">方案设计    █████████            18</div>`],
+    [2800,`<div class="term-output dim">技术调研    ███████              14</div>`],
+    [3000,`<div class="term-blank"></div>`],
+    [3100,`<div class="term-output dim">7 日热力图</div>`],
+    [3300,`<div class="term-output" style="color:#444">Mon Tue Wed Thu Fri Sat Sun</div>`],
+    [3500,`<div class="term-output" style="color:#30D158"> ██   ██   ██   ██   ██   ░░   ██ </div>`],
+    [3800,`<div class="term-blank"></div>`],
+    [3900,`<div class="term-output success">🏅 本月最活跃  🔥 连续达人  ⚡ 代码卫士</div>`],
+    [4300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 4800) * 100));
+  }
+  updateBar(id, 100);
+}
+
+/* ── PLAY / RESET ── */
+function playAnim(id) {
+  const overlay = document.getElementById(`overlay-${id}`);
+  if (overlay) overlay.classList.add('hidden');
+
+  if (animTimers[id]) {
+    animTimers[id].forEach(clearTimeout);
+    animTimers[id] = [];
+  }
+
+  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats };
+  if (animMap[id]) animMap[id]();
+}
+
+function resetAnim(id) {
+  if (animTimers[id]) {
+    animTimers[id].forEach(clearTimeout);
+    animTimers[id] = [];
+  }
+  clearTerminal(id);
+  updateBar(id, 0);
+  const overlay = document.getElementById(`overlay-${id}`);
+  if (overlay) overlay.classList.remove('hidden');
+
+  if (id === 'git') {
+    document.getElementById('status-git').textContent = '等待运行';
+    document.getElementById('status-git').className = 'output-status pending';
+    document.getElementById('obody-git').style.opacity = '0.3';
+  }
+  if (id === 'review') {
+    document.getElementById('output-review').style.opacity = '0.3';
+  }
+  if (id === 'workflow') {
+    for (let i = 0; i < 4; i++) setWfStep(i, 'pending');
+  }
+}
+
+function startAllAnimations() {
+  switchTab('git');
+  document.querySelector('.scenarios-section').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => playAnim('git'), 600);
+}
+
+/* ── SCROLL REVEAL ── */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ── COPY BUTTON ── */
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = btn.dataset.copy || '';
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ 已复制';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -495,6 +495,161 @@
     }
 
     /* ============================================================
+       WHY ETHAN / PROBLEM STATEMENT SECTION
+    ============================================================ */
+    #why-ethan {
+      padding: var(--spacing-section) 40px;
+      background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(0,122,255,0.06) 0%, transparent 70%);
+    }
+
+    .why-ethan-intro {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .why-ethan-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: 1px solid rgba(255, 55, 95, 0.3);
+      background: rgba(255, 55, 95, 0.08);
+      font-size: 12px;
+      font-weight: 600;
+      color: #FF375F;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .pain-points-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto 64px;
+    }
+
+    .pain-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 24px;
+      align-items: center;
+      transition: border-color var(--transition-medium), box-shadow var(--transition-medium);
+    }
+
+    .pain-card:hover {
+      border-color: rgba(0,122,255,0.3);
+      box-shadow: 0 0 40px rgba(0,122,255,0.08);
+    }
+
+    .pain-before, .pain-after {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pain-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .pain-label.before { color: #FF375F; }
+    .pain-label.after { color: #30D158; }
+
+    .pain-scenario {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    .pain-scenario strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .pain-scenario.before-text {
+      border-left: 2px solid rgba(255, 55, 95, 0.4);
+      padding-left: 12px;
+    }
+
+    .pain-scenario.after-text {
+      border-left: 2px solid rgba(48, 209, 88, 0.4);
+      padding-left: 12px;
+    }
+
+    .pain-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .pain-card-title {
+      grid-column: 1 / -1;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.2px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pain-card-icon {
+      font-size: 20px;
+    }
+
+    .why-cta-box {
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(0,122,255,0.08) 0%, rgba(191,90,242,0.08) 100%);
+      border: 1px solid rgba(0,122,255,0.2);
+      border-radius: 24px;
+      padding: 48px;
+    }
+
+    .why-cta-box h3 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .why-cta-box p {
+      color: var(--color-text-secondary);
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .why-cta-box .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================================
        SKILLS SECTION
     ============================================================ */
     #skills {
@@ -1166,6 +1321,28 @@
         --spacing-section: 80px;
       }
 
+      .pain-points-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pain-card {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .pain-arrow {
+        transform: rotate(90deg);
+        margin: 0 auto;
+      }
+
+      .pain-card-title {
+        grid-column: 1;
+      }
+
+      .why-cta-box {
+        padding: 32px 24px;
+      }
+
       #navbar {
         padding: 0 20px;
       }
@@ -1315,6 +1492,7 @@
     <a href="#hero" class="nav-logo">Ethan</a>
 
     <ul class="nav-links">
+      <li><a href="demo.html">演示</a></li>
       <li><a href="#skills">Skills</a></li>
       <li><a href="#git">Git</a></li>
       <li><a href="#devtools">Dev Tools</a></li>
@@ -1410,6 +1588,114 @@
       <div class="stat-item reveal reveal-delay-3">
         <div class="stat-number" data-target="40" data-suffix="+">40+</div>
         <div class="stat-label">CLI 命令</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       WHY ETHAN / PROBLEM STATEMENT SECTION
+  ============================================================ -->
+  <section id="why-ethan" aria-label="为什么选择 Ethan">
+    <div class="container">
+      <div class="why-ethan-intro reveal">
+        <div class="why-ethan-badge">⚠ 痛点识别</div>
+        <h2 class="section-title">AI 编辑器很强大，<br>但你用对了吗？</h2>
+        <p class="section-subtitle">90% 的开发者每天都在经历这些——Ethan 是答案</p>
+      </div>
+
+      <div class="pain-points-grid">
+        <!-- Pain Point 1: 提示词碎片化 -->
+        <div class="pain-card reveal">
+          <div class="pain-card-title">
+            <span class="pain-card-icon">📝</span>
+            提示词碎片化，每次从零开始
+          </div>
+          <div class="pain-before">
+            <div class="pain-label before">❌ 之前</div>
+            <div class="pain-scenario before-text">
+              <strong>同一件事，每次描述不同</strong>。昨天 "帮我 review 一下代码"，今天 "check 这个 PR"，明天 "分析变更"……AI 理解参差不齐，输出质量全靠运气。
+            </div>
+          </div>
+          <div class="pain-arrow">→</div>
+          <div class="pain-after">
+            <div class="pain-label after">✅ Ethan</div>
+            <div class="pain-scenario after-text">
+              <strong>10 个标准化 Skill，一次定义，处处一致。</strong>触发词 <code>代码审查</code> → 自动按 Blocker / Major / Minor 分级，逐文件审查，永远输出同等质量的报告。
+            </div>
+          </div>
+        </div>
+
+        <!-- Pain Point 2: 工作流无状态 -->
+        <div class="pain-card reveal reveal-delay-1">
+          <div class="pain-card-title">
+            <span class="pain-card-icon">🔄</span>
+            工作流无状态，多步骤断档
+          </div>
+          <div class="pain-before">
+            <div class="pain-label before">❌ 之前</div>
+            <div class="pain-scenario before-text">
+              需求→拆解→设计→实现，<strong>每一步都需要手动搬运上下文</strong>。关掉窗口，所有进度丢失。新的对话，一切重来。
+            </div>
+          </div>
+          <div class="pain-arrow">→</div>
+          <div class="pain-after">
+            <div class="pain-label after">✅ Ethan</div>
+            <div class="pain-scenario after-text">
+              <strong>有状态工作流引擎。</strong><code>ethan workflow start dev-workflow</code> 启动，每步完成后自动携带上下文推进，会话持久化，随时恢复。
+            </div>
+          </div>
+        </div>
+
+        <!-- Pain Point 3: Git 产出物低效 -->
+        <div class="pain-card reveal reveal-delay-2">
+          <div class="pain-card-title">
+            <span class="pain-card-icon">📊</span>
+            Git 产出物低效，commit / PR 质量差
+          </div>
+          <div class="pain-before">
+            <div class="pain-label before">❌ 之前</div>
+            <div class="pain-scenario before-text">
+              <strong>commit 信息随意</strong>：<code>fix bug</code>、<code>update</code>、<code>改了一下</code>。PR 描述空空如也。Code Review 只看了两眼，没有系统性分析。
+            </div>
+          </div>
+          <div class="pain-arrow">→</div>
+          <div class="pain-after">
+            <div class="pain-label after">✅ Ethan</div>
+            <div class="pain-scenario after-text">
+              <strong>读取 staged diff → Conventional Commit。</strong>自动生成分级 PR 描述 + Checklist。<code>ethan review</code> 输出 Blocker / Major / Minor 完整报告。
+            </div>
+          </div>
+        </div>
+
+        <!-- Pain Point 4: 工具割裂 -->
+        <div class="pain-card reveal reveal-delay-3">
+          <div class="pain-card-title">
+            <span class="pain-card-icon">🔗</span>
+            工具割裂，AI 编辑器各自为政
+          </div>
+          <div class="pain-before">
+            <div class="pain-label before">❌ 之前</div>
+            <div class="pain-scenario before-text">
+              Cursor 一套配置，Copilot 一套，Cline 又是另一套。<strong>换个工具，所有经验归零</strong>，还得重写提示词规则。
+            </div>
+          </div>
+          <div class="pain-arrow">→</div>
+          <div class="pain-after">
+            <div class="pain-label after">✅ Ethan</div>
+            <div class="pain-scenario after-text">
+              <strong>单一数据源，11 个平台自动适配。</strong><code>npx ethan-skill install --platform cursor</code>，换平台只需改一个参数，规则内容完全一致。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="why-cta-box reveal">
+        <h3>一行命令，<span class="gradient-text">解决所有痛点</span></h3>
+        <p>Ethan 将最佳实践固化为可分发的 Skill，无论你用哪个 AI 编辑器，无论团队规模多大，每一步工作流都有据可依、有迹可查。</p>
+        <div class="btn-row">
+          <a href="#install" class="btn-primary">立即安装 →</a>
+          <a href="demo.html" class="btn-secondary">查看演示</a>
+        </div>
       </div>
     </div>
   </section>
