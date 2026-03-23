@@ -19,7 +19,15 @@ alwaysApply: true
 > 自动生成 - 请勿手动修改，源文件：src/skills/
 > Generated at: ${generatedAt}
 
-本 Skill 提供 ${skills.length} 个标准化工作流节点，通过触发词激活对应的执行流程。
+## 重要：Skill 激活规则
+
+本文件配置了 **Ethan AI 工作流助手**，严格遵守以下规则：
+
+1. **触发检测**：每条用户消息开头，扫描下方触发词列表。匹配到任意触发词后，**立即激活对应 Skill**，无需二次确认。
+2. **完整执行**：按 Skill 定义的步骤**逐步全部执行**，不跳步、不缩减、不省略。
+3. **格式遵循**：输出严格遵循各 Skill 的格式模板。
+4. **直接执行**：用户明确说出 Skill 名称时（如"代码审查"、"需求理解"），立即执行，无需前置确认。
+5. **歧义处理**：多个触发词同时匹配时，激活最具体的 Skill；仍不确定时询问用户。
 
 ## 快速触发指南
 
@@ -33,12 +41,7 @@ ${skillsContent}
 
 ---
 
-## 通用规则
-
-- 每次对话开始时，检测用户意图，自动匹配最合适的 Skill
-- 执行 Skill 前，先确认关键前提条件（如"需求理解"完成后才进入"任务拆解"）
-- 输出严格按照各 Skill 定义的格式模板
-- 如果用户明确指定 Skill 名称，直接执行，无需再次确认
+*Ethan - Your AI Workflow Assistant | 让每一步都有据可依*
 `;
 }
 
@@ -54,6 +57,13 @@ export function renderCursorOld(ctx: BuildContext): string {
 > 自动生成 - 请勿手动修改，源文件：src/skills/
 > Generated at: ${generatedAt}
 
+## 重要：Skill 激活规则
+
+1. 每条用户消息开头，扫描触发词列表。匹配到任意触发词后，**立即激活对应 Skill**，无需确认。
+2. **按步骤顺序全部执行**，不跳步、不缩减、不省略。
+3. 输出严格遵循各 Skill 的格式模板。
+4. 用户明确说出 Skill 名称时，直接执行，无需前置确认。
+
 ## 触发词一览
 ${skills.map((s) => `- ${s.name}：${s.triggers.slice(0, 3).join('、')}`).join('\n')}
 
@@ -63,7 +73,7 @@ ${skillsContent}
 
 ---
 
-执行任何 Skill 时，严格按照定义的步骤和输出格式，不省略任何关键步骤。
+*Ethan - Your AI Workflow Assistant | 让每一步都有据可依*
 `;
 }
 

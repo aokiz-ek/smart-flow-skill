@@ -51,25 +51,35 @@ function renderCopilot(ctx: BuildContext): string {
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Ethan workflow assistant. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+## IMPORTANT: Skill Activation Rules
+
+You are equipped with the **Ethan AI Workflow Assistant**. Follow these rules strictly:
+
+1. **Trigger detection**: At the start of every user message, scan for trigger keywords listed in each Skill. If a match is found, **immediately activate that Skill** — do not ask for confirmation.
+2. **Full execution**: Execute **every step in order**. Do not skip, summarize, or abbreviate steps.
+3. **Exact output**: Output must follow each Skill's defined format template exactly.
+4. **Direct activation**: When the user explicitly names a Skill (e.g. "代码审查", "code review", "需求理解"), activate it immediately without any preamble.
+5. **Ambiguity resolution**: When multiple triggers match, activate the most specific Skill. When in doubt, ask the user to confirm which Skill to run.
 
 ## Available Skills
 
 ${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
-
-## General Rules
-
-- Detect user intent and auto-match the appropriate Skill at the start of each conversation
-- Follow each Skill's defined steps without skipping
-- Output strictly follows the defined format template for each Skill
-- When user explicitly names a Skill, execute directly without confirmation
 `;
 }
 
 function renderCopilotSkill(skill: SkillDefinition, isEn: boolean): string {
   const steps = skill.steps
-    .map((step, i) => `${i + 1}. **${step.title.replace(/^\d+\.\s*/, '')}**: ${step.content.split('\n')[0]}`)
-    .join('\n');
+    .map((step, i) => {
+      const title = step.title.replace(/^\d+\.\s*/, '');
+      const lines = step.content.trim().split('\n').map((l) => `   ${l}`).join('\n');
+      return `${i + 1}. **${title}**:\n${lines}`;
+    })
+    .join('\n\n');
+
+  const notesLine =
+    skill.notes && skill.notes.length > 0
+      ? `\n**Notes**: ${skill.notes.map((n) => `\n- ${n}`).join('')}`
+      : '';
 
   return `### ${skill.order}. ${skillName(skill, isEn)} (${skill.nameEn})
 
@@ -78,9 +88,10 @@ function renderCopilotSkill(skill: SkillDefinition, isEn: boolean): string {
 **Goal**: ${desc(skill, isEn)}
 
 **Steps**:
+
 ${steps}
 
-**Output**: ${skill.outputFormat}`;
+**Output**: ${skill.outputFormat}${notesLine}`;
 }
 
 /** Cline：.clinerules */
@@ -89,13 +100,31 @@ function renderCline(ctx: BuildContext): string {
   const isEn = ctx.lang === 'en';
   const skillsContent = skills.map((s) => renderClineSkill(s, isEn)).join('\n\n');
 
+  const activationRules = isEn
+    ? `## IMPORTANT: Skill Activation Rules
+
+1. At the start of every user message, scan for trigger keywords. If matched, **immediately activate that Skill**.
+2. Execute **every step in order** — do not skip or abbreviate any step.
+3. Output must follow each Skill's defined format template exactly.
+4. When the user names a Skill directly, activate it immediately without any preamble.
+
+`
+    : `## 重要：Skill 激活规则
+
+1. 每条用户消息开头，扫描触发词列表。匹配到任意触发词后，**立即激活对应 Skill**，无需确认。
+2. **按步骤顺序全部执行**，不跳步、不缩减、不省略。
+3. 输出严格遵循各 Skill 的格式模板。
+4. 用户明确说出 Skill 名称时，直接执行，无需前置确认。
+
+`;
+
   if (isEn) {
     return `# Ethan v${version}
 # Generated: ${generatedAt}
 
 Ethan - Your AI Workflow Assistant. When you see any trigger keyword below, execute the corresponding skill workflow.
 
-## Skill Triggers
+${activationRules}## Skill Triggers
 ${skills.map((s) => `- **${skillName(s, true)}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
 
 ---
@@ -113,7 +142,7 @@ Rules: Follow steps in order. Do not skip. Output per skill template.
 
 Ethan。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
-## 触发词总览
+${activationRules}## 触发词总览
 ${skills.map((s) => `- **${s.name}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
 
 ---
@@ -237,28 +266,34 @@ ${isEn ? 'Output' : '输出'}：${s.outputFormat}`
 `;
 }
 
-/** Windsurf：.windsurf/rules/smart-flow.md（类 Copilot 格式） */
+/** Windsurf：.windsurf/rules/smart-flow.md（YAML frontmatter + 强激活指令） */
 function renderWindsurf(ctx: BuildContext): string {
   const { skills, version, generatedAt } = ctx;
   const isEn = ctx.lang === 'en';
 
-  return `# Ethan - Windsurf Rules (v${version})
+  return `---
+description: Ethan AI Workflow Assistant — ${skills.length} standardized workflow skills
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Ethan - Windsurf Rules (v${version})
 
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Ethan workflow assistant for Windsurf. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+## IMPORTANT: Skill Activation Rules
+
+You are equipped with the **Ethan AI Workflow Assistant**. Follow these rules strictly:
+
+1. **Trigger detection**: At the start of every user message, scan for trigger keywords listed in each Skill. If a match is found, **immediately activate that Skill** — do not ask for confirmation.
+2. **Full execution**: Execute **every step in order**. Do not skip, summarize, or abbreviate steps.
+3. **Exact output**: Output must follow each Skill's defined format template exactly.
+4. **Direct activation**: When the user explicitly names a Skill, activate it immediately without any preamble.
 
 ## Available Skills
 
 ${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
-
-## General Rules
-
-- Detect user intent and auto-match the appropriate Skill at the start of each conversation
-- Follow each Skill's defined steps without skipping
-- Output strictly follows the defined format template for each Skill
-- When user explicitly names a Skill, execute directly without confirmation
 `;
 }
 
@@ -294,18 +329,18 @@ function renderJetBrains(ctx: BuildContext): string {
 > Auto-generated from src/skills/ | ${generatedAt}
 > Do not edit manually.
 
-You are equipped with the Ethan workflow assistant for JetBrains AI. When users mention any of the trigger keywords below, execute the corresponding skill workflow precisely.
+## IMPORTANT: Skill Activation Rules
+
+You are equipped with the **Ethan AI Workflow Assistant**. Follow these rules strictly:
+
+1. **Trigger detection**: At the start of every user message, scan for trigger keywords listed in each Skill. If a match is found, **immediately activate that Skill** — do not ask for confirmation.
+2. **Full execution**: Execute **every step in order**. Do not skip, summarize, or abbreviate steps.
+3. **Exact output**: Output must follow each Skill's defined format template exactly.
+4. **Direct activation**: When the user explicitly names a Skill, activate it immediately without any preamble.
 
 ## Available Skills
 
 ${skills.map((s) => renderCopilotSkill(s, isEn)).join('\n\n')}
-
-## General Rules
-
-- Detect user intent and auto-match the appropriate Skill at the start of each conversation
-- Follow each Skill's defined steps without skipping
-- Output strictly follows the defined format template for each Skill
-- When user explicitly names a Skill, execute directly without confirmation
 `;
 }
 
@@ -315,13 +350,31 @@ function renderContinue(ctx: BuildContext): string {
   const isEn = ctx.lang === 'en';
   const skillsContent = skills.map((s) => renderClineSkill(s, isEn)).join('\n\n');
 
+  const activationRules = isEn
+    ? `## IMPORTANT: Skill Activation Rules
+
+1. At the start of every user message, scan for trigger keywords. If matched, **immediately activate that Skill**.
+2. Execute **every step in order** — do not skip or abbreviate any step.
+3. Output must follow each Skill's defined format template exactly.
+4. When the user names a Skill directly, activate it immediately without any preamble.
+
+`
+    : `## 重要：Skill 激活规则
+
+1. 每条用户消息开头，扫描触发词列表。匹配到任意触发词后，**立即激活对应 Skill**，无需确认。
+2. **按步骤顺序全部执行**，不跳步、不缩减、不省略。
+3. 输出严格遵循各 Skill 的格式模板。
+4. 用户明确说出 Skill 名称时，直接执行，无需前置确认。
+
+`;
+
   if (isEn) {
     return `# Ethan v${version}
 # Generated: ${generatedAt}
 
 Ethan (Continue). Execute the matching skill workflow when trigger keywords are detected.
 
-## Skill Triggers
+${activationRules}## Skill Triggers
 ${skills.map((s) => `- **${skillName(s, true)}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
 
 ---
@@ -339,7 +392,7 @@ Rules: Follow steps in order. Output per skill template.
 
 Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
 
-## 触发词总览
+${activationRules}## 触发词总览
 ${skills.map((s) => `- **${s.name}**: ${s.triggers.slice(0, 4).join(' | ')}`).join('\n')}
 
 ---
