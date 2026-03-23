@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="Ethan v1.5.0 — 10 个标准化工作流 Skill，17 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。Git 集成、开发工具链、Skill 记忆库、估算复盘、统计排行、浏览器扩展、插件 OS，让每一步都有据可依。" />
+  <meta name="description" content="Ethan v1.5.5 — 10 个标准化工作流 Skill，17 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。持久化会话、交互式 Pipeline 选择、Git 集成、浏览器扩展、插件 OS，让每一步都有据可依。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1537,7 +1537,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Ethan v1.5.0 — Now Available</span>
+      <span>Ethan v1.5.5 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1545,7 +1545,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 17 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.0
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 17 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.5
     </p>
 
     <div class="hero-cta">
@@ -1641,7 +1641,7 @@
           <div class="pain-after">
             <div class="pain-label after">✅ Ethan</div>
             <div class="pain-scenario after-text">
-              <strong>有状态工作流引擎。</strong><code>ethan workflow start dev-workflow</code> 启动，每步完成后自动携带上下文推进，会话持久化，随时恢复。
+              <strong>有状态工作流引擎。</strong><code>ethan workflow start</code> 交互式选 Pipeline，<code>ethan workflow use &lt;name&gt;</code> 激活会话，<code>ethan workflow done</code> 一键推进（摘要可选），会话持久化，随时恢复。
             </div>
           </div>
         </div>
@@ -1912,14 +1912,14 @@
     <div class="adv-grid">
       <article class="adv-card reveal" aria-label="启动工作流">
         <div class="adv-icon" aria-hidden="true">🚀</div>
-        <div class="adv-title">一键启动</div>
-        <div class="adv-desc"><code>ethan workflow start dev-workflow -c "任务描述"</code>，自动创建会话，输出第一步提示词并复制到剪贴板</div>
+        <div class="adv-title">交互式 Pipeline 选择</div>
+        <div class="adv-desc"><code>ethan workflow start</code> 无需记住 ID，自动弹出编号菜单列出所有可用 Pipeline；选好后自动创建会话并输出第一步提示词</div>
       </article>
 
       <article class="adv-card reveal reveal-delay-1" aria-label="跨步骤上下文传递">
         <div class="adv-icon" aria-hidden="true">🔗</div>
         <div class="adv-title">上下文链式传递</div>
-        <div class="adv-desc">每步完成后执行 <code>ethan workflow done "摘要"</code>，摘要自动注入下一步提示词，实现无缝上下文接力</div>
+        <div class="adv-desc">每步完成后执行 <code>ethan workflow done</code>（摘要可选），摘要自动注入下一步提示词，实现无缝上下文接力</div>
       </article>
 
       <article class="adv-card reveal reveal-delay-2" aria-label="进度可视化">
@@ -1929,9 +1929,9 @@
       </article>
 
       <article class="adv-card reveal reveal-delay-3" aria-label="持久化会话">
-        <div class="adv-icon" aria-hidden="true">💾</div>
-        <div class="adv-title">持久化会话</div>
-        <div class="adv-desc">会话状态保存到项目 <code>.ethan/workflow.json</code>，关闭终端后仍可恢复，多���跨会话持续推进</div>
+        <div class="adv-icon" aria-hidden="true">📌</div>
+        <div class="adv-title">激活会话 · 无需 --name</div>
+        <div class="adv-desc"><code>ethan workflow use &lt;name&gt;</code> 激活具名会话，后续 <code>done / status / reset</code> 无需每次带 <code>--name</code>；支持多并行会话互相切换</div>
       </article>
 
       <article class="adv-card reveal" aria-label="MCP 原生集成">
@@ -1951,24 +1951,24 @@
       <div style="font-size:13px;color:#666;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:16px;">工作流命令速查</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
-          <code style="font-size:13px;color:#3b82f6;">ethan workflow start [pipeline] -c "..."</code>
-          <div style="font-size:12px;color:#666;margin-top:5px;">创建会话，输出第一步提示词</div>
+          <code style="font-size:13px;color:#3b82f6;">ethan workflow start</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">交互式选择 Pipeline，创建会话，输出第一步提示词</div>
         </div>
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
-          <code style="font-size:13px;color:#3b82f6;">ethan workflow done "本步摘要"</code>
-          <div style="font-size:12px;color:#666;margin-top:5px;">完成当前步骤，注入上下文，推进下一步</div>
+          <code style="font-size:13px;color:#3b82f6;">ethan workflow done</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">完成当前步骤（摘要可选），注入上下文，推进下一步</div>
+        </div>
+        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#3b82f6;">ethan workflow use &lt;name&gt;</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">激活具名会话，后续命令无需 --name</div>
         </div>
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
           <code style="font-size:13px;color:#3b82f6;">ethan workflow status</code>
           <div style="font-size:12px;color:#666;margin-top:5px;">查看进度看板与各步骤摘要</div>
         </div>
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
-          <code style="font-size:13px;color:#3b82f6;">ethan workflow reset</code>
-          <div style="font-size:12px;color:#666;margin-top:5px;">清除当前会话，开始新工作流</div>
-        </div>
-        <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
           <code style="font-size:13px;color:#3b82f6;">ethan workflow list</code>
-          <div style="font-size:12px;color:#666;margin-top:5px;">列出所有可用工作流</div>
+          <div style="font-size:12px;color:#666;margin-top:5px;">列出所有进行中的会话（具名 + 默认）</div>
         </div>
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
           <code style="font-size:13px;color:#22c55e;">MCP: ethan_workflow_next</code>
@@ -2140,7 +2140,7 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.5.0 — Git 集成、浏览器扩展、记忆库、插件 OS 全面升级</p>
+      <p class="section-subtitle">v1.5.5 — 工作流大幅简化：持久化会话、交互式 Pipeline 菜单、可选摘要</p>
     </div>
 
     <div class="adv-grid">
@@ -2606,23 +2606,27 @@
       </div>
       <div class="cli-item reveal">
         <div class="cli-cmd">ethan workflow start</div>
-        <div class="cli-desc">启动有状态工作流会话，支持 -c 传入任务背景，输出第一步提示词</div>
+        <div class="cli-desc">交互式选择 Pipeline（无需记 ID），或 <code>workflow start dev-workflow -c "..."</code> 直接指定；自动创建会话并输出第一步提示词</div>
       </div>
       <div class="cli-item reveal reveal-delay-1">
-        <div class="cli-cmd">ethan workflow done</div>
-        <div class="cli-desc">完成当前步骤，传入摘要后自动将上下文注入下一步提示词</div>
+        <div class="cli-cmd">ethan workflow use &lt;name&gt;</div>
+        <div class="cli-desc">激活具名会话，后续 done / status / reset 自动使用该会话，无需每次 --name；传 default 切回默认会话</div>
       </div>
       <div class="cli-item reveal">
+        <div class="cli-cmd">ethan workflow done</div>
+        <div class="cli-desc">完成当前步骤（摘要可选），自动将上下文注入下一步提示词并复制到剪贴板</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
         <div class="cli-cmd">ethan workflow status</div>
         <div class="cli-desc">查看工作流进度看板（ASCII 进度条 + 各步骤摘要）</div>
       </div>
-      <div class="cli-item reveal reveal-delay-1">
+      <div class="cli-item reveal">
         <div class="cli-cmd">ethan workflow reset</div>
         <div class="cli-desc">清除当前会话（需二次确认），准备开始新工作流</div>
       </div>
-      <div class="cli-item reveal">
+      <div class="cli-item reveal reveal-delay-1">
         <div class="cli-cmd">ethan workflow list</div>
-        <div class="cli-desc">列出所有可用工作流 Pipeline，标注当前进行中的会话</div>
+        <div class="cli-desc">列出所有进行中的会话（具名 + 默认），标注当前激活会话</div>
       </div>
 
       <!-- Phase 1: Git Integration -->
@@ -2843,7 +2847,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.0 &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.5 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 

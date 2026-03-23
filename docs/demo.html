@@ -1419,10 +1419,18 @@ async function animWorkflow() {
   }
 
   const lines = [
-    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow start</span> <span class="cmd-flag">dev-workflow</span> <span class="cmd-flag">-c "用户认证模块"</span></span></div>`],
-    [600, `<div class="term-output success">✅ 工作流已启动：dev-workflow</div>`],
-    [900, `<div class="term-output">📋 第 1 步 → 需求理解</div>`],
-    [1200,`<div class="term-output dim">  分析需求，消除歧义，输出结构化文档...</div>`],
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow start</span></span></div>`],
+    [600, `<div class="term-output dim">🔄 可用工作流 Pipeline</div>`],
+    [900, `<div class="term-output dim">  1. 开发工作流  [dev-workflow]</div>`],
+    [1000,`<div class="term-output dim">     需求→任务→设计→实现</div>`],
+    [1100,`<div class="term-output dim">  2. 汇报工作流  [reporting]</div>`],
+    [1200,`<div class="term-output dim">  3. 质量工作流  [quality-workflow]</div>`],
+    [1500,`<div class="term-output highlight">选择 Pipeline（1）: 1</div>`],
+    [2000,`<div class="term-output dim">请描述你的任务背景：</div>`],
+    [2200,`<div class="term-output highlight">> 用户认证模块</div>`],
+    [2600,`<div class="term-output success">✅ 工作流已启动：开发工作流</div>`],
+    [2900,`<div class="term-output">📋 第 1 步 → 需求理解</div>`],
+    [3200,`<div class="term-output dim">  分析需求，消除歧义，输出结构化文档...</div>`],
   ];
 
   for (const [delay, html] of lines) {
@@ -1430,11 +1438,11 @@ async function animWorkflow() {
     updateBar(id, Math.round((delay / 8000) * 100));
   }
 
-  setTimeout(() => setWfStep(0, 'active'), 900);
+  setTimeout(() => setWfStep(0, 'active'), 2600);
 
   const lines2 = [
     [2200,`<div class="term-blank"></div>`],
-    [2300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span> <span class="cmd-flag">"已梳理核心需求"</span></span></div>`],
+    [2300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span></span></div>`],
     [2900,`<div class="term-output success">✅ 步骤 1 完成 → 进度 25%</div>`],
     [3200,`<div class="term-output">🔀 第 2 步 → 任务拆解</div>`],
     [3600,`<div class="term-output dim">  拆解子任务，建立依赖关系...</div>`],
