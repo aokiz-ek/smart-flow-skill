@@ -165,8 +165,8 @@ const HTML = `<!DOCTYPE html>
 <div class="modal-overlay" id="modal-done">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-done')">&#x2715;</button>
-    <h3>完成本步 — 填写执行摘要</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">摘要将作为下一步的上下文输入，请简要描述本步产出结果。</p>
+    <h3>完成本步 — 填写执行摘要（可选）</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">摘要将作为下一步的上下文输入，简要描述本步产出结果（也可直接点击「确认完成」跳过）。</p>
     <textarea id="done-summary" placeholder="例如：需求文档已完成，用户登录支持手机号+密码，JWT 有效期 7 天..."></textarea>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-done')">取消</button>
@@ -303,10 +303,7 @@ const HTML = `<!DOCTYPE html>
 
   window.submitDone = async function() {
     const summary = document.getElementById('done-summary').value.trim();
-    if (!summary) {
-      document.getElementById('done-summary').style.borderColor = 'var(--red)';
-      return;
-    }
+    // summary is now optional — proceed even if empty
     document.getElementById('done-summary').style.borderColor = '';
     const btn = document.getElementById('btn-confirm-done');
     btn.textContent = '提交中...';
@@ -445,8 +442,10 @@ export function startDashboardServer(port: number, cwd: string = process.cwd()):
       try {
         const raw = fs.readFileSync(statsPath, 'utf-8');
         const data = JSON.parse(raw);
+        // Support both v1 (plain Record<string,number>) and v2 ({usage:{}, streak:{}, dailyLog:{}}) formats
+        const skillUsage = data && typeof data.usage === 'object' ? data.usage : data;
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ skillUsage: data }));
+        res.end(JSON.stringify({ skillUsage }));
       } catch {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({}));
@@ -514,11 +513,7 @@ export function startDashboardServer(port: number, cwd: string = process.cwd()):
         res.end(JSON.stringify({ error: 'Invalid JSON body' }));
         return;
       }
-      if (!summary) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'summary is required' }));
-        return;
-      }
+      // summary is optional — allow empty
       const session = loadSession(cwd);
       if (!session) {
         res.writeHead(404, { 'Content-Type': 'application/json' });

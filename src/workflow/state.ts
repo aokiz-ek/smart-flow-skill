@@ -36,6 +36,7 @@ export interface WorkflowSession {
 const WORKFLOW_DIR = '.ethan';
 const WORKFLOW_FILE = 'workflow.json';
 const SESSIONS_DIR = 'sessions';
+const CURRENT_SESSION_FILE = 'current-session';
 
 function getWorkflowPath(cwd: string, sessionName?: string): string {
   if (sessionName) {
@@ -44,9 +45,37 @@ function getWorkflowPath(cwd: string, sessionName?: string): string {
   return path.join(cwd, WORKFLOW_DIR, WORKFLOW_FILE);
 }
 
-/** 读取当前 session（支持具名会话） */
+/** 读取当前激活的具名会话（workflow use 设置的） */
+export function getCurrentSessionName(cwd: string = process.cwd()): string | undefined {
+  const filePath = path.join(cwd, WORKFLOW_DIR, CURRENT_SESSION_FILE);
+  try {
+    if (fs.existsSync(filePath)) {
+      const name = fs.readFileSync(filePath, 'utf-8').trim();
+      return name || undefined;
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
+/** 设置当前激活的具名会话 */
+export function setCurrentSessionName(cwd: string = process.cwd(), name: string): void {
+  const dir = path.join(cwd, WORKFLOW_DIR);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, CURRENT_SESSION_FILE), name, 'utf-8');
+}
+
+/** 清除当前激活的具名会话 */
+export function clearCurrentSessionName(cwd: string = process.cwd()): void {
+  const filePath = path.join(cwd, WORKFLOW_DIR, CURRENT_SESSION_FILE);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+}
+
+/** 读取当前 session（支持具名会话，优先级：显式 name > current-session 文件 > 默认 workflow.json） */
 export function loadSession(cwd: string = process.cwd(), sessionName?: string): WorkflowSession | null {
-  const filePath = getWorkflowPath(cwd, sessionName);
+  const effectiveName = sessionName ?? getCurrentSessionName(cwd);
+  const filePath = getWorkflowPath(cwd, effectiveName);
   try {
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as WorkflowSession;
@@ -134,7 +163,7 @@ export function getCurrentStepIndex(session: WorkflowSession): number {
 /** 标记当前步骤完成，推进到下一步，返回新的当前步骤（若无则 null） */
 export function markStepDone(
   session: WorkflowSession,
-  summary: string,
+  summary: string = '',
   cwd: string = process.cwd()
 ): WorkflowStep | null {
   const idx = getCurrentStepIndex(session);
@@ -195,7 +224,7 @@ export function buildStepPrompt(
     `**输出格式**：${skill.outputFormat}`,
     '',
     '---',
-    `> 完成本步后，运行 \`ethan workflow done "你的摘要"\` 进入下一步`
+    `> 完成本步后，运行 \`ethan workflow done\` 推进到下一步（可选摘要：\`ethan workflow done "你的摘要"\`）`
   );
 
   return lines.join('\n');
