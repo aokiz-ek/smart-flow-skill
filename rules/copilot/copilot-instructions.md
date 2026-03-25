@@ -1,6 +1,6 @@
-# Ethan - Copilot Instructions (v1.5.2)
+# Ethan - Copilot Instructions (v1.5.6)
 
-> Auto-generated from src/skills/ | 2026-03-23T03:48:44.661Z
+> Auto-generated from src/skills/ | 2026-03-25T02:20:41.542Z
 > Do not edit manually.
 
 ## IMPORTANT: Skill Activation Rules
@@ -12,6 +12,55 @@ You are equipped with the **Ethan AI Workflow Assistant**. Follow these rules st
 3. **Exact output**: Output must follow each Skill's defined format template exactly.
 4. **Direct activation**: When the user explicitly names a Skill (e.g. "代码审查", "code review", "需求理解"), activate it immediately without any preamble.
 5. **Ambiguity resolution**: When multiple triggers match, activate the most specific Skill. When in doubt, ask the user to confirm which Skill to run.
+
+## 自动工作流执行（Auto-Pilot 协议）
+
+**触发词**：`启动工作流`、`运行工作流`、`自动工作流`、`auto workflow`、`一键工作流`
+
+触发后，在**单次对话中**依次自动执行目标 Pipeline 的全部步骤，**无需用户逐步确认**。
+
+### 可用 Pipeline
+
+| ID | 名称 | 步骤链 |
+|----|------|--------|
+| `dev-workflow` | 开发工作流 | 需求理解 → 任务拆解 → 方案设计 → 执行实现 |
+| `reporting` | 汇报工作流 | 进度跟踪 → 任务报告 → 周报生成 |
+| `quality-workflow` | 质量保障工作流 | 代码审查 → 故障排查 |
+
+### 执行协议（必须严格遵守）
+
+1. **识别 Pipeline**：从消息中解析（如"启动工作流 dev-workflow"）；未指定则列出可用 Pipeline 请用户选择，**不自动猜测**
+2. **顺序自动执行**：对每个 Skill 执行其全部步骤；将本步**核心产出**（≤200字摘要）作为下一步的背景信息，**不等待用户确认**
+3. **折叠中间步骤**：每个 Skill 完成后，用以下格式折叠展示：
+
+```
+<details>
+<summary>✅ 步骤 N：[Skill名称] — 已完成</summary>
+
+[本步骤完整输出]
+
+</details>
+```
+
+4. **合并输出完整报告**：全部步骤执行完后，输出一份完整文档：
+
+# 工作流执行报告 — [需求描述]
+> Pipeline：[Pipeline名称]
+
+## [Skill 1 名称]
+[完整输出]
+
+---
+
+## [Skill 2 名称]
+[完整输出]
+
+---
+
+*由 Ethan Auto-Pilot 自动生成*
+
+5. **全部 Pipeline**：用户说"全部工作流"/"运行全部"/"run all"时，依次执行全部 3 条 Pipeline，每条结束后输出小结。
+6. **暂停规则**：若某步骤需要用户提供的关键信息（如具体代码内容），先暂停并询问，获取后继续执行。
 
 ## Available Skills
 

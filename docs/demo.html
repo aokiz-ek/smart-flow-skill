@@ -877,6 +877,9 @@
     <button class="scenario-tab" role="tab" data-tab="stats" onclick="switchTab('stats')">
       <span class="tab-icon">📊</span> 统计
     </button>
+    <button class="scenario-tab" role="tab" data-tab="autopilot" onclick="switchTab('autopilot')">
+      <span class="tab-icon">⚡</span> Auto-Pilot
+    </button>
   </div>
 
   <!-- ═══════════════════════════════
@@ -1196,6 +1199,45 @@
           <div class="desc-step"><div class="desc-step-num">1</div><div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan stats show</code> — 个人统计</div></div>
           <div class="desc-step"><div class="desc-step-num">2</div><div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan stats leaderboard</code> — 团队排行</div></div>
           <div class="desc-step"><div class="desc-step-num">3</div><div>数据存储在 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">~/.ethan-stats.json</code>，本地私有</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: AUTO-PILOT
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="autopilot">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-autopilot">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ethan autopilot</div>
+          </div>
+          <div class="terminal-body" id="tbody-autopilot">
+            <div class="terminal-play-overlay" id="overlay-autopilot" onclick="playAnim('autopilot')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-autopilot"></div></div>
+            <button class="anim-restart" onclick="resetAnim('autopilot')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <h3>⚡ Auto-Pilot — 全自动链式执行</h3>
+        <p>不再需要每步手动 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">workflow done</code>。生成超级 prompt，粘贴到 AI 后自动链式跑完所有步骤，中间折叠，只看最终结果。</p>
+        <div class="desc-steps">
+          <div class="desc-step"><div class="desc-step-num">1</div><div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan autopilot dev-workflow -c "需求"</code></div></div>
+          <div class="desc-step"><div class="desc-step-num">2</div><div>超级 prompt 自动复制到剪贴板，粘贴到 AI 编辑器</div></div>
+          <div class="desc-step"><div class="desc-step-num">3</div><div>AI 自动执行全部 4 步，每步折叠展示，最终输出完整报告</div></div>
+          <div class="desc-step"><div class="desc-step-num" style="background:linear-gradient(135deg,#007AFF,#BF5AF2);">✦</div><div>或直接在 AI 对话中说「<strong>启动工作流 dev-workflow</strong>」，无需 CLI</div></div>
         </div>
       </div>
     </div>
@@ -1524,6 +1566,46 @@ async function animStats() {
   updateBar(id, 100);
 }
 
+/* ── AUTO-PILOT ANIMATION ── */
+async function animAutopilot() {
+  const id = 'autopilot';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">autopilot dev-workflow</span> <span style="color:#666">-c "实现用户认证模块"</span></span></div>`],
+    [700, `<div class="term-blank"></div>`],
+    [800, `<div class="term-output highlight">🚀 超级 prompt 已生成：开发工作流（4 步）</div>`],
+    [1100,`<div class="term-output dim">─────────────────────────────────────────────</div>`],
+    [1300,`<div class="term-output success">✅ 超级 prompt 已复制到剪贴板！</div>`],
+    [1500,`<div class="term-output dim">   粘贴到 AI 编辑器后，AI 将自动执行所有步骤</div>`],
+    [1800,`<div class="term-blank"></div>`],
+    [1900,`<div class="term-output dim">💡 AI 自动链式执行中...</div>`],
+    [2200,`<div class="term-blank"></div>`],
+    [2300,`<div class="term-output" style="color:#555">&lt;details&gt;&lt;summary&gt;✅ 步骤 1：需求理解 — 已完成&lt;/summary&gt;</div>`],
+    [2500,`<div class="term-output dim">   需求分析完成，识别 3 个核心功能模块...</div>`],
+    [2700,`<div class="term-output" style="color:#555">&lt;/details&gt;</div>`],
+    [3000,`<div class="term-blank"></div>`],
+    [3100,`<div class="term-output" style="color:#555">&lt;details&gt;&lt;summary&gt;✅ 步骤 2：任务拆解 — 已完成&lt;/summary&gt;</div>`],
+    [3300,`<div class="term-output dim">   拆解为 8 个子任务，识别关键依赖关系...</div>`],
+    [3500,`<div class="term-output" style="color:#555">&lt;/details&gt;</div>`],
+    [3800,`<div class="term-blank"></div>`],
+    [3900,`<div class="term-output" style="color:#555">&lt;details&gt;&lt;summary&gt;✅ 步骤 3：方案设计 — 已完成&lt;/summary&gt;</div>`],
+    [4100,`<div class="term-output dim">   JWT + Refresh Token 方案，含接口定义...</div>`],
+    [4300,`<div class="term-output" style="color:#555">&lt;/details&gt;</div>`],
+    [4600,`<div class="term-blank"></div>`],
+    [4700,`<div class="term-output highlight">━━━ 工作流执行报告 — 实现用户认证模块 ━━━</div>`],
+    [5000,`<div class="term-output success">✅ 4 步全部完成 | 自动生成完整合并报告</div>`],
+    [5400,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 5800) * 100));
+  }
+  updateBar(id, 100);
+}
+
 /* ── PLAY / RESET ── */
 function playAnim(id) {
   const overlay = document.getElementById(`overlay-${id}`);
@@ -1534,7 +1616,7 @@ function playAnim(id) {
     animTimers[id] = [];
   }
 
-  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats };
+  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats, autopilot: animAutopilot };
   if (animMap[id]) animMap[id]();
 }
 

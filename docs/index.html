@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="Ethan v1.5.5 — 10 个标准化工作流 Skill，17 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。持久化会话、交互式 Pipeline 选择、Git 集成、浏览器扩展、插件 OS，让每一步都有据可依。" />
+  <meta name="description" content="Ethan v1.5.6 — 10 个标准化工作流 Skill，17 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。Auto-Pilot 全自动链式执行，说一句「启动工作流」即可完成整个 Pipeline，让每一步都有据可依。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1537,7 +1537,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Ethan v1.5.5 — Now Available</span>
+      <span>Ethan v1.5.6 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1545,7 +1545,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 17 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.5
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 17 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.6
     </p>
 
     <div class="hero-cta">
@@ -1634,14 +1634,14 @@
           <div class="pain-before">
             <div class="pain-label before">❌ 之前</div>
             <div class="pain-scenario before-text">
-              需求→拆解→设计→实现，<strong>每一步都需要手动搬运上下文</strong>。关掉窗口，所有进度丢失。新的对话，一切重来。
+              需求→拆解→设计→实现，<strong>每一步都需要手动搬运上下文</strong>，每步都要跑 <code>workflow done</code>。关掉窗口，所有进度丢失。
             </div>
           </div>
           <div class="pain-arrow">→</div>
           <div class="pain-after">
             <div class="pain-label after">✅ Ethan</div>
             <div class="pain-scenario after-text">
-              <strong>有状态工作流引擎。</strong><code>ethan workflow start</code> 交互式选 Pipeline，<code>ethan workflow use &lt;name&gt;</code> 激活会话，<code>ethan workflow done</code> 一键推进（摘要可选），会话持久化，随时恢复。
+              <strong>Auto-Pilot 全自动。</strong>说「启动工作流」AI 自动链式跑完所有步骤；或 <code>ethan autopilot dev-workflow -c "需求"</code> 生成超级 prompt，粘贴即跑。有状态引擎持久化会话，随时恢复。
             </div>
           </div>
         </div>
@@ -1906,7 +1906,7 @@
   <section id="workflow" aria-label="一键工作流执行">
     <div class="section-header reveal">
       <h2 class="section-title">一键工作流执行</h2>
-      <p class="section-subtitle">有状态推进 · 跨步骤上下文 · AI 编辑器原生集成</p>
+      <p class="section-subtitle">Auto-Pilot 全自动链式执行 · 有状态推进 · 跨步骤上下文 · AI 编辑器原生集成</p>
     </div>
 
     <div class="adv-grid">
@@ -1945,6 +1945,12 @@
         <div class="adv-title">3 条预置工作流</div>
         <div class="adv-desc">开发工作流（需求→任务→设计→实现）· 汇报工作流（跟踪→报告→周报）· 质量工作流（审查→排查）</div>
       </article>
+
+      <article class="adv-card reveal reveal-delay-2" aria-label="Auto-Pilot 全自动执行" style="border-color:#007AFF33;background:linear-gradient(135deg,#007AFF08,#BF5AF208);">
+        <div class="adv-icon" aria-hidden="true">⚡</div>
+        <div class="adv-title" style="color:#007AFF;">Auto-Pilot — 全自动链式执行</div>
+        <div class="adv-desc">说一句「<strong>启动工作流</strong>」，AI 自动链式执行所有步骤，中间过程折叠展示，最终输出完整合并报告。或用 <code>ethan autopilot dev-workflow -c "需求"</code> 生成超级 prompt，粘贴即跑，无需每步手动推进。</div>
+      </article>
     </div>
 
     <div style="margin-top:40px;background:#111;border:1px solid #222;border-radius:12px;padding:24px 28px;">
@@ -1973,6 +1979,10 @@
         <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:12px 16px;">
           <code style="font-size:13px;color:#22c55e;">MCP: ethan_workflow_next</code>
           <div style="font-size:12px;color:#666;margin-top:5px;">AI 编辑器通过 MCP 一键推进步骤</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#007AFF0d,#BF5AF20d);border:1px solid #007AFF33;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#007AFF;">ethan autopilot [pipeline]</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成超级 prompt，AI 自动链式执行全部步骤，无需手动推进</div>
         </div>
       </div>
     </div>
@@ -2140,7 +2150,7 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.5.5 — 工作流大幅简化：持久化会话、交互式 Pipeline 菜单、可选摘要</p>
+      <p class="section-subtitle">v1.5.6 — 工作流大幅简化：持久化会话、交互式 Pipeline 菜单、可选摘要</p>
     </div>
 
     <div class="adv-grid">
@@ -2847,7 +2857,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.5 &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.6 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 

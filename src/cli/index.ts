@@ -3246,6 +3246,138 @@ function loadCustomPipelines(cwd: string): CustomPipelineYaml[] {
   return results;
 }
 
+// ─── autopilot 命令 ──────────────────────────────────────────────────────────
+
+program
+  .command('autopilot [pipelineId]')
+  .description('生成「超级 prompt」：一次粘贴即可让 AI 自动链式执行完整 Pipeline，无需手动推进每一步')
+  .option('-c, --context <context>', '任务上下文描述（如"实现用户登录功能"）', '')
+  .option('--all', '生成全部 3 条 Pipeline 的超级 prompt')
+  .option('--lang <lang>', '输出语言：zh（默认）或 en', '')
+  .option('--no-copy', '不自动复制到剪贴板，直接打印到终端')
+  .action(async (pipelineId: string | undefined, options: {
+    context: string;
+    all?: boolean;
+    lang: string;
+    copy: boolean;
+  }) => {
+    const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
+    const { buildAutopilotPrompt, buildAllPipelinesAutopilotPrompt } = await import('./autopilot');
+
+    const config = readConfig(process.cwd());
+    const isEn = (options.lang || config.lang || 'zh') === 'en';
+
+    // 获取任务上下文（--context 或交互式输入）
+    let context = (options.context || '').trim();
+    if (!context) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const ask = (q: string): Promise<string> =>
+        new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+      context = await ask(isEn
+        ? 'Describe your task context (e.g. "implement user login with JWT"):\n> '
+        : '请描述任务背景（例如：实现用户登录功能，支持 JWT 认证）：\n> ');
+      rl.close();
+      if (!context) {
+        console.error(isEn ? '\n❌ Context cannot be empty\n' : '\n❌ 任务背景不能为空\n');
+        process.exit(1);
+      }
+    }
+
+    let prompt: string;
+
+    if (options.all) {
+      // 生成全部 Pipeline 的超级 prompt
+      const allResolved = PIPELINES.map((p) => resolvePipeline(p.id)!).filter(Boolean);
+      prompt = buildAllPipelinesAutopilotPrompt(allResolved, { context, isEn });
+      console.log(isEn
+        ? `\n🚀 Auto-Pilot prompt generated for all ${PIPELINES.length} pipelines`
+        : `\n🚀 已生成全部 ${PIPELINES.length} 条 Pipeline 的超级 prompt`);
+    } else {
+      // 确定目标 Pipeline
+      let id = pipelineId;
+      if (!id) {
+        const customPipelines = loadCustomPipelines(process.cwd());
+        const allPipelines = [
+          ...PIPELINES,
+          ...customPipelines.map((p) => ({ id: p.id, name: p.name, description: p.description, skillIds: p.skillIds })),
+        ];
+
+        const readline = await import('readline');
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const ask = (q: string): Promise<string> =>
+          new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+
+        console.log(isEn ? '\n🔄 Available Pipelines\n' : '\n🔄 可用工作流 Pipeline\n');
+        console.log('─'.repeat(60));
+        allPipelines.forEach((p, i) => {
+          console.log(`  ${i + 1}. ${p.name}  [${p.id}]`);
+          console.log(`     ${isEn ? p.description : p.description}`);
+        });
+        console.log('');
+
+        const choice = await ask(isEn
+          ? `Select pipeline (1-${allPipelines.length} or ID):\n> `
+          : `选择 Pipeline（输入序号 1-${allPipelines.length}，或直接输入 ID）：\n> `);
+        rl.close();
+
+        const num = parseInt(choice, 10);
+        if (!isNaN(num) && num >= 1 && num <= allPipelines.length) {
+          id = allPipelines[num - 1].id;
+        } else {
+          id = choice;
+        }
+      }
+
+      let resolved = resolvePipeline(id!);
+      if (!resolved) {
+        const customPipelines = loadCustomPipelines(process.cwd());
+        const custom = customPipelines.find((p) => p.id === id);
+        if (custom) {
+          const customSkills = custom.skillIds
+            .map((sid) => ALL_SKILLS.find((s) => s.id === sid))
+            .filter((s): s is NonNullable<typeof s> => s != null);
+          if (customSkills.length > 0) {
+            resolved = { pipeline: { id: custom.id, name: custom.name, description: custom.description, skillIds: custom.skillIds }, skills: customSkills };
+          }
+        }
+      }
+
+      if (!resolved) {
+        console.error(isEn ? `\n❌ Unknown pipeline: ${id}\n` : `\n❌ 未找到 Pipeline: ${id}\n`);
+        console.error(`Available: ${PIPELINES.map((p) => p.id).join(' | ')}`);
+        process.exit(1);
+      }
+
+      const { pipeline, skills } = resolved;
+      prompt = buildAutopilotPrompt(pipeline, skills, { context, isEn });
+
+      console.log(isEn
+        ? `\n🚀 Auto-Pilot prompt generated: ${pipeline.name} (${skills.length} steps)`
+        : `\n🚀 超级 prompt 已生成：${pipeline.name}（${skills.length} 步）`);
+
+      trackUsageWithStreak(`autopilot-${pipeline.id}`);
+    }
+
+    console.log('─'.repeat(60));
+
+    if (options.copy !== false) {
+      if (copyToClipboard(prompt)) {
+        console.log(isEn
+          ? '\n✅ Super prompt copied to clipboard! Paste it into your AI editor.'
+          : '\n✅ 超级 prompt 已复制到剪贴板！粘贴到 AI 编辑器后，AI 将自动执行所有步骤。');
+      } else {
+        console.log('\n' + prompt + '\n');
+      }
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+
+    console.log(isEn
+      ? '\n💡 The AI will automatically chain all steps and deliver the final merged report.\n'
+      : '\n💡 AI 将自动链式执行所有步骤，每步折叠展示，最终输出完整合并报告。\n');
+  });
+
 program
   .command('pipeline-init')
   .description('在 .ethan/pipelines/ 生成自定义 Pipeline YAML 模板')
