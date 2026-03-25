@@ -280,6 +280,67 @@ export async function startMcpServer(): Promise<void> {
     },
   };
 
+  const autopilotTool: Tool = {
+    name: 'ethan_autopilot',
+    description: '生成 Auto-Pilot 超级 Prompt，将完整 Pipeline 的所有步骤打包为单条链式执行指令。粘贴到 AI 编辑器后，AI 将自动链式执行所有步骤，无需手动推进，最终输出完整合并报告。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: {
+          type: 'string',
+          enum: PIPELINES.map((p) => p.id),
+          description: `Pipeline ID。可选值：${PIPELINES.map((p) => `${p.id}（${p.name}）`).join('、')}`,
+        },
+        context: {
+          type: 'string',
+          description: '任务背景描述（如"实现用户登录功能，支持 JWT 认证"）',
+        },
+        lang: {
+          type: 'string',
+          enum: ['zh', 'en'],
+          description: '输出语言：zh（默认）或 en',
+          default: 'zh',
+        },
+        withContext: {
+          type: 'boolean',
+          description: '是否采集并注入项目上下文快照（技术栈/git 提交/目录树）',
+          default: false,
+        },
+        cwd: {
+          type: 'string',
+          description: '项目目录路径（withContext=true 时使用，默认为当前目录）',
+        },
+      },
+      required: ['pipelineId', 'context'],
+    },
+  };
+
+  const contextSnapshotTool: Tool = {
+    name: 'ethan_context_snapshot',
+    description: '采集当前项目的上下文快照，包含技术栈、编程语言、框架、近期 git 提交记录、变更文件列表和目录树。可用于为 Auto-Pilot 或工作流步骤提供项目背景信息。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        cwd: {
+          type: 'string',
+          description: '项目目录路径（默认为当前目录）',
+        },
+        format: {
+          type: 'string',
+          enum: ['markdown', 'json'],
+          description: '输出格式：markdown（默认）或 json',
+          default: 'markdown',
+        },
+        useCache: {
+          type: 'boolean',
+          description: '是否使用缓存（TTL 30min，默认 true）',
+          default: true,
+        },
+      },
+      required: [],
+    },
+  };
+
   // 注册工具列表处理器
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
@@ -292,6 +353,8 @@ export async function startMcpServer(): Promise<void> {
         estimateTool,
         gitCommitTool,
         gitReviewTool,
+        autopilotTool,
+        contextSnapshotTool,
       ],
     };
   });
@@ -594,6 +657,64 @@ export async function startMcpServer(): Promise<void> {
       return { content: [{ type: 'text', text: prompt }] };
     }
 
+    // ── ethan_autopilot ────────────────────────────────────────────────────
+    if (name === 'ethan_autopilot') {
+      const pipelineId = ((args?.pipelineId as string) || '').trim();
+      const context = ((args?.context as string) || '').trim();
+      const isEn = (args?.lang as string) === 'en';
+      const withContext = (args?.withContext as boolean) || false;
+      const cwd = (args?.cwd as string) || process.cwd();
+
+      if (!context) {
+        return {
+          content: [{ type: 'text', text: '❌ context 参数不能为空' }],
+          isError: true,
+        };
+      }
+
+      const resolved = resolvePipeline(pipelineId);
+      if (!resolved) {
+        return {
+          content: [{ type: 'text', text: `❌ 未知 Pipeline: ${pipelineId}。可选值：${PIPELINES.map((p) => p.id).join(', ')}` }],
+          isError: true,
+        };
+      }
+
+      const { buildAutopilotPrompt } = await import('../cli/autopilot');
+      let snapshot: import('../context/builder').ProjectSnapshot | undefined;
+      if (withContext) {
+        const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache } = await import('../context/builder');
+        snapshot = loadCachedSnapshot(cwd) ?? (() => {
+          const s = buildProjectSnapshot(cwd);
+          saveSnapshotCache(s, cwd);
+          return s;
+        })();
+      }
+
+      const prompt = buildAutopilotPrompt(resolved.pipeline, resolved.skills, { context, isEn, snapshot });
+      return { content: [{ type: 'text', text: prompt }] };
+    }
+
+    // ── ethan_context_snapshot ─────────────────────────────────────────────
+    if (name === 'ethan_context_snapshot') {
+      const cwd = (args?.cwd as string) || process.cwd();
+      const format = ((args?.format as string) || 'markdown') as 'markdown' | 'json';
+      const useCache = args?.useCache !== false;
+
+      const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache, formatSnapshotForPrompt } = await import('../context/builder');
+      let snapshot = useCache ? loadCachedSnapshot(cwd) : null;
+      if (!snapshot) {
+        snapshot = buildProjectSnapshot(cwd);
+        saveSnapshotCache(snapshot, cwd);
+      }
+
+      const text = format === 'json'
+        ? JSON.stringify(snapshot, null, 2)
+        : formatSnapshotForPrompt(snapshot, false);
+
+      return { content: [{ type: 'text', text }] };
+    }
+
     const skillResult = ALL_SKILLS.find((s) => s.nameEn === name);
     if (!skillResult) {
       return {
@@ -626,7 +747,7 @@ export async function startMcpServer(): Promise<void> {
 
   // MCP server 运行时不输出到 stdout（会破坏协议）
   process.stderr.write(
-    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review, ${PIPELINES.length} pipelines)\n`
+    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_context_snapshot, ${PIPELINES.length} pipelines)\n`
   );
 }
 

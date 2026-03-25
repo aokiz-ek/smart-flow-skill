@@ -192,7 +192,8 @@ export function markStepDone(
 export function buildStepPrompt(
   session: WorkflowSession,
   step: WorkflowStep,
-  skill: SkillDefinition
+  skill: SkillDefinition,
+  snapshotBlock?: string
 ): string {
   const stepIdx = session.steps.indexOf(step);
 
@@ -209,6 +210,10 @@ export function buildStepPrompt(
     '',
     `**任务背景**：${session.initialContext}`,
   ];
+
+  if (snapshotBlock) {
+    lines.push('', snapshotBlock);
+  }
 
   if (prevSummaries) {
     lines.push('', '**前序步骤产出**：', prevSummaries);

@@ -1218,7 +1218,8 @@ workflowCmd
   .command('done [summary]')
   .description('完成当前步骤，自动推进到下一步（摘要可选）')
   .option('-n, --name <name>', '具名会话名称')
-  .action(async (summary: string | undefined, options: { name?: string }) => {
+  .option('-r, --rating <rating>', '评分本步 Skill 质量（1-5）')
+  .action(async (summary: string | undefined, options: { name?: string; rating?: string }) => {
     const {
       loadSession,
       markStepDone,
@@ -1259,6 +1260,21 @@ workflowCmd
       stepSummary,
       process.cwd()
     );
+
+    // 记录 Skill 质量评分（--rating 1-5）
+    if (options.rating !== undefined) {
+      const ratingNum = parseInt(options.rating, 10);
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        console.warn('⚠️  评分无效，已忽略（必须为 1-5 的整数）');
+      } else {
+        const statsData = readStatsV2();
+        if (!statsData.ratings) statsData.ratings = {};
+        if (!statsData.ratings[currentStep.skillId]) statsData.ratings[currentStep.skillId] = [];
+        statsData.ratings[currentStep.skillId].push(ratingNum);
+        writeStatsV2(statsData);
+        console.log(`⭐ 已记录评分 ${ratingNum}/5 → ${currentStep.skillId}`);
+      }
+    }
 
     if (!nextStep) {
       console.log('\n🎉 恭喜！工作流全部完成！');
@@ -3056,6 +3072,7 @@ interface StatsData {
     lastDate: string;
   };
   dailyLog: Record<string, string[]>; // date → skill ids used
+  ratings?: Record<string, number[]>; // skillId → [1,4,5,3,...] (1-5)
 }
 
 function readStatsV2(): StatsData {
@@ -3246,6 +3263,96 @@ function loadCustomPipelines(cwd: string): CustomPipelineYaml[] {
   return results;
 }
 
+// ─── context 命令组 ────────────────────────────────────────────────────────
+
+const contextCmd = program.command('context').description('采集并展示当前项目上下文快照（技术栈/git/目录树）');
+
+contextCmd
+  .command('show')
+  .description('显示项目上下文快照（使用缓存，TTL 30min）')
+  .option('--refresh', '强制重新采集，忽略缓存')
+  .option('--json', '以 JSON 格式输出')
+  .action(async (options: { refresh?: boolean; json?: boolean }) => {
+    const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache, formatSnapshotForPrompt } = await import('../context/builder');
+    let snapshot = options.refresh ? null : loadCachedSnapshot(process.cwd());
+    if (!snapshot) {
+      console.log('🔍 正在采集项目上下文...');
+      snapshot = buildProjectSnapshot(process.cwd());
+      saveSnapshotCache(snapshot, process.cwd());
+    }
+    if (options.json) {
+      console.log(JSON.stringify(snapshot, null, 2));
+    } else {
+      console.log('\n' + formatSnapshotForPrompt(snapshot, false) + '\n');
+      console.log(`（缓存时间：${snapshot.generatedAt}）\n`);
+    }
+  });
+
+contextCmd
+  .command('refresh')
+  .description('强制重新采集，更新 .ethan/context.json 缓存')
+  .action(async () => {
+    const { buildProjectSnapshot, saveSnapshotCache, formatSnapshotForPrompt } = await import('../context/builder');
+    console.log('🔍 正在采集项目上下文...');
+    const snapshot = buildProjectSnapshot(process.cwd());
+    saveSnapshotCache(snapshot, process.cwd());
+    console.log('\n' + formatSnapshotForPrompt(snapshot, false) + '\n');
+    console.log('✅ 项目上下文已更新并缓存到 .ethan/context.json\n');
+  });
+
+// ─── quality 命令组 ────────────────────────────────────────────────────────
+
+const qualityCmd = program.command('quality').description('Skill 质量评估报告（基于 workflow done --rating 的评分数据）');
+
+qualityCmd
+  .command('report')
+  .description('显示各 Skill 的质量评分报告（ASCII 条形图）')
+  .option('--min-count <n>', '最少评分次数过滤（低于此数量的 Skill 不显示）', '1')
+  .action((options: { minCount: string }) => {
+    const minCount = parseInt(options.minCount, 10) || 1;
+    const data = readStatsV2();
+    const ratings = data.ratings || {};
+
+    const entries = Object.entries(ratings)
+      .map(([skillId, scores]) => ({
+        skillId,
+        scores,
+        avg: scores.reduce((a, b) => a + b, 0) / scores.length,
+        count: scores.length,
+      }))
+      .filter((e) => e.count >= minCount)
+      .sort((a, b) => b.avg - a.avg);
+
+    if (entries.length === 0) {
+      console.log('\n📊 暂无评分数据。运行 ethan workflow done "摘要" --rating 4 记录评分。\n');
+      return;
+    }
+
+    const globalAvg = entries.reduce((s, e) => s + e.avg, 0) / entries.length;
+
+    console.log('\n📊 Skill 质量评估报告');
+    console.log('─'.repeat(60));
+
+    const BAR_MAX = 25;
+    for (const e of entries) {
+      const indicator = e.avg > 4 ? '🟢' : e.avg >= 3 ? '🟡' : '🔴';
+      const bars = Math.round((e.avg / 5) * BAR_MAX);
+      const bar = '█'.repeat(bars) + '░'.repeat(BAR_MAX - bars);
+      const avgStr = e.avg.toFixed(1);
+      console.log(`${indicator} ${e.skillId.padEnd(28)} ${bar}  ${avgStr}/5  (n=${e.count})`);
+    }
+
+    console.log('─'.repeat(60));
+    console.log(`   全局平均分：${globalAvg.toFixed(1)}/5  （${entries.length} 个 Skill，共 ${entries.reduce((s, e) => s + e.count, 0)} 条评分）`);
+
+    const lowSkills = entries.filter((e) => e.avg < 3);
+    if (lowSkills.length > 0) {
+      console.log('\n⚠️  低分 Skill（平均 < 3）需要关注：');
+      lowSkills.forEach((e) => console.log(`   🔴 ${e.skillId}  avg=${e.avg.toFixed(1)}`));
+    }
+    console.log('');
+  });
+
 // ─── autopilot 命令 ──────────────────────────────────────────────────────────
 
 program
@@ -3254,18 +3361,38 @@ program
   .option('-c, --context <context>', '任务上下文描述（如"实现用户登录功能"）', '')
   .option('--all', '生成全部 3 条 Pipeline 的超级 prompt')
   .option('--lang <lang>', '输出语言：zh（默认）或 en', '')
+  .option('--with-context', '自动采集项目上下文（技术栈/git 提交/目录树）注入到提示词')
   .option('--no-copy', '不自动复制到剪贴板，直接打印到终端')
   .action(async (pipelineId: string | undefined, options: {
     context: string;
     all?: boolean;
     lang: string;
+    withContext?: boolean;
     copy: boolean;
   }) => {
     const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
     const { buildAutopilotPrompt, buildAllPipelinesAutopilotPrompt } = await import('./autopilot');
+    const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache } = await import('../context/builder');
 
     const config = readConfig(process.cwd());
     const isEn = (options.lang || config.lang || 'zh') === 'en';
+
+    // 采集项目上下文快照（--with-context 或自动检测缓存）
+    let snapshot = undefined as import('../context/builder').ProjectSnapshot | undefined;
+    if (options.withContext) {
+      const cached = loadCachedSnapshot(process.cwd());
+      if (cached) {
+        snapshot = cached;
+      } else {
+        console.log(isEn ? '🔍 Collecting project context...' : '🔍 正在采集项目上下文...');
+        snapshot = buildProjectSnapshot(process.cwd());
+        saveSnapshotCache(snapshot, process.cwd());
+      }
+    } else {
+      // 静默注入：若缓存存在且未过期则自动使用
+      const cached = loadCachedSnapshot(process.cwd());
+      if (cached) snapshot = cached;
+    }
 
     // 获取任务上下文（--context 或交互式输入）
     let context = (options.context || '').trim();
@@ -3289,7 +3416,7 @@ program
     if (options.all) {
       // 生成全部 Pipeline 的超级 prompt
       const allResolved = PIPELINES.map((p) => resolvePipeline(p.id)!).filter(Boolean);
-      prompt = buildAllPipelinesAutopilotPrompt(allResolved, { context, isEn });
+      prompt = buildAllPipelinesAutopilotPrompt(allResolved, { context, isEn, snapshot });
       console.log(isEn
         ? `\n🚀 Auto-Pilot prompt generated for all ${PIPELINES.length} pipelines`
         : `\n🚀 已生成全部 ${PIPELINES.length} 条 Pipeline 的超级 prompt`);
@@ -3350,7 +3477,7 @@ program
       }
 
       const { pipeline, skills } = resolved;
-      prompt = buildAutopilotPrompt(pipeline, skills, { context, isEn });
+      prompt = buildAutopilotPrompt(pipeline, skills, { context, isEn, snapshot });
 
       console.log(isEn
         ? `\n🚀 Auto-Pilot prompt generated: ${pipeline.name} (${skills.length} steps)`

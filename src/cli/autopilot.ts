@@ -5,10 +5,13 @@
  */
 
 import type { PipelineDefinition, SkillDefinition } from '../skills/types';
+import type { ProjectSnapshot } from '../context/builder';
+import { formatSnapshotForPrompt } from '../context/builder';
 
 export interface AutopilotOptions {
   context: string;
   isEn?: boolean;
+  snapshot?: ProjectSnapshot;
 }
 
 /** 生成单条 Pipeline 的超级 prompt */
@@ -74,8 +77,9 @@ ${stepsContent}
 
     const reportTemplate = buildReportTemplate(pipeline, skills, context, true);
     const startCmd = `**Begin executing Step 1 now.**`;
+    const snapshotBlock = options.snapshot ? formatSnapshotForPrompt(options.snapshot, true) : '';
 
-    return [header, '---', rules, '---', foldFormat, '---', `## Step Details`, stepsSection, '---', reportTemplate, startCmd].join('\n\n');
+    return [header, snapshotBlock, '---', rules, '---', foldFormat, '---', `## Step Details`, stepsSection, '---', reportTemplate, startCmd].filter(Boolean).join('\n\n');
   }
 
   // 中文版
@@ -132,8 +136,9 @@ ${stepsContent}
 
   const reportTemplate = buildReportTemplate(pipeline, skills, context, false);
   const startCmd = `**立即开始执行步骤 1。**`;
+  const snapshotBlock = options.snapshot ? formatSnapshotForPrompt(options.snapshot, false) : '';
 
-  return [header, '---', rules, '---', foldFormat, '---', `## 步骤详情`, stepsSection, '---', reportTemplate, startCmd].join('\n\n');
+  return [header, snapshotBlock, '---', rules, '---', foldFormat, '---', `## 步骤详情`, stepsSection, '---', reportTemplate, startCmd].filter(Boolean).join('\n\n');
 }
 
 /** 生成合并报告模板段落 */
