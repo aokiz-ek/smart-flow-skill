@@ -880,6 +880,12 @@
     <button class="scenario-tab" role="tab" data-tab="autopilot" onclick="switchTab('autopilot')">
       <span class="tab-icon">⚡</span> Auto-Pilot
     </button>
+    <button class="scenario-tab" role="tab" data-tab="context" onclick="switchTab('context')">
+      <span class="tab-icon">🔍</span> Context 引擎
+    </button>
+    <button class="scenario-tab" role="tab" data-tab="quality" onclick="switchTab('quality')">
+      <span class="tab-icon">⭐</span> 质量评分
+    </button>
   </div>
 
   <!-- ═══════════════════════════════
@@ -1091,7 +1097,7 @@
       <div>
         <div class="desc-card" style="margin-bottom:16px">
           <h3>🤖 MCP Server 集成</h3>
-          <p>配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue）可直接在对话中调用 17 个 Ethan 工具，无需切换终端。</p>
+          <p>配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue）可直接在对话中调用 19 个 Ethan 工具，无需切换终端。</p>
         </div>
         <div class="mcp-call-card">
           <div class="mcp-call-header">
@@ -1147,7 +1153,7 @@
     </div>
 
     <div style="margin-top:24px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:16px;padding:24px">
-      <h3 style="font-size:14px;font-weight:600;color:var(--color-text-secondary);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">17 个可用 MCP 工具</h3>
+      <h3 style="font-size:14px;font-weight:600;color:var(--color-text-secondary);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">19 个可用 MCP 工具</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
         <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">requirement_understanding</div>
         <div style="padding:10px 14px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue)">task_breakdown</div>
@@ -1162,6 +1168,8 @@
         <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_estimate</div>
         <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_git_commit</div>
         <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.2);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green)">ethan_git_review</div>
+        <div style="padding:10px 14px;background:rgba(0,122,255,0.1);border:2px solid rgba(0,122,255,0.35);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-blue);font-weight:700">ethan_autopilot ✨</div>
+        <div style="padding:10px 14px;background:rgba(52,199,89,0.1);border:2px solid rgba(52,199,89,0.35);border-radius:10px;font-family:var(--font-mono);font-size:12px;color:var(--color-green);font-weight:700">ethan_context_snapshot ✨</div>
       </div>
     </div>
   </div>
@@ -1242,9 +1250,109 @@
       </div>
     </div>
   </div>
-</section>
 
-<!-- ── BEFORE / AFTER ── -->
+  <!-- ═══════════════════════════════
+       TAB: CONTEXT ENGINE
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="context">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-context">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ethan context</div>
+          </div>
+          <div class="terminal-body" id="tbody-context">
+            <div class="terminal-play-overlay" id="overlay-context" onclick="playAnim('context')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-context"></div></div>
+            <button class="anim-restart" onclick="resetAnim('context')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <h3>🔍 Context 引擎 — 项目上下文自动注入</h3>
+        <p>再也不用手动告诉 AI 你用的什么框架。<code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan context show</code> 一键采集，缓存 30 分钟，autopilot 自动注入。</p>
+        <div class="desc-steps">
+          <div class="desc-step">
+            <div class="desc-step-num">1</div>
+            <div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan context show</code>，自动扫描技术栈、git 提交、变更文件、目录树</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">2</div>
+            <div>快照缓存到 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">.ethan/context.json</code>，TTL 30 分钟</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">3</div>
+            <div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan autopilot --with-context</code> 将快照注入超级 prompt，AI 不再询问项目信息</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num" style="background:linear-gradient(135deg,#34C759,#007AFF)">✦</div>
+            <div>MCP 工具 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan_context_snapshot</code> 在编辑器内直接调用</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       TAB: QUALITY RATINGS
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="quality">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-quality">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ethan quality report</div>
+          </div>
+          <div class="terminal-body" id="tbody-quality">
+            <div class="terminal-play-overlay" id="overlay-quality" onclick="playAnim('quality')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-quality"></div></div>
+            <button class="anim-restart" onclick="resetAnim('quality')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <h3>⭐ Skill 质量评分 — 闭环反馈</h3>
+        <p>完成每一步时顺手打个分，Ethan 帮你追踪哪些 Skill 效果好、哪些需要改进。</p>
+        <div class="desc-steps">
+          <div class="desc-step">
+            <div class="desc-step-num">1</div>
+            <div>完成步骤时评分：<code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan workflow done "摘要" --rating 4</code></div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">2</div>
+            <div>评分 1-5，自动聚合到 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">~/.ethan-stats.json</code></div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">3</div>
+            <div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan quality report</code>，ASCII 条形图 🔴🟡🟢 分级展示各 Skill 平均分</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num" style="background:linear-gradient(135deg,#FF375F,#FF9F0A)">!</div>
+            <div>低于 3 分的 Skill 在底部单独警告，帮你优先改进</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="before-after-section reveal">
   <div style="max-width:1200px;margin:0 auto">
     <h2>同一件事，<span class="gradient-text">两种结果</span></h2>
@@ -1606,6 +1714,89 @@ async function animAutopilot() {
   updateBar(id, 100);
 }
 
+/* ── CONTEXT ENGINE ANIMATION ── */
+async function animContext() {
+  const id = 'context';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">context show</span></span></div>`],
+    [500, `<div class="term-output">🔍 正在采集项目上下文...</div>`],
+    [900, `<div class="term-blank"></div>`],
+    [1000,`<div class="term-output highlight">## 项目上下文（自动采集）</div>`],
+    [1200,`<div class="term-blank"></div>`],
+    [1300,`<div class="term-output dim"><span style="color:#BF5AF2">项目名称</span>：my-app</div>`],
+    [1500,`<div class="term-output dim"><span style="color:#BF5AF2">编程语言</span>：TypeScript</div>`],
+    [1700,`<div class="term-output dim"><span style="color:#BF5AF2">框架/库</span>：Next.js、Tailwind CSS</div>`],
+    [1900,`<div class="term-output dim"><span style="color:#BF5AF2">工具链</span>：Vitest、pnpm、Prisma</div>`],
+    [2100,`<div class="term-output dim"><span style="color:#BF5AF2">当前分支</span>：feature/user-auth</div>`],
+    [2300,`<div class="term-blank"></div>`],
+    [2400,`<div class="term-output dim"><span style="color:#BF5AF2">变更文件</span>（3 个）：</div>`],
+    [2500,`<div class="term-output dim">  M src/app/api/auth/route.ts</div>`],
+    [2600,`<div class="term-output dim">  M src/components/LoginForm.tsx</div>`],
+    [2700,`<div class="term-output dim">  A src/lib/jwt.ts</div>`],
+    [2900,`<div class="term-blank"></div>`],
+    [3000,`<div class="term-output dim"><span style="color:#BF5AF2">近期提交</span>：</div>`],
+    [3100,`<div class="term-output dim">  a1b2c3d feat: add prisma user schema</div>`],
+    [3200,`<div class="term-output dim">  d4e5f6a fix: cors middleware config</div>`],
+    [3400,`<div class="term-blank"></div>`],
+    [3500,`<div class="term-output success">✅ 已缓存到 .ethan/context.json（TTL 30min）</div>`],
+    [3800,`<div class="term-blank"></div>`],
+    [3900,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">autopilot dev-workflow</span> <span class="cmd-flag">--with-context</span> <span style="color:#666">-c "实现登录功能"</span></span></div>`],
+    [4500,`<div class="term-output success">🚀 超级 prompt 已生成（含项目上下文注入）</div>`],
+    [4800,`<div class="term-output dim">   AI 不再需要询问：你用的什么框架？</div>`],
+    [5100,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 5500) * 100));
+  }
+  updateBar(id, 100);
+}
+
+/* ── QUALITY RATING ANIMATION ── */
+async function animQuality() {
+  const id = 'quality';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  const lines = [
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span> <span style="color:#e2e8f0">"完成需求分析，确认核心功能"</span> <span class="cmd-flag">--rating 4</span></span></div>`],
+    [600, `<div class="term-output success">✅ 步骤 1（需求理解）已完成 → 进度 25%</div>`],
+    [900, `<div class="term-output" style="color:#BF5AF2">⭐ 已记录评分 4/5 → requirement-understanding</div>`],
+    [1200,`<div class="term-blank"></div>`],
+    [1300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span> <span style="color:#e2e8f0">"任务拆解完成，8 个子任务"</span> <span class="cmd-flag">--rating 5</span></span></div>`],
+    [1900,`<div class="term-output success">✅ 步骤 2（任务拆解）已完成 → 进度 50%</div>`],
+    [2200,`<div class="term-output" style="color:#BF5AF2">⭐ 已记录评分 5/5 → task-breakdown</div>`],
+    [2500,`<div class="term-blank"></div>`],
+    [2600,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">workflow done</span> <span style="color:#e2e8f0">"方案设计完成"</span> <span class="cmd-flag">--rating 2</span></span></div>`],
+    [3200,`<div class="term-output success">✅ 步骤 3（方案设计）已完成 → 进度 75%</div>`],
+    [3500,`<div class="term-output" style="color:#BF5AF2">⭐ 已记录评分 2/5 → solution-design</div>`],
+    [3800,`<div class="term-blank"></div>`],
+    [3900,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">quality report</span></span></div>`],
+    [4300,`<div class="term-blank"></div>`],
+    [4400,`<div class="term-output highlight">📊 Skill 质量评估报告</div>`],
+    [4500,`<div class="term-output dim">────────────────────────────────────────────────────────────</div>`],
+    [4700,`<div class="term-output term-ok">🟢 task-breakdown             █████████████████████████  5.0/5  (n=1)</div>`],
+    [4900,`<div class="term-output" style="color:#FF9F0A">🟡 requirement-understanding  ████████████████████       4.0/5  (n=1)</div>`],
+    [5100,`<div class="term-output term-blocker">🔴 solution-design            ██████████                 2.0/5  (n=1)</div>`],
+    [5300,`<div class="term-output dim">────────────────────────────────────────────────────────────</div>`],
+    [5500,`<div class="term-output dim">   全局平均分：3.7/5  （3 个 Skill，共 3 条评分）</div>`],
+    [5700,`<div class="term-blank"></div>`],
+    [5800,`<div class="term-output warn">⚠️  低分 Skill（平均 &lt; 3）需要关注：</div>`],
+    [6000,`<div class="term-output term-blocker">   🔴 solution-design  avg=2.0</div>`],
+    [6300,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 6700) * 100));
+  }
+  updateBar(id, 100);
+}
+
 /* ── PLAY / RESET ── */
 function playAnim(id) {
   const overlay = document.getElementById(`overlay-${id}`);
@@ -1616,7 +1807,7 @@ function playAnim(id) {
     animTimers[id] = [];
   }
 
-  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats, autopilot: animAutopilot };
+  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats, autopilot: animAutopilot, context: animContext, quality: animQuality };
   if (animMap[id]) animMap[id]();
 }
 
