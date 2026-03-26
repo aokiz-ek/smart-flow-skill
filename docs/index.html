@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="Ethan v1.5.9 — 10 个标准化工作流 Skill，19 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。Context 引擎自动采集项目上下文，Auto-Pilot 全自动链式执行，Skill 质量评估闭环。" />
+  <meta name="description" content="Ethan v1.6.0 — 10 个标准化工作流 Skill，19 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。自定义 Skill 支持 YAML/MD 格式，Context 引擎自动采集项目上下文，Auto-Pilot 全自动链式执行，Skill 质量评估闭环。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -1631,7 +1631,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Ethan v1.5.9 — Now Available</span>
+      <span>Ethan v1.6.0 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1639,7 +1639,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 19 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.5.9
+      Your AI Workflow Assistant &nbsp;·&nbsp; 10 Skills &nbsp;·&nbsp; 19 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.6.0
     </p>
 
     <div class="hero-cta">
@@ -2092,6 +2092,10 @@
           <code style="font-size:13px;color:#FF9F0A;">ethan quality report</code>
           <div style="font-size:12px;color:#666;margin-top:5px;">Skill 质量评分 ASCII 条形图，🔴🟡🟢 分级展示平均评分</div>
         </div>
+        <div style="background:linear-gradient(135deg,#FF9F0A0d,#BF5AF20d);border:1px solid #FF9F0A44;border-radius:8px;padding:12px 16px;">
+          <code style="font-size:13px;color:#FF9F0A;">ethan skill new [name] --format md</code>
+          <div style="font-size:12px;color:#666;margin-top:5px;">生成 Markdown 格式自定义 Skill 模板（frontmatter + ## 步骤）</div>
+        </div>
       </div>
     </div>
   </section>
@@ -2258,7 +2262,7 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.5.9 — Context 引擎自动采集项目上下文 · MCP Autopilot 直接触发 Pipeline · Skill 质量评分闭环</p>
+      <p class="section-subtitle">v1.6.0 — 自定义 Skill 支持 YAML/MD 格式 · Context 引擎自动采集项目上下文 · Skill 质量评分闭环</p>
     </div>
 
     <div class="adv-grid">
@@ -2358,6 +2362,13 @@
         <div class="adv-icon" aria-hidden="true">🔌</div>
         <div class="adv-title">插件 OS</div>
         <div class="adv-desc"><code>ethan plugin publish / registry / search</code> — 发布私有 Skill 包到 npm，配置私有注册表，搜索社区插件，打造团队专属 Prompt 生态</div>
+      </article>
+
+      <!-- Card 15 (NEW v1.6.0) -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="自定义 Skill YAML/MD" style="border-color:#FF9F0A33;background:linear-gradient(135deg,#FF9F0A08,#FF6B6B08);">
+        <div class="adv-icon" aria-hidden="true">📝</div>
+        <div class="adv-title" style="color:#FF9F0A;">自定义 Skill — YAML / Markdown</div>
+        <div class="adv-desc"><code>ethan skill new [name] --format md</code> 生成 Markdown 模板；YAML frontmatter 定义元数据，<code>##</code> 标题定义步骤。也支持 <code>.yaml</code>/<code>.json</code>，所有格式透明合并到 <code>ethan list</code>。</div>
       </article>
     </div>
   </section>
@@ -2965,7 +2976,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2026 Ethan &nbsp;·&nbsp; v1.5.9 &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.6.0 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 

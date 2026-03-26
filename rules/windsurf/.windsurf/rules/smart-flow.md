@@ -4,9 +4,9 @@ globs: ["**/*"]
 alwaysApply: true
 ---
 
-# Ethan - Windsurf Rules (v1.5.7)
+# Ethan - Windsurf Rules (v1.6.0)
 
-> Auto-generated from src/skills/ | 2026-03-25T17:14:25.105Z
+> Auto-generated from src/skills/ | 2026-03-26T15:25:56.504Z
 > Do not edit manually.
 
 ## IMPORTANT: Skill Activation Rules

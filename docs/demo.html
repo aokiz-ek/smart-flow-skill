@@ -886,6 +886,9 @@
     <button class="scenario-tab" role="tab" data-tab="quality" onclick="switchTab('quality')">
       <span class="tab-icon">⭐</span> 质量评分
     </button>
+    <button class="scenario-tab" role="tab" data-tab="custom-skill" onclick="switchTab('custom-skill')">
+      <span class="tab-icon">📝</span> 自定义 Skill
+    </button>
   </div>
 
   <!-- ═══════════════════════════════
@@ -1352,6 +1355,57 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════
+       CUSTOM SKILL PANEL
+  ═══════════════════════════════ -->
+  <div class="scenario-panel" data-panel="custom-skill">
+    <div class="demo-layout">
+      <div>
+        <div class="terminal" id="terminal-custom-skill">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">Terminal — ethan skill new --format md</div>
+          </div>
+          <div class="terminal-body" id="tbody-custom-skill">
+            <div class="terminal-play-overlay" id="overlay-custom-skill" onclick="playAnim('custom-skill')">
+              <div class="play-btn">▶</div>
+              <div class="play-label">点击播放演示</div>
+            </div>
+          </div>
+          <div class="anim-progress">
+            <div class="anim-bar"><div class="anim-bar-fill" id="bar-custom-skill"></div></div>
+            <button class="anim-restart" onclick="resetAnim('custom-skill')">↺ 重播</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="desc-card">
+        <h3>📝 自定义 Skill — YAML / Markdown</h3>
+        <p>在 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">.ethan/skills/</code> 目录放置 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">.yaml</code> 或 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">.md</code> 文件，即可扩展 Ethan 的 Skill 体系。</p>
+        <div class="desc-steps">
+          <div class="desc-step">
+            <div class="desc-step-num">1</div>
+            <div>生成模板：<code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan skill new my-skill --format md</code></div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">2</div>
+            <div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">---</code> frontmatter 填写元数据，正文用 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">## 标题</code> 定义步骤</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num">3</div>
+            <div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan list</code>，自定义 Skill 自动合并，标注 🔧</div>
+          </div>
+          <div class="desc-step">
+            <div class="desc-step-num" style="background:linear-gradient(135deg,#FF9F0A,#BF5AF2)">✦</div>
+            <div>通过 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan plugin publish</code> 发布到 npm 分享给团队</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 <section class="before-after-section reveal">
   <div style="max-width:1200px;margin:0 auto">
@@ -1797,6 +1851,56 @@ async function animQuality() {
   updateBar(id, 100);
 }
 
+/* ── CUSTOM SKILL ANIMATION ── */
+async function animCustomSkill() {
+  const id = 'custom-skill';
+  clearTerminal(id);
+  updateBar(id, 0);
+
+  const lines = [
+    [0,    `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">skill new</span> <span style="color:#e2e8f0">code-review-pro</span> <span class="cmd-flag">--format md</span></span></div>`],
+    [600,  `<div class="term-output success">✅ 已创建自定义 Skill 模板：.ethan/skills/code-review-pro.md</div>`],
+    [900,  `<div class="term-output" style="color:#888">   在 --- frontmatter 中填写元数据，在正文用 ## 标题定义步骤</div>`],
+    [1200, `<div class="term-output" style="color:#888">   编辑该文件后运行 ethan list 验证加载结果</div>`],
+    [1600, `<div class="term-blank"></div>`],
+    [1700, `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span style="color:#888">cat .ethan/skills/code-review-pro.md</span></span></div>`],
+    [2000, `<div class="term-output" style="color:#60a5fa">---</div>`],
+    [2100, `<div class="term-output" style="color:#e2e8f0">id: code-review-pro</div>`],
+    [2200, `<div class="term-output" style="color:#e2e8f0">name: 专项代码审查</div>`],
+    [2300, `<div class="term-output" style="color:#e2e8f0">nameEn: code_review_pro</div>`],
+    [2400, `<div class="term-output" style="color:#e2e8f0">description: 深度安全 + 性能双维度审查</div>`],
+    [2500, `<div class="term-output" style="color:#e2e8f0">triggers:</div>`],
+    [2550, `<div class="term-output" style="color:#34d399">  - 专项审查</div>`],
+    [2600, `<div class="term-output" style="color:#34d399">  - security review</div>`],
+    [2700, `<div class="term-output" style="color:#60a5fa">---</div>`],
+    [2800, `<div class="term-blank"></div>`],
+    [2900, `<div class="term-output" style="color:#BF5AF2">## 1. 安全漏洞扫描</div>`],
+    [3000, `<div class="term-output" style="color:#888">- 检查 SQL 注入 / XSS / CSRF 风险</div>`],
+    [3100, `<div class="term-output" style="color:#888">- 审查认证与授权边界</div>`],
+    [3200, `<div class="term-blank"></div>`],
+    [3300, `<div class="term-output" style="color:#BF5AF2">## 2. 性能热点分析</div>`],
+    [3400, `<div class="term-output" style="color:#888">- 识别 N+1 查询与不必要的重复计算</div>`],
+    [3500, `<div class="term-blank"></div>`],
+    [3700, `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">list</span></span></div>`],
+    [4200, `<div class="term-output" style="color:#888">Ethan Skills</div>`],
+    [4300, `<div class="term-output" style="color:#888">────────────────────────────────────────────────────</div>`],
+    [4400, `<div class="term-output" style="color:#e2e8f0"> 1. 需求理解 (requirement-understanding) [需求侧]</div>`],
+    [4500, `<div class="term-output" style="color:#888">    ...</div>`],
+    [4600, `<div class="term-output" style="color:#FF9F0A">100. 专项代码审查 (code-review-pro) 🔧</div>`],
+    [4750, `<div class="term-output success">    深度安全 + 性能双维度审查</div>`],
+    [4900, `<div class="term-output success">    Triggers: 专项审查 | security review</div>`],
+    [5100, `<div class="term-blank"></div>`],
+    [5200, `<div class="term-output" style="color:#888">────────────────────────────────────────────────────</div>`],
+    [5300, `<div class="term-output" style="color:#30D158">Total: 11 skills (10 built-in, 1 custom)</div>`],
+  ];
+
+  for (const [delay, html] of lines) {
+    await appendLine(id, html, delay);
+    updateBar(id, Math.round((delay / 5300) * 100));
+  }
+  updateBar(id, 100);
+}
+
 /* ── PLAY / RESET ── */
 function playAnim(id) {
   const overlay = document.getElementById(`overlay-${id}`);
@@ -1807,7 +1911,7 @@ function playAnim(id) {
     animTimers[id] = [];
   }
 
-  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats, autopilot: animAutopilot, context: animContext, quality: animQuality };
+  const animMap = { git: animGit, review: animReview, workflow: animWorkflow, stats: animStats, autopilot: animAutopilot, context: animContext, quality: animQuality, 'custom-skill': animCustomSkill };
   if (animMap[id]) animMap[id]();
 }
 
