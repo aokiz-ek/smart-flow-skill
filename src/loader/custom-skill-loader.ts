@@ -1,6 +1,6 @@
 /**
  * 自定义 Skill 加载器
- * 从项目的 .ethan/skills/ 目录加载用户自定义 Skill（YAML 或 JSON 格式）
+ * 从项目的 .ethan/skills/ 目录加载用户自定义 Skill（YAML、JSON 或 Markdown 格式）
  */
 
 import * as fs from 'fs';
@@ -11,13 +11,13 @@ const CUSTOM_SKILLS_DIR = '.ethan/skills';
 
 /**
  * 从指定目录加载自定义 Skill 定义
- * 支持 .yaml、.yml、.json 格式
+ * 支持 .yaml、.yml、.json、.md 格式
  */
 export function loadCustomSkills(cwd: string = process.cwd()): SkillDefinition[] {
   const skillsDir = path.join(cwd, CUSTOM_SKILLS_DIR);
   if (!fs.existsSync(skillsDir)) return [];
 
-  const files = fs.readdirSync(skillsDir).filter((f) => /\.(ya?ml|json)$/i.test(f));
+  const files = fs.readdirSync(skillsDir).filter((f) => /\.(ya?ml|json|md)$/i.test(f));
 
   const skills: SkillDefinition[] = [];
 
@@ -25,8 +25,15 @@ export function loadCustomSkills(cwd: string = process.cwd()): SkillDefinition[]
     const filePath = path.join(skillsDir, file);
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      let data: unknown;
 
+      if (/\.md$/i.test(file)) {
+        // .md 格式：YAML frontmatter + Markdown body 步骤
+        const skill = parseMdSkill(raw, file);
+        if (skill) skills.push(skill);
+        continue;
+      }
+
+      let data: unknown;
       if (/\.json$/i.test(file)) {
         data = JSON.parse(raw);
       } else {
@@ -132,4 +139,114 @@ order: 100                    # 排序序号（自定义 Skill 建议从 100 开
 notes:
   - 使用注意事项（可选）
 `;
+}
+
+/**
+ * 生成自定义 Skill 的 Markdown 模板文件
+ * 格式：YAML frontmatter（元数据）+ Markdown 正文（步骤，每个 ## 标题为一步）
+ */
+export function generateMdSkillTemplate(): string {
+  return `---
+id: my-custom-skill
+name: 自定义技能
+nameEn: my_custom_skill
+description: 一句话描述这个 Skill 的作用
+detailDescription: 详细描述（可选，用于规则文件头部）
+triggers:
+  - 自定义触发词
+  - custom skill
+  - '@ethan custom'
+outputFormat: 描述输出格式（如：Markdown 文档、JSON 数据等）
+category: 质量侧
+order: 100
+notes:
+  - 使用注意事项（可选）
+---
+
+## 1. 第一步标题
+
+- 步骤详细说明
+- 支持任意 Markdown 格式
+
+**重点内容**可以加粗，也可以使用代码块：
+
+\`\`\`
+示例代码
+\`\`\`
+
+## 2. 第二步标题
+
+继续描述步骤内容...
+`;
+}
+
+/**
+ * 解析 .md 格式的 Skill 文件
+ * 格式：YAML frontmatter（元数据）+ Markdown 正文（## 标题为步骤）
+ */
+function parseMdSkill(raw: string, filename: string): SkillDefinition | null {
+  const fmMatch = raw.match(/^---\r?\n([\s\S]+?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!fmMatch) {
+    console.warn(`  ⚠️  ${filename}: .md Skill 必须以 YAML frontmatter 开头（--- ... ---）`);
+    return null;
+  }
+
+  let meta: unknown;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const yaml = require('js-yaml') as { load: (s: string) => unknown };
+    meta = yaml.load(fmMatch[1]);
+  } catch (err) {
+    console.warn(`  ⚠️  ${filename}: YAML frontmatter 解析失败 — ${(err as Error).message}`);
+    return null;
+  }
+
+  if (typeof meta !== 'object' || meta === null) {
+    console.warn(`  ⚠️  ${filename}: frontmatter 必须是对象`);
+    return null;
+  }
+
+  const body = fmMatch[2].trim();
+  const mdSteps = parseMdSteps(body);
+
+  // body 中的步骤优先；若 body 无 ## 标题则 fallback 到 frontmatter.steps
+  const data: Record<string, unknown> = {
+    ...(meta as Record<string, unknown>),
+    ...(mdSteps.length > 0 ? { steps: mdSteps } : {}),
+  };
+
+  return validateCustomSkill(data, filename);
+}
+
+/**
+ * 从 Markdown 正文中提取步骤
+ * 每个 ## 或 ### 标题 → 一个步骤（title = 标题文字，content = 标题到下一标题前的内容）
+ */
+function parseMdSteps(body: string): Array<{ title: string; content: string }> {
+  const steps: Array<{ title: string; content: string }> = [];
+  if (!body) return steps;
+
+  const lines = body.split(/\r?\n/);
+  let currentTitle = '';
+  const currentContent: string[] = [];
+
+  const flush = () => {
+    if (currentTitle) {
+      steps.push({ title: currentTitle, content: currentContent.join('\n').trim() });
+      currentContent.length = 0;
+    }
+  };
+
+  for (const line of lines) {
+    const headingMatch = line.match(/^#{2,3}\s+(.+)/);
+    if (headingMatch) {
+      flush();
+      currentTitle = headingMatch[1].trim();
+    } else if (currentTitle) {
+      currentContent.push(line);
+    }
+  }
+
+  flush();
+  return steps;
 }

@@ -321,13 +321,15 @@ const skillCmd = program.command('skill').description('自定义 Skill 管理');
 
 skillCmd
   .command('new [name]')
-  .description('在 .ethan/skills/ 目录生成自定义 Skill YAML 模板')
-  .action(async (name?: string) => {
-    const { generateSkillTemplate } = await import('../loader/custom-skill-loader');
+  .description('在 .ethan/skills/ 目录生成自定义 Skill 模板')
+  .option('--format <format>', '文件格式：yaml 或 md（默认 yaml）', 'yaml')
+  .action(async (name?: string, options?: { format?: string }) => {
+    const { generateSkillTemplate, generateMdSkillTemplate } = await import('../loader/custom-skill-loader');
     const skillsDir = path.join(process.cwd(), '.ethan/skills');
     if (!fs.existsSync(skillsDir)) fs.mkdirSync(skillsDir, { recursive: true });
 
-    const filename = name ? `${name}.yaml` : 'my-skill.yaml';
+    const format = options?.format === 'md' ? 'md' : 'yaml';
+    const filename = name ? `${name}.${format}` : `my-skill.${format}`;
     const filePath = path.join(skillsDir, filename);
 
     if (fs.existsSync(filePath)) {
@@ -335,8 +337,12 @@ skillCmd
       return;
     }
 
-    fs.writeFileSync(filePath, generateSkillTemplate(), 'utf-8');
+    const template = format === 'md' ? generateMdSkillTemplate() : generateSkillTemplate();
+    fs.writeFileSync(filePath, template, 'utf-8');
     console.log(`\n✅ 已创建自定义 Skill 模板：${filePath}`);
+    if (format === 'md') {
+      console.log('   在 --- frontmatter 中填写元数据，在正文用 ## 标题定义步骤');
+    }
     console.log('   编辑该文件后运行 ethan list 验证加载结果\n');
   });
 
