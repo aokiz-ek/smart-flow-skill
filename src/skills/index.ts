@@ -13,6 +13,10 @@ export { weeklyReportSkill } from './07-weekly-report';
 export { codeReviewSkill } from './08-code-review';
 export { debugSkill } from './09-debug';
 export { techResearchSkill } from './10-tech-research';
+export { apiDesignSkill } from './11-api-design';
+export { securityReviewSkill } from './12-security-review';
+export { deploymentSkill } from './13-deployment';
+export { prdSkill } from './14-prd';
 
 export type { SkillDefinition, SkillStep, SkillExample, Platform, BuildContext, PipelineDefinition } from './types';
 
@@ -26,6 +30,10 @@ import { weeklyReportSkill } from './07-weekly-report';
 import { codeReviewSkill } from './08-code-review';
 import { debugSkill } from './09-debug';
 import { techResearchSkill } from './10-tech-research';
+import { apiDesignSkill } from './11-api-design';
+import { securityReviewSkill } from './12-security-review';
+import { deploymentSkill } from './13-deployment';
+import { prdSkill } from './14-prd';
 
 /** 所有 Skill 按顺序排列 */
 export const ALL_SKILLS = [
@@ -39,4 +47,8 @@ export const ALL_SKILLS = [
   codeReviewSkill,
   debugSkill,
   techResearchSkill,
+  apiDesignSkill,
+  securityReviewSkill,
+  deploymentSkill,
+  prdSkill,
 ];

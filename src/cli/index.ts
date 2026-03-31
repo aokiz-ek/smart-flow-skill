@@ -697,19 +697,23 @@ const pipelineCmd = program
 
 pipelineCmd
   .command('list')
-  .description('列出所有可用 Pipeline')
+  .description('列出所有可用 Pipeline（内置 + 自定义）')
   .action(async () => {
     const { PIPELINES } = await import('../skills/pipeline');
+    const customPipelines = loadCustomPipelines(process.cwd());
+    const all = [...PIPELINES, ...customPipelines];
     console.log('\nEthan Pipelines\n');
     console.log('─'.repeat(60));
-    for (const p of PIPELINES) {
-      console.log(`\n${p.id}`);
+    for (const p of all) {
+      const isCustom = !PIPELINES.find((bp) => bp.id === p.id);
+      const tag = isCustom ? ' 🔧 自定义' : '';
+      console.log(`\n${p.id}${tag}`);
       console.log(`  名称：${p.name}`);
       console.log(`  描述：${p.description}`);
       console.log(`  Skills：${p.skillIds.join(' → ')}`);
     }
     console.log('\n' + '─'.repeat(60));
-    console.log(`Total: ${PIPELINES.length} pipelines`);
+    console.log(`Total: ${PIPELINES.length} 内置 + ${customPipelines.length} 自定义 = ${all.length} pipelines`);
   });
 
 pipelineCmd
@@ -717,13 +721,15 @@ pipelineCmd
   .description('按 Pipeline 顺序执行各 Skill 提示')
   .option('-c, --context <context>', '输入上下文', '')
   .action(async (name: string, options: { context: string }) => {
-    const { resolvePipeline } = await import('../skills/pipeline');
-    const resolved = resolvePipeline(name);
+    const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
+    const customPipelines = loadCustomPipelines(process.cwd());
+    const activeSkills = await getActiveSkills();
+    const resolved = resolvePipeline(name, customPipelines, activeSkills);
 
     if (!resolved) {
-      const { PIPELINES } = await import('../skills/pipeline');
+      const allIds = [...PIPELINES.map((p) => p.id), ...customPipelines.map((p) => p.id)];
       console.error(`Unknown pipeline: ${name}`);
-      console.error(`Available: ${PIPELINES.map((p) => p.id).join(' | ')}`);
+      console.error(`Available: ${allIds.join(' | ')}`);
       process.exit(1);
     }
 
@@ -3535,23 +3541,17 @@ name: 自定义工作流名称
 description: 这个 Pipeline 的描述
 
 # 引用的 Skill ID 列表（按执行顺序）
-# 可用 Skill ID：requirement-understanding | task-breakdown | solution-design
-#               implementation | progress-tracking | task-report | weekly-report
-#               code-review | debug | tech-research
+# 内置 Skill ID：
+#   需求侧: requirement-understanding, prd
+#   执行侧: task-breakdown, solution-design, api-design, implementation, deployment
+#   跟踪侧: progress-tracking
+#   输出侧: task-report, weekly-report
+#   质量侧: code-review, debug, tech-research, security-review
+# 也可以引用 .ethan/skills/ 中的自定义 Skill ID
 skillIds:
   - requirement-understanding
   - solution-design
   - implementation
-
-# （可选）输出结构定义：每个字段对应 AI 需要输出的内容
-# outputSchema:
-#   featureSpec:
-#     type: string
-#     description: 需求规格说明书
-#     required: true
-#   designDoc:
-#     type: string
-#     description: 技术方案设计文档
 `;
 
     fs.writeFileSync(filePath, template, 'utf-8');
