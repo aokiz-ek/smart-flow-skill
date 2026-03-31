@@ -14,18 +14,20 @@
 
 | 模块 | 内容 |
 |------|------|
-| **10 个 Skill** | 标准化工作流节点，覆盖需求→设计→实现→跟踪→输出→质量 |
+| **14 个 Skill** | 标准化工作流节点，覆盖需求→接口设计→安全→部署→PRD→质量全链路 |
 | **11 个平台** | Cursor / Copilot / Cline / Windsurf / Zed / JetBrains / Continue / Claude Code 等 |
-| **3 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量），有状态持久化推进 |
-| **17 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算 |
+| **6 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量 / 完整周期 / 故障响应 / 新功能），有状态持久化推进 |
+| **23 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算 |
 | **40+ CLI 命令** | Git 集成、开发工具、记忆库、估算、插件 OS 全覆盖 |
+| **自定义 Skill** | `.ethan/skills/*.yaml/.md`，YAML frontmatter + Markdown body |
+| **自定义 Pipeline** | `.ethan/pipelines/*.yaml`，引用内置或自定义 Skill 自由组合 |
 | **浏览器扩展** | Chrome/Edge MV3，GitHub PR 一键 Review + 右键菜单 |
-| **VS Code 扩展** | 侧边栏树、20 个命令、17 个 @ethan 斜杠命令 |
+| **VS Code 扩展** | 侧边栏树、20 个命令、23 个 @ethan 斜杠命令 |
 | **插件 OS** | 发布/搜索/安装社区 Skill 插件，支持私有注册表 |
 
 ---
 
-## 10 个 Skill
+## 14 个 Skill
 
 | # | Skill | 分类 | 触发词（示例） | 说明 |
 |---|-------|------|--------------|------|
@@ -39,16 +41,23 @@
 | 8 | 代码审查 | 质量侧 | `代码审查`、`code review`、`CR` | 系统性审查，分级输出 Blocker/Major/Minor |
 | 9 | 故障排查 | 质量侧 | `故障排查`、`debug`、`线上故障` | 假设验证 + 5 Why 根因分析，三层解决方案 |
 | 10 | 技术调研 | 需求侧 | `技术调研`、`技术选型`、`POC` | 加权评分矩阵 + POC 验证，输出有据可查的结论 |
+| 11 | **接口设计** | 执行侧 | `接口设计`、`API 设计`、`RESTful` | RESTful/GraphQL 接口规范，OpenAPI 3.0 风格输出 |
+| 12 | **安全审查** | 质量侧 | `安全审查`、`OWASP`、`security review` | OWASP Top 10 逐项扫描，四级风险清单（Critical→Low） |
+| 13 | **部署上线** | 执行侧 | `部署上线`、`上线`、`deploy` | Pre-flight 预检 + 灰度/蓝绿策略 + 回滚方案全流程 |
+| 14 | **PRD 编写** | 需求侧 | `PRD`、`产品需求`、`写 PRD` | 用户故事 + 验收标准 AC + 非功能性需求 + 埋点方案 |
 
 ---
 
-## 3 个 Pipeline（链式工作流）
+## 6 个 Pipeline（链式工作流）
 
 | Pipeline ID | Skills | 适用场景 |
 |-------------|--------|---------|
-| `dev-workflow` | 需求理解 → 任务拆解 → 方案设计 → 执行实现 | 完整功能开发 |
+| `dev-workflow` | 需求理解 → 任务拆解 → 方案设计 → 执行实现 | 常规功能开发 |
 | `reporting` | 进度跟踪 → 任务报告 → 周报生成 | 项目汇报 |
 | `quality-workflow` | 代码审查 → 故障排查 | 质量保障 |
+| `full-dev-cycle` | 需求理解 → **接口设计** → 方案设计 → 执行实现 → 代码审查 → **部署上线** | 完整功能交付 |
+| `incident-response` | 故障排查 → 技术调研 → 任务报告 | 线上故障处理 |
+| `new-feature` | **PRD** → 技术调研 → **接口设计** → 任务拆解 → 执行实现 | 新功能从 0 到 1 |
 
 自定义 Pipeline：在 `.ethan/pipelines/` 目录创建 YAML 文件，`ethan pipeline-init` 生成模板。
 
@@ -85,7 +94,7 @@ npx ethan-skill install --platform cursor --lang en
 }
 ```
 
-重启 AI 编辑器后，可使用全部 **17 个 MCP 工具**（详见下方 MCP 工具列表）。
+重启 AI 编辑器后，可使用全部 **23 个 MCP 工具**（详见下方 MCP 工具列表）。
 
 ### 方式三：全局安装
 
@@ -120,7 +129,7 @@ ethan install --platform cursor
 
 ```bash
 ethan install [--platform <platform>] [--lang en]   # 安装规则文件
-ethan list [--json]                                  # 列出所有 Skill
+ethan list [--json]                                  # 列出所有 Skill（含自定义）
 ethan run                                            # 交互式 Skill 执行向导
 ethan init                                           # 生成 .ethanrc.json 配置文件
 ethan validate                                       # 校验 rules/ 与源码是否同步
@@ -208,6 +217,35 @@ ethan pipeline run <id> [-c "上下文"]                 # 运行 Pipeline
 ethan pipeline-init [--name my-pipeline]              # 生成自定义 YAML Pipeline 模板
 ```
 
+### 自定义 Skill
+
+```bash
+ethan skill new [name] [--format yaml|md]             # 生成自定义 Skill 模板（默认 yaml）
+ethan skill list                                      # 列出 .ethan/skills/ 中的自定义 Skill
+```
+
+自定义 Skill 文件放置在 `.ethan/skills/` 目录，支持 `.yaml`、`.json`、`.md` 格式：
+
+```markdown
+---
+id: my-skill
+name: 自定义技能
+nameEn: my_skill
+description: 一句话描述
+triggers:
+  - 触发词
+outputFormat: Markdown 文档
+---
+
+## 1. 第一步
+
+步骤说明...
+
+## 2. 第二步
+
+步骤说明...
+```
+
 ### 插件 OS（Phase 6）
 
 ```bash
@@ -220,7 +258,7 @@ ethan plugin search <keyword> [-n <limit>]            # 搜索社区插件（eth
 
 ---
 
-## 17 个 MCP 工具
+## 23 个 MCP 工具
 
 配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue 等）可直接调用：
 
@@ -236,13 +274,19 @@ ethan plugin search <keyword> [-n <limit>]            # 搜索社区插件（eth
 | `code_review` | 代码审查 Skill |
 | `debug` | 故障排查 Skill |
 | `tech_research` | 技术调研 Skill |
+| `api_design` | 接口设计 Skill（v1.7.0 新增）|
+| `security_review` | 安全审查 Skill（v1.7.0 新增）|
+| `deployment` | 部署上线 Skill（v1.7.0 新增）|
+| `prd` | PRD 编写 Skill（v1.7.0 新增）|
 | `ethan_pipeline` | 串联执行完整 Pipeline |
-| `ethan_workflow_next` | 推进工作流到下一步（传入摘要，返回下一步提示词） |
+| `ethan_workflow_next` | 推进工作流到下一步（传入摘要，返回下一步提示词）|
 | `ethan_workflow_status` | 查询工作流进度与当前步骤 |
-| `ethan_memory_search` | 搜索 Skill 记忆库（项目级 + 全局） |
-| `ethan_estimate` | 生成三点估算提示词（支持小时/故事点/人天） |
+| `ethan_memory_search` | 搜索 Skill 记忆库（项目级 + 全局）|
+| `ethan_estimate` | 生成三点估算提示词（支持小时/故事点/人天）|
 | `ethan_git_commit` | 读取 staged diff → Conventional Commit 提示词 |
 | `ethan_git_review` | 读取分支 diff → Blocker/Major/Minor Review 提示词 |
+| `ethan_autopilot` | 生成 Pipeline 超级 prompt（自动链式执行）|
+| `ethan_context_snapshot` | 采集项目快照（技术栈/git/目录树，TTL 30min 缓存）|
 
 ---
 
@@ -271,9 +315,9 @@ Chrome/Edge Manifest V3 扩展，将 Ethan 带入任意网页。
 2. VS Code → Extensions → `...` → Install from VSIX
 
 **功能：**
-- **Skill 侧边栏树**：按分类分组展示 10 个 Skill，点击直接运行
-- **Pipeline 侧边栏树**：展示 3 条 Pipeline，点击查看详情
-- **17 个 @ethan 斜杠命令**：在 Copilot Chat 中使用 `@ethan /需求理解`、`@ethan /commit` 等
+- **Skill 侧边栏树**：按分类分组展示 14 个 Skill，点击直接运行
+- **Pipeline 侧边栏树**：展示 6 条 Pipeline，点击查看详情
+- **23 个 @ethan 斜杠命令**：在 Copilot Chat 中使用 `@ethan /需求理解`、`@ethan /commit` 等
 - **20 个命令面板命令**：包含 Git、开发工具、记忆、估算、复盘等全系列
 - **状态栏快捷按钮**：底部状态栏 `⚡ Ethan`，单击打开 Skill 选择器
 
@@ -318,11 +362,11 @@ src/skills/*.ts  ──→  [build-rules.ts]  ──→  rules/cursor/smart-flow
 ```
 ethan-skill/
 ├── src/
-│   ├── skills/            # 单一数据源（10 Skill + pipeline 定义）
+│   ├── skills/            # 单一数据源（14 Skill + pipeline 定义）
 │   │   ├── types.ts       # SkillDefinition、Platform、PipelineDefinition
 │   │   ├── index.ts       # ALL_SKILLS 导出
-│   │   ├── pipeline.ts    # PIPELINES + resolvePipeline()
-│   │   └── 01~10-*.ts     # 各 Skill 定义（含 category、nextSkill）
+│   │   ├── pipeline.ts    # PIPELINES（6条）+ resolvePipeline()
+│   │   └── 01~14-*.ts     # 各 Skill 定义（含 category、nextSkill）
 │   ├── cli/               # 40+ CLI 命令入口
 │   │   ├── index.ts       # Commander.js 主程序
 │   │   └── config.ts      # .ethanrc.json 读写
@@ -330,20 +374,22 @@ ethan-skill/
 │   │   └── utils.ts       # getStagedDiff / getBranchDiff / truncateDiff 等
 │   ├── workflow/           # 有状态工作流引擎
 │   │   └── state.ts       # 会话持久化、Named Sessions、步骤推进
-│   ├── mcp/               # MCP Server（17 个工具）
+│   ├── mcp/               # MCP Server（23 个工具）
 │   │   └── server.ts
 │   ├── router/            # 触发词路由
 │   ├── templates/         # 各平台渲染模板（11 个 case，强制穷举）
 │   ├── context/           # 项目技术栈自动检测
-│   ├── loader/            # 自定义 Skill YAML 加载器
+│   ├── loader/            # 自定义 Skill/Pipeline 加载器
+│   │   ├── custom-skill-loader.ts    # .ethan/skills/*.yaml/.md
+│   │   └── custom-pipeline-loader.ts # .ethan/pipelines/*.yaml
 │   ├── server/            # Web UI Dashboard
 │   └── vscode/            # VS Code 扩展
 ├── browser-extension/     # Chrome/Edge MV3 扩展
-├── vscode-extension/      # VS Code 扩展 manifest（20 命令、17 斜杠命令）
+├── vscode-extension/      # VS Code 扩展 manifest（20 命令、23 斜杠命令）
 ├── rules/                 # 构建产物，11 个平台（提交到仓库）
 ├── docs/                  # 官网（GitHub Pages）
 ├── scripts/build/         # 构建脚本（build-rules.ts / build-vscode.ts）
-└── .ethan/                # 项目级运行时数据（workflow.json、memory/、pipelines/）
+└── .ethan/                # 项目级运行时数据（workflow.json、memory/、skills/、pipelines/）
 ```
 
 ---
@@ -399,7 +445,9 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
-| **v1.5.0** | MCP 新增 4 工具（git commit/review/memory search/estimate）；VS Code 扩展 17 斜杠命令；插件 OS（publish/registry/search）；浏览器扩展；自定义 YAML Pipeline；Stats 排行榜；记忆库；估算复盘 |
+| **v1.7.0** | 新增 4 个 Skill（接口设计/安全审查/部署上线/PRD 编写）；新增 3 条 Pipeline（full-dev-cycle/incident-response/new-feature）；自定义 Pipeline 加载（`.ethan/pipelines/`）；MCP 工具 19 → 23 |
+| **v1.6.0** | 自定义 Skill 支持 `.md` 格式（YAML frontmatter + Markdown body）；`ethan skill new --format md`；新增 MCP `ethan_autopilot` 和 `ethan_context_snapshot` 工具 |
+| **v1.5.0** | MCP 新增 4 工具（git commit/review/memory search/estimate）；VS Code 扩展 17 斜杠命令；插件 OS；浏览器扩展；Context 引擎；Stats 排行榜；记忆库；估算复盘 |
 | **v1.3.0** | Git 集成（commit/review/pr/standup/changelog）；开发工具（scan/explain/test-case/naming/readme/roast）；On-call、定时任务、Git Hooks |
 | **v1.2.0** | 新增代码审查、故障排查、技术调研 3 个 Skill；新增 Windsurf/Zed/JetBrains/Continue/Claude Code 5 个平台；validate/pipeline/doctor/stats 命令 |
 | **v1.1.0** | 有状态工作流（workflow start/done/status）；MCP Server；Web UI Dashboard；自动上下文检测 |
