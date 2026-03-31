@@ -5,8 +5,8 @@ import { PIPELINES, resolvePipeline } from './pipeline';
 // ─── ALL_SKILLS 基础契约 ────────────────────────────────────────────────────
 
 describe('ALL_SKILLS', () => {
-  it('should contain exactly 14 skills', () => {
-    expect(ALL_SKILLS).toHaveLength(14);
+  it('should contain exactly 24 skills', () => {
+    expect(ALL_SKILLS).toHaveLength(24);
   });
 
   it('should have unique ids', () => {
@@ -21,7 +21,7 @@ describe('ALL_SKILLS', () => {
 
   it('should have sequential order numbers starting from 1', () => {
     const orders = ALL_SKILLS.map((s) => s.order).sort((a, b) => a - b);
-    expect(orders).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    expect(orders).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]);
   });
 
   it('every skill should have at least one trigger', () => {

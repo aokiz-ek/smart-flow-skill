@@ -14,7 +14,7 @@
 
 | 模块 | 内容 |
 |------|------|
-| **14 个 Skill** | 标准化工作流节点，覆盖需求→接口设计→安全→部署→PRD→质量全链路 |
+| **24 个 Skill** | 标准化工作流节点，覆盖需求→接口设计→安全→部署→PRD→Git→测试→系统设计→数据库→Docker→CI/CD→性能→重构→可观测性→设计模式 |
 | **11 个平台** | Cursor / Copilot / Cline / Windsurf / Zed / JetBrains / Continue / Claude Code 等 |
 | **6 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量 / 完整周期 / 故障响应 / 新功能），有状态持久化推进 |
 | **23 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算 |
@@ -27,7 +27,7 @@
 
 ---
 
-## 14 个 Skill
+## 24 个 Skill
 
 | # | Skill | 分类 | 触发词（示例） | 说明 |
 |---|-------|------|--------------|------|
@@ -41,10 +41,20 @@
 | 8 | 代码审查 | 质量侧 | `代码审查`、`code review`、`CR` | 系统性审查，分级输出 Blocker/Major/Minor |
 | 9 | 故障排查 | 质量侧 | `故障排查`、`debug`、`线上故障` | 假设验证 + 5 Why 根因分析，三层解决方案 |
 | 10 | 技术调研 | 需求侧 | `技术调研`、`技术选型`、`POC` | 加权评分矩阵 + POC 验证，输出有据可查的结论 |
-| 11 | **接口设计** | 执行侧 | `接口设计`、`API 设计`、`RESTful` | RESTful/GraphQL 接口规范，OpenAPI 3.0 风格输出 |
-| 12 | **安全审查** | 质量侧 | `安全审查`、`OWASP`、`security review` | OWASP Top 10 逐项扫描，四级风险清单（Critical→Low） |
-| 13 | **部署上线** | 执行侧 | `部署上线`、`上线`、`deploy` | Pre-flight 预检 + 灰度/蓝绿策略 + 回滚方案全流程 |
-| 14 | **PRD 编写** | 需求侧 | `PRD`、`产品需求`、`写 PRD` | 用户故事 + 验收标准 AC + 非功能性需求 + 埋点方案 |
+| 11 | 接口设计 | 执行侧 | `接口设计`、`API 设计`、`RESTful` | RESTful/GraphQL 接口规范，OpenAPI 3.0 风格输出 |
+| 12 | 安全审查 | 质量侧 | `安全审查`、`OWASP`、`security review` | OWASP Top 10 逐项扫描，四级风险清单（Critical→Low） |
+| 13 | 部署上线 | 执行侧 | `部署上线`、`上线`、`deploy` | Pre-flight 预检 + 灰度/蓝绿策略 + 回滚方案全流程 |
+| 14 | PRD 编写 | 需求侧 | `PRD`、`产品需求`、`写 PRD` | 用户故事 + 验收标准 AC + 非功能性需求 + 埋点方案 |
+| 15 | **Git 工作流** | 执行侧 | `Git 工作流`、`分支策略`、`commit 规范` | GitFlow/Trunk-Based 选型、Conventional Commits、Rebase vs Merge 决策 |
+| 16 | **单元测试** | 质量侧 | `单元测试`、`unit test`、`测试覆盖率` | AAA 模式、Mock 策略、Vitest/Jest 配置，建立测试文化 |
+| 17 | **系统设计** | 执行侧 | `系统设计`、`架构设计`、`system design` | 需求拆解→容量估算→架构选型→核心组件→数据模型 |
+| 18 | **数据库优化** | 质量侧 | `数据库优化`、`慢查询`、`索引优化` | 慢查询诊断、索引策略、查询优化、分库分表与缓存 |
+| 19 | **Docker** | 执行侧 | `Docker`、`容器化`、`Dockerfile` | 多阶段构建、Compose 编排、安全加固与镜像精简 |
+| 20 | **CI/CD** | 执行侧 | `CI/CD`、`流水线`、`GitHub Actions` | GitHub Actions 全流程、并行构建、多环境部署策略 |
+| 21 | **性能优化** | 质量侧 | `性能优化`、`Core Web Vitals`、`performance` | 基线建立、前端懒加载/代码分割、后端缓存/并发优化 |
+| 22 | **代码重构** | 质量侧 | `代码重构`、`refactoring`、`技术债` | 识别坏味道、提炼函数/多态等重构手法、测试先行 |
+| 23 | **可观测性** | 质量侧 | `可观测性`、`监控`、`链路追踪` | 日志/指标/链路三支柱、OTel、Prometheus+Grafana、SLO |
+| 24 | **设计模式** | 执行侧 | `设计模式`、`design pattern`、`GoF` | 23 种 GoF 模式速查、TypeScript 实现、场景→模式选型指南 |
 
 ---
 
@@ -362,11 +372,11 @@ src/skills/*.ts  ──→  [build-rules.ts]  ──→  rules/cursor/smart-flow
 ```
 ethan-skill/
 ├── src/
-│   ├── skills/            # 单一数据源（14 Skill + pipeline 定义）
+│   ├── skills/            # 单一数据源（24 Skill + pipeline 定义）
 │   │   ├── types.ts       # SkillDefinition、Platform、PipelineDefinition
 │   │   ├── index.ts       # ALL_SKILLS 导出
 │   │   ├── pipeline.ts    # PIPELINES（6条）+ resolvePipeline()
-│   │   └── 01~14-*.ts     # 各 Skill 定义（含 category、nextSkill）
+│   │   └── 01~24-*.ts     # 各 Skill 定义（含 category、nextSkill）
 │   ├── cli/               # 40+ CLI 命令入口
 │   │   ├── index.ts       # Commander.js 主程序
 │   │   └── config.ts      # .ethanrc.json 读写
@@ -445,6 +455,7 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
+| **v1.8.0** | 新增 10 个 Skill（Git 工作流/单元测试/系统设计/数据库优化/Docker/CI/CD/性能优化/代码重构/可观测性/设计模式）；Skills 14 → 24；docs ReactBits 风格重设计 |
 | **v1.7.0** | 新增 4 个 Skill（接口设计/安全审查/部署上线/PRD 编写）；新增 3 条 Pipeline（full-dev-cycle/incident-response/new-feature）；自定义 Pipeline 加载（`.ethan/pipelines/`）；MCP 工具 19 → 23 |
 | **v1.6.0** | 自定义 Skill 支持 `.md` 格式（YAML frontmatter + Markdown body）；`ethan skill new --format md`；新增 MCP `ethan_autopilot` 和 `ethan_context_snapshot` 工具 |
 | **v1.5.0** | MCP 新增 4 工具（git commit/review/memory search/estimate）；VS Code 扩展 17 斜杠命令；插件 OS；浏览器扩展；Context 引擎；Stats 排行榜；记忆库；估算复盘 |

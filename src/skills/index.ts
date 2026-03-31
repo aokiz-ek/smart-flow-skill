@@ -17,6 +17,16 @@ export { apiDesignSkill } from './11-api-design';
 export { securityReviewSkill } from './12-security-review';
 export { deploymentSkill } from './13-deployment';
 export { prdSkill } from './14-prd';
+export { gitWorkflowSkill } from './15-git-workflow';
+export { unitTestingSkill } from './16-unit-testing';
+export { systemDesignSkill } from './17-system-design';
+export { databaseOptimizeSkill } from './18-database-optimize';
+export { dockerSkill } from './19-docker';
+export { cicdSkill } from './20-cicd';
+export { performanceSkill } from './21-performance';
+export { refactoringSkill } from './22-refactoring';
+export { observabilitySkill } from './23-observability';
+export { designPatternsSkill } from './24-design-patterns';
 
 export type { SkillDefinition, SkillStep, SkillExample, Platform, BuildContext, PipelineDefinition } from './types';
 
@@ -34,6 +44,16 @@ import { apiDesignSkill } from './11-api-design';
 import { securityReviewSkill } from './12-security-review';
 import { deploymentSkill } from './13-deployment';
 import { prdSkill } from './14-prd';
+import { gitWorkflowSkill } from './15-git-workflow';
+import { unitTestingSkill } from './16-unit-testing';
+import { systemDesignSkill } from './17-system-design';
+import { databaseOptimizeSkill } from './18-database-optimize';
+import { dockerSkill } from './19-docker';
+import { cicdSkill } from './20-cicd';
+import { performanceSkill } from './21-performance';
+import { refactoringSkill } from './22-refactoring';
+import { observabilitySkill } from './23-observability';
+import { designPatternsSkill } from './24-design-patterns';
 
 /** 所有 Skill 按顺序排列 */
 export const ALL_SKILLS = [
@@ -51,4 +71,14 @@ export const ALL_SKILLS = [
   securityReviewSkill,
   deploymentSkill,
   prdSkill,
+  gitWorkflowSkill,
+  unitTestingSkill,
+  systemDesignSkill,
+  databaseOptimizeSkill,
+  dockerSkill,
+  cicdSkill,
+  performanceSkill,
+  refactoringSkill,
+  observabilitySkill,
+  designPatternsSkill,
 ];

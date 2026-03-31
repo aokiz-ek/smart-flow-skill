@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="Ethan v1.7.0 — 14 个标准化工作流 Skill，23 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。新增接口设计/安全审查/部署上线/PRD 编写 Skill，6 条内置 Pipeline，自定义 Skill/Pipeline 支持 YAML/MD 格式，Context 引擎自动采集项目上下文，Auto-Pilot 全自动链式执行，Skill 质量评估闭环。" />
+  <meta name="description" content="Ethan v1.8.0 — 24 个标准化工作流 Skill，23 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。新增 Git 工作流/单元测试/系统设计/数据库优化/Docker/CI/CD/性能优化/重构/可观测性/设计模式 10 个 Skill，6 条内置 Pipeline，Context 引擎，Auto-Pilot 全自动链式执行。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -59,6 +59,66 @@
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================================
+       AURORA BACKGROUND (ReactBits inspired)
+    ============================================================ */
+    @keyframes aurora {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes aurora-orb-1 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+      33%       { transform: translate(80px, -60px) scale(1.2); opacity: 0.25; }
+      66%       { transform: translate(-40px, 40px) scale(0.9); opacity: 0.18; }
+    }
+
+    @keyframes aurora-orb-2 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.12; }
+      33%       { transform: translate(-70px, 50px) scale(1.1); opacity: 0.2; }
+      66%       { transform: translate(50px, -30px) scale(1.3); opacity: 0.1; }
+    }
+
+    @keyframes aurora-orb-3 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.1; }
+      50%       { transform: translate(30px, 60px) scale(1.15); opacity: 0.18; }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -40%;
+      left: -20%;
+      width: 80vw;
+      height: 80vw;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #7c3aed 0%, transparent 70%);
+      animation: aurora-orb-1 18s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -15%;
+      width: 70vw;
+      height: 70vw;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #1d4ed8 0%, transparent 70%);
+      animation: aurora-orb-2 22s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* dot grid background */
+    body {
+      background-image: radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
     }
 
     a {
@@ -1014,8 +1074,10 @@
     }
 
     .adv-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: var(--border-radius-card);
       padding: 28px 24px;
       display: flex;
@@ -1023,15 +1085,21 @@
       gap: 12px;
       transition: transform var(--transition-medium),
                   box-shadow var(--transition-medium),
-                  border-color var(--transition-medium);
+                  border-color var(--transition-medium),
+                  background var(--transition-medium);
       cursor: default;
+      position: relative;
+      z-index: 1;
     }
 
     .adv-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 0 24px rgba(191, 90, 242, 0.2),
-                  0 8px 32px rgba(0, 0, 0, 0.4);
-      border-color: var(--color-purple);
+      transform: translateY(-6px);
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 0 0 1px rgba(124,58,237,0.5),
+                  0 0 32px rgba(124,58,237,0.25),
+                  0 0 64px rgba(59,130,246,0.15),
+                  0 12px 40px rgba(0,0,0,0.5);
+      border-color: rgba(124,58,237,0.6);
     }
 
     .adv-icon {
@@ -1631,7 +1699,7 @@
   <section id="hero" aria-label="主展示区">
     <div class="hero-badge">
       <div class="hero-badge-dot" aria-hidden="true"></div>
-      <span>Ethan v1.7.0 — Now Available</span>
+      <span>Ethan v1.8.0 — Now Available</span>
     </div>
 
     <h1 class="hero-title" id="heroTitle" aria-label="让每一步都有据可依">
@@ -1639,7 +1707,7 @@
     </h1>
 
     <p class="hero-subtitle">
-      Your AI Workflow Assistant &nbsp;·&nbsp; 14 Skills &nbsp;·&nbsp; 23 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.7.0
+      Your AI Workflow Assistant &nbsp;·&nbsp; 24 Skills &nbsp;·&nbsp; 23 MCP 工具 &nbsp;·&nbsp; 40+ CLI 命令 &nbsp;·&nbsp; v1.8.0
     </p>
 
     <div class="hero-cta">
@@ -1714,7 +1782,7 @@
           <div class="pain-after">
             <div class="pain-label after">✅ Ethan</div>
             <div class="pain-scenario after-text">
-              <strong>14 个标准化 Skill，一次定义，处处一致。</strong>触发词 <code>代码审查</code> → 自动按 Blocker / Major / Minor 分级，逐文件审查，永远输出同等质量的报告。
+              <strong>24 个标准化 Skill，一次定义，处处一致。</strong>触发词 <code>代码审查</code> → 自动按 Blocker / Major / Minor 分级，逐文件审查，永远输出同等质量的报告。
             </div>
           </div>
         </div>
@@ -2112,7 +2180,7 @@
     <div class="adv-grid">
       <article class="adv-card reveal" aria-label="Skill 工具">
         <div class="adv-icon" aria-hidden="true">🎯</div>
-        <div class="adv-title">14 个 Skill 工具</div>
+        <div class="adv-title">24 个 Skill 工具</div>
         <div class="adv-desc">每个 Skill 对应一个 MCP Tool（如 <code>requirement_understanding</code>），AI 编辑器可直接调用，注入上下文后输出完整执行提示词</div>
       </article>
 
@@ -2262,7 +2330,7 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.7.0 — 14 个 Skill · 6 条 Pipeline · 自定义 Skill/Pipeline · Context 引擎 · Skill 质量评分闭环</p>
+      <p class="section-subtitle">v1.8.0 — 24 个 Skill · 6 条 Pipeline · 自定义 Skill/Pipeline · Context 引擎 · Skill 质量评分闭环</p>
     </div>
 
     <div class="adv-grid">
@@ -2371,32 +2439,102 @@
         <div class="adv-desc"><code>ethan skill new [name] --format md</code> 生成 Markdown 模板；YAML frontmatter 定义元数据，<code>##</code> 标题定义步骤。也支持 <code>.yaml</code>/<code>.json</code>，所有格式透明合并到 <code>ethan list</code>。</div>
       </article>
 
-      <!-- Card 16 (NEW v1.7.0) -->
+      <!-- Card 16 (NEW v1.8.0) -->
       <article class="adv-card reveal reveal-delay-3" aria-label="接口设计 Skill" style="border-color:#007AFF33;background:linear-gradient(135deg,#007AFF08,#30D15808);">
         <div class="adv-icon" aria-hidden="true">🔌</div>
         <div class="adv-title" style="color:#007AFF;">api-design — 接口设计</div>
         <div class="adv-desc">从业务边界到 URL 设计、请求/响应体、错误码体系、安全与性能规范，输出 OpenAPI 3.0 风格接口文档。</div>
       </article>
 
-      <!-- Card 17 (NEW v1.7.0) -->
+      <!-- Card 17 (NEW v1.8.0) -->
       <article class="adv-card reveal" aria-label="安全审查 Skill" style="border-color:#FF375F33;background:linear-gradient(135deg,#FF375F08,#FF9F0A08);">
         <div class="adv-icon" aria-hidden="true">🔒</div>
         <div class="adv-title" style="color:#FF375F;">security-review — 安全审查</div>
         <div class="adv-desc">基于 OWASP Top 10 逐项扫描，覆盖注入、XSS、越权、密钥泄露、依赖漏洞。按 Critical/High/Medium/Low 四级输出修复清单。</div>
       </article>
 
-      <!-- Card 18 (NEW v1.7.0) -->
+      <!-- Card 18 (NEW v1.8.0) -->
       <article class="adv-card reveal reveal-delay-1" aria-label="部署上线 Skill" style="border-color:#34C75933;background:linear-gradient(135deg,#34C75908,#007AFF08);">
         <div class="adv-icon" aria-hidden="true">🚀</div>
         <div class="adv-title" style="color:#34C759;">deployment — 部署上线</div>
         <div class="adv-desc">Pre-flight 预检清单、灰度/蓝绿/滚动策略选择、上线后验证与回滚方案。确保每次变更安全可控落地。</div>
       </article>
 
-      <!-- Card 19 (NEW v1.7.0) -->
+      <!-- Card 19 (NEW v1.8.0) -->
       <article class="adv-card reveal reveal-delay-2" aria-label="PRD 编写 Skill" style="border-color:#BF5AF233;background:linear-gradient(135deg,#BF5AF208,#FF375F08);">
         <div class="adv-icon" aria-hidden="true">📋</div>
         <div class="adv-title" style="color:#BF5AF2;">prd — PRD 编写</div>
         <div class="adv-desc">从用户故事到验收标准（AC）、非功能性需求、埋点方案，一次生成完整的产品需求文档，研发直接可用。</div>
+      </article>
+
+      <!-- Card 20 (NEW v1.8.0) -->
+      <article class="adv-card reveal" aria-label="Git 工作流 Skill" style="border-color:#F59E0B33;background:linear-gradient(135deg,#F59E0B08,#EF444408);">
+        <div class="adv-icon" aria-hidden="true">🌿</div>
+        <div class="adv-title" style="color:#F59E0B;">git-workflow — Git 工作流</div>
+        <div class="adv-desc">GitFlow vs Trunk-Based 选型、Conventional Commits 规范、Rebase vs Merge 决策、冲突解决 SOP 和 PR 最佳实践。</div>
+      </article>
+
+      <!-- Card 21 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="单元测试 Skill" style="border-color:#10B98133;background:linear-gradient(135deg,#10B98108,#06B6D408);">
+        <div class="adv-icon" aria-hidden="true">🧪</div>
+        <div class="adv-title" style="color:#10B981;">unit-testing — 单元测试</div>
+        <div class="adv-desc">AAA 模式、测试覆盖率目标、Mock 策略、Vitest/Jest 配置，帮助团队建立高质量的测试文化。</div>
+      </article>
+
+      <!-- Card 22 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="系统设计 Skill" style="border-color:#6366F133;background:linear-gradient(135deg,#6366F108,#8B5CF608);">
+        <div class="adv-icon" aria-hidden="true">🏗️</div>
+        <div class="adv-title" style="color:#6366F1;">system-design — 系统设计</div>
+        <div class="adv-desc">需求拆解→容量估算→架构选型→核心组件→数据模型→可扩展性，输出完整系统设计方案。</div>
+      </article>
+
+      <!-- Card 23 (NEW v1.8.0) -->
+      <article class="adv-card reveal" aria-label="数据库优化 Skill" style="border-color:#EC489933;background:linear-gradient(135deg,#EC489908,#F4366208);">
+        <div class="adv-icon" aria-hidden="true">🗃️</div>
+        <div class="adv-title" style="color:#EC4899;">database-optimize — 数据库优化</div>
+        <div class="adv-desc">慢查询诊断（EXPLAIN）、索引策略、查询优化、分库分表与缓存，全面提升数据库性能。</div>
+      </article>
+
+      <!-- Card 24 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="Docker Skill" style="border-color:#0EA5E933;background:linear-gradient(135deg,#0EA5E908,#2563EB08);">
+        <div class="adv-icon" aria-hidden="true">🐳</div>
+        <div class="adv-title" style="color:#0EA5E9;">docker — Docker 容器化</div>
+        <div class="adv-desc">多阶段构建 Dockerfile、.dockerignore 优化、Docker Compose 编排、安全加固与镜像精简最佳实践。</div>
+      </article>
+
+      <!-- Card 25 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="CI/CD Skill" style="border-color:#84CC1633;background:linear-gradient(135deg,#84CC1608,#22C55E08);">
+        <div class="adv-icon" aria-hidden="true">⚙️</div>
+        <div class="adv-title" style="color:#84CC16;">cicd — CI/CD 流水线</div>
+        <div class="adv-desc">GitHub Actions 全流程配置、并行构建加速、多环境部署策略、安全扫描集成与通知告警。</div>
+      </article>
+
+      <!-- Card 26 (NEW v1.8.0) -->
+      <article class="adv-card reveal" aria-label="性能优化 Skill" style="border-color:#F9731633;background:linear-gradient(135deg,#F9731608,#EF444408);">
+        <div class="adv-icon" aria-hidden="true">⚡</div>
+        <div class="adv-title" style="color:#F97316;">performance — 性能优化</div>
+        <div class="adv-desc">Core Web Vitals 基线建立、前端懒加载/代码分割/虚拟列表、后端 N+1/缓存/异步并行，Lighthouse CI 持续监控。</div>
+      </article>
+
+      <!-- Card 27 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="代码重构 Skill" style="border-color:#A855F733;background:linear-gradient(135deg,#A855F708,#7C3AED08);">
+        <div class="adv-icon" aria-hidden="true">🔧</div>
+        <div class="adv-title" style="color:#A855F7;">refactoring — 代码重构</div>
+        <div class="adv-desc">识别 12 种代码坏味道、提炼函数/类/多态等重构手法、测试先行原则和 Strangler Fig 大规模重构策略。</div>
+      </article>
+
+      <!-- Card 28 (NEW v1.8.0) -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="可观测性 Skill" style="border-color:#06B6D433;background:linear-gradient(135deg,#06B6D408,#0284C708);">
+        <div class="adv-icon" aria-hidden="true">📊</div>
+        <div class="adv-title" style="color:#06B6D4;">observability — 可观测性</div>
+        <div class="adv-desc">日志/指标/链路三支柱、结构化日志规范、Prometheus+Grafana 告警、OpenTelemetry 分布式链路追踪与 SLO 定义。</div>
+      </article>
+
+      <!-- Card 29 (NEW v1.8.0) -->
+      <article class="adv-card reveal" aria-label="设计模式 Skill" style="border-color:#8B5CF633;background:linear-gradient(135deg,#8B5CF608,#6366F108);">
+        <div class="adv-icon" aria-hidden="true">🎯</div>
+        <div class="adv-title" style="color:#8B5CF6;">design-patterns — 设计模式</div>
+        <div class="adv-desc">23 种 GoF 模式速查、Strategy/Observer/Factory/Decorator 高频模式 TypeScript 实现、场景→模式选型指南。</div>
       </article>
     </div>
   </section>
@@ -3004,7 +3142,7 @@
     </div>
 
     <div class="footer-bottom">
-      &copy; 2026 Ethan &nbsp;·&nbsp; v1.7.0 &nbsp;·&nbsp; Built with ❤️
+      &copy; 2026 Ethan &nbsp;·&nbsp; v1.8.0 &nbsp;·&nbsp; Built with ❤️
     </div>
   </footer>
 

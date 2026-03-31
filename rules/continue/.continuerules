@@ -1,5 +1,5 @@
-# Ethan v1.6.0
-# Generated: 2026-03-31T07:56:06.363Z
+# Ethan v1.8.0
+# Generated: 2026-03-31T16:55:43.257Z
 # Source: https://github.com/aokiz-ek/smart-flow-skill
 
 Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步骤执行。
@@ -26,6 +26,16 @@ Ethan（Continue）。当用户输入以下触发词时，按对应 Skill 的步
 - **安全审查**: 安全审查 | 安全扫描 | 安全检查 | 漏洞扫描
 - **部署上线**: 部署上线 | 上线 | 发布 | deploy
 - **PRD 编写**: PRD | 产品需求 | 写 PRD | 需求文档
+- **Git 工作流**: Git 工作流 | git workflow | git 规范 | 分支策略
+- **单元测试**: 单元测试 | unit test | 写测试 | write tests
+- **系统设计**: 系统设计 | system design | 架构设计 | architecture design
+- **数据库优化**: 数据库优化 | database optimize | 慢查询 | slow query
+- **Docker 容器化**: Docker | docker | 容器化 | containerization
+- **CI/CD 流水线**: CI/CD | cicd | 流水线 | pipeline
+- **性能优化**: 性能优化 | performance | 页面慢 | 接口慢
+- **代码重构**: 代码重构 | refactoring | refactor | 重构
+- **可观测性**: 可观测性 | observability | 监控 | monitoring
+- **设计模式**: 设计模式 | design pattern | design patterns | 模式
 
 ---
 
@@ -1200,6 +1210,2256 @@ docker-compose up -d --no-deps --scale app=2  # 拉起旧版本
 - 功能使用率（功能激活用户 / 总用户）
 
 输出格式：Markdown PRD 文档，含背景目标、用户故事、功能详情（含验收标准 AC）、非功能性需求、UI/UX 说明和埋点方案
+
+## Git 工作流
+
+触发：Git 工作流 | git workflow | git 规范 | 分支策略
+说明：规范 Git 分支策略、提交规范、合并流程，建立团队一致的版本控制工作流
+
+1. 评估项目特征，选择分支策略
+根据团队规模和发布节奏选择合适的分支策略：
+
+**GitFlow 适用场景**
+- 有明确版本号的产品（如 App、SDK、开源库）
+- 需要维护多个线上版本
+- 发布周期较长（周/月级别）
+
+```
+main          ──●────────────────────●──  (生产稳定)
+hotfix/1.0.1    └──●──┘                  (紧急修复)
+release/1.1       └──●──┘               (预发布验证)
+develop       ──●──────●──────●──────●── (集成分支)
+feature/login    └──●──┘                 (功能开发)
+```
+
+**Trunk-Based Development 适用场景**
+- 持续部署（CD）体系成熟
+- 有完善的 Feature Flag 机制
+- 团队规模适中（≤50 人），发布频率高（日/周）
+
+```
+main  ──●──●──●──●──●──  (直接推送或短命分支 <2天)
+feat   └──●──┘           (短命功能分支，快速合并)
+```
+
+**决策矩阵**
+
+| 维度 | GitFlow | Trunk-Based |
+|------|---------|-------------|
+| 发布频率 | 低（周/月） | 高（日/周） |
+| 团队规模 | 大 | 中小 |
+| 多版本维护 | 支持 | 不擅长 |
+| CI/CD 成熟度 | 低要求 | 高要求 |
+
+2. 制定提交信息规范（Conventional Commits）
+采用 Conventional Commits 规范，格式：`<type>(<scope>): <subject>`
+
+**类型（type）定义**
+
+| type | 用途 | 版本影响 |
+|------|------|---------|
+| `feat` | 新功能 | MINOR |
+| `fix` | Bug 修复 | PATCH |
+| `perf` | 性能优化 | PATCH |
+| `refactor` | 重构（无功能变化） | — |
+| `docs` | 文档变更 | — |
+| `test` | 测试相关 | — |
+| `chore` | 构建/依赖/工具 | — |
+| `ci` | CI 配置变更 | — |
+| `BREAKING CHANGE` | 破坏性变更（Footer） | MAJOR |
+
+**示例**
+```bash
+# 好的提交信息
+feat(auth): add OAuth2 login with Google provider
+fix(cart): prevent duplicate item addition on rapid click
+perf(query): add composite index on (user_id, created_at)
+refactor(api): extract pagination helper to shared utils
+docs(readme): update installation steps for Node 20
+
+# 破坏性变更写法
+feat(api)!: rename /users endpoint to /accounts
+
+BREAKING CHANGE: /users endpoint removed, use /accounts instead
+```
+
+**工具链配置**
+```bash
+# 安装 commitlint
+npm install -D @commitlint/cli @commitlint/config-conventional
+echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+
+# 配合 husky 在 commit-msg 钩子校验
+npx husky add .husky/commit-msg 'npx --no -- commitlint --edit $1'
+```
+
+3. Rebase vs Merge 决策与实践
+**核心原则：黄金法则 — 不要 rebase 已推送的公共分支**
+
+**何时用 Merge**
+- 合并长期分支（feature → develop）
+- 需要保留完整历史记录（审计场景）
+- 多人协作的共享分支
+
+```bash
+# 保留合并记录（推荐用于 PR/MR 合并）
+git merge --no-ff feature/login
+
+# 快进合并（适合独立小修改）
+git merge --ff-only hotfix/typo
+```
+
+**何时用 Rebase**
+- 更新本地功能分支，与主干保持同步
+- 整理本地提交历史，推送 PR 前清理
+
+```bash
+# 将功能分支变基到最新 main
+git checkout feature/login
+git rebase origin/main
+
+# 交互式 rebase：合并/重排/修改最近 3 个提交
+git rebase -i HEAD~3
+# 选项: pick / squash(s) / fixup(f) / reword(r) / drop(d)
+```
+
+**Squash Merge**（GitHub/GitLab PR 推荐）
+```bash
+# 将功能分支所有提交合并为一个干净提交
+git merge --squash feature/login
+git commit -m "feat(auth): add login page with form validation"
+```
+
+**推荐工作流**
+1. 本地开发：随意提交，保持节奏
+2. 推送 PR 前：`git rebase -i origin/main` 整理提交
+3. PR 合并：使用 Squash Merge 保持主干干净
+
+4. 冲突解决流程
+**结构化冲突解决步骤**
+
+```bash
+# Step 1: 理解冲突来源
+git log --oneline --graph --all  # 查看分支关系
+git diff HEAD origin/main        # 对比差异
+
+# Step 2: 标记冲突文件分析
+git status  # 查看所有冲突文件
+# conflict markers: <<<<<<< HEAD ... ======= ... >>>>>>> branch
+
+# Step 3: 使用工具辅助解决
+git mergetool  # 调用配置的 merge tool（VSCode / IntelliJ）
+
+# 配置 VSCode 为默认 merge tool
+git config --global merge.tool vscode
+git config --global mergetool.vscode.cmd 'code --wait $MERGED'
+```
+
+**三路合并理解（Three-way merge）**
+```
+BASE（公共祖先）：const timeout = 5000;
+OURS（当前分支）：const timeout = 10000;  // 改为10s
+THEIRS（被合并）：const TIMEOUT = 5000;   // 改为大写常量名
+RESULT（手动）：  const TIMEOUT = 10000;  // 两个改动都要
+```
+
+**预防冲突的最佳实践**
+- 功能分支生命周期控制在 1-3 天内
+- 每日同步主干：`git pull --rebase origin main`
+- 大文件/自动生成文件加入 `.gitattributes` 配置合并策略
+```gitattributes
+# 始终使用 ours 策略合并 lock 文件（减少冲突）
+package-lock.json merge=ours
+yarn.lock merge=ours
+```
+
+5. Pull Request / Code Review 流程规范
+**PR 模板设计**
+```markdown
+## 变更说明
+[简洁描述本次变更做了什么、为什么]
+
+## 变更类型
+- [ ] 新功能 (feat)
+- [ ] Bug 修复 (fix)
+- [ ] 重构 (refactor)
+- [ ] 性能优化 (perf)
+
+## 测试验证
+- [ ] 单元测试通过
+- [ ] 手动测试场景: [描述]
+- [ ] 截图/录屏（UI 变更必填）
+
+## 影响范围
+[描述可能影响的模块或依赖方]
+
+## Checklist
+- [ ] 代码自查完毕
+- [ ] 无调试代码 (console.log/debugger)
+- [ ] 文档已更新（如需要）
+```
+
+**PR 规模控制**
+- 理想 PR 大小：< 400 行（不含测试）
+- 超过 800 行：强制拆分为多个 PR
+- 可用 `git diff --stat origin/main` 提前检查
+
+**分支保护规则（GitHub/GitLab 配置）**
+```
+main 分支保护：
+✅ Require pull request reviews (min: 1)
+✅ Require status checks to pass (CI/lint/test)
+✅ Require branches to be up to date
+✅ Restrict push access (仅管理员)
+✅ Require signed commits（高安全场景）
+```
+
+6. 输出工作流规范文档
+整理为团队可直接使用的规范文档，格式如下：
+
+```markdown
+## Git 工作流规范
+
+### 分支命名
+- feature/<ticket-id>-short-description  (如: feature/PROJ-123-user-login)
+- fix/<ticket-id>-short-description
+- hotfix/<version>-short-description     (如: hotfix/1.2.1-payment-crash)
+- release/<version>                      (如: release/1.3.0)
+
+### 提交规范
+格式: <type>(<scope>): <subject>
+示例: feat(auth): add JWT refresh token support
+
+### 禁止行为
+❌ 直接推送到 main/master
+❌ force push 到共享分支
+❌ rebase 已推送的公共分支
+❌ 超过 1000 行的单次 PR（紧急 hotfix 除外）
+
+### 分支生命周期
+- feature 分支: ≤ 5 个工作日
+- release 分支: ≤ 2 周
+- hotfix 分支: ≤ 24 小时
+```
+
+输出格式：Markdown 工作流规范文档，含分支策略选型建议、提交规范示例、rebase/merge 决策指南、冲突解决 SOP 和 PR 规范模板
+
+## 单元测试
+
+触发：单元测试 | unit test | 写测试 | write tests
+说明：运用 AAA 模式和 TDD 工作流编写高质量单元测试，建立覆盖率目标和 Mock 策略
+
+1. 明确测试目标与范围
+在编写测试前，先明确测什么：
+
+**测试金字塔**
+```
+        ┌───────────┐
+        │  E2E 测试  │  (少量，慢，高置信)
+       ┌┴───────────┴┐
+       │  集成测试    │  (适量，中速)
+      ┌┴─────────────┴┐
+      │  单元测试      │  (大量，快，低成本)
+      └───────────────┘
+```
+
+**单元测试应该覆盖**
+- ✅ 纯函数的各种输入输出（含边界）
+- ✅ 类/模块的公共方法逻辑
+- ✅ 条件分支（if/switch/三元）
+- ✅ 错误处理路径（throw/catch）
+- ✅ 异步操作（Promise/async-await）
+
+**不应该单元测试**
+- ❌ 简单的 getter/setter（无逻辑）
+- ❌ 第三方库内部实现
+- ❌ 框架本身（如 React 渲染机制）
+- ❌ 私有方法（通过公共方法间接测试）
+
+2. AAA 模式编写测试用例
+每个测试用例遵循 **Arrange → Act → Assert** 三段式结构：
+
+**基础示例（JavaScript/TypeScript with Vitest/Jest）**
+```typescript
+describe('calculateDiscount', () => {
+  it('should apply 20% discount for premium users', () => {
+    // Arrange（准备：设置测试数据和依赖）
+    const user = { type: 'premium', cart: [{ price: 100 }, { price: 50 }] };
+    const expectedTotal = 120;  // 150 * 0.8
+
+    // Act（执行：调用被测函数）
+    const result = calculateDiscount(user);
+
+    // Assert（断言：验证结果）
+    expect(result.total).toBe(expectedTotal);
+    expect(result.discountRate).toBe(0.2);
+  });
+});
+```
+
+**测试命名规范（Given-When-Then）**
+```typescript
+// 格式: should <expected behavior> when <condition>
+it('should return null when user is not found')
+it('should throw AuthError when token is expired')
+it('should apply 20% discount when user has premium status')
+
+// 或使用 Given-When-Then 风格
+it('given empty cart, when checkout, then throws EmptyCartError')
+```
+
+**边界条件测试清单**
+```typescript
+describe('parseAge', () => {
+  // 正常值
+  it('should parse valid age 25')
+  // 边界值
+  it('should accept minimum age 0')
+  it('should accept maximum age 150')
+  // 非法值
+  it('should throw when age is negative')
+  it('should throw when age exceeds 150')
+  // 类型边界
+  it('should throw when age is not a number')
+  it('should throw when age is null or undefined')
+  it('should handle decimal by flooring to integer')
+});
+```
+
+3. TDD 工作流（红-绿-重构）
+**TDD 循环步骤**
+
+```
+🔴 Red   → 写一个失败的测试（先设计接口）
+🟢 Green → 写最少代码让测试通过（不过度设计）
+🔵 Refactor → 在测试保护下重构代码
+```
+
+**实践示例：用 TDD 实现邮箱验证**
+
+```typescript
+// Step 1 🔴 先写测试（此时 validateEmail 还不存在）
+describe('validateEmail', () => {
+  it('should return true for valid email', () => {
+    expect(validateEmail('user@example.com')).toBe(true);
+  });
+  it('should return false for missing @', () => {
+    expect(validateEmail('userexample.com')).toBe(false);
+  });
+  it('should return false for empty string', () => {
+    expect(validateEmail('')).toBe(false);
+  });
+});
+
+// Step 2 🟢 写最简实现让测试通过
+export function validateEmail(email: string): boolean {
+  return /^[^s@]+@[^s@]+.[^s@]+$/.test(email);
+}
+
+// Step 3 🔵 重构：提取正则为常量，添加类型注释
+const EMAIL_REGEX = /^[^s@]+@[^s@]+.[^s@]+$/;
+export function validateEmail(email: string): boolean {
+  if (!email) return false;
+  return EMAIL_REGEX.test(email);
+}
+```
+
+**TDD 适用场景**
+- 明确需求的业务逻辑函数
+- 工具库/SDK 开发
+- Bug 修复（先写复现测试再修复）
+
+**不强制 TDD 的场景**
+- 探索性开发阶段
+- UI 组件（先实现再补测试）
+
+4. Mock / Stub / Spy 策略
+**三种测试替身的区别**
+
+| 类型 | 用途 | 验证方式 |
+|------|------|---------|
+| **Stub** | 替换外部依赖，控制返回值 | 只验证输出 |
+| **Mock** | 验证函数是否被正确调用 | 验证调用行为 |
+| **Spy** | 监听真实函数的调用情况 | 包装真实实现 |
+
+**Vitest/Jest 实践**
+```typescript
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+// Stub: 控制外部 API 返回值
+vi.mock('../api/user', () => ({
+  fetchUser: vi.fn().mockResolvedValue({ id: 1, name: 'Alice' }),
+}));
+
+// Mock: 验证函数被调用
+it('should call sendEmail when user registers', async () => {
+  const sendEmail = vi.fn();
+  await registerUser({ email: 'test@test.com' }, { sendEmail });
+  expect(sendEmail).toHaveBeenCalledOnce();
+  expect(sendEmail).toHaveBeenCalledWith('test@test.com', expect.objectContaining({ subject: 'Welcome' }));
+});
+
+// Spy: 包装真实函数监听
+it('should log error when fetch fails', async () => {
+  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.mocked(fetchUser).mockRejectedValue(new Error('Network Error'));
+  await loadUserProfile(1);
+  expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Network Error'));
+  consoleSpy.mockRestore();
+});
+```
+
+**Mock 黄金法则**
+- 只 Mock 跨边界的依赖（网络、数据库、文件系统、时间）
+- 不要 Mock 被测单元的内部实现
+- 每次测试后还原 Mock（使用 `beforeEach(() => vi.clearAllMocks())`）
+
+5. 覆盖率目标与质量保障
+**覆盖率类型与目标**
+
+| 覆盖率类型 | 说明 | 建议目标 |
+|----------|------|---------|
+| 语句覆盖（Statements） | 执行的语句比例 | ≥ 80% |
+| 分支覆盖（Branches） | if/else 分支比例 | ≥ 75% |
+| 函数覆盖（Functions） | 调用的函数比例 | ≥ 80% |
+| 行覆盖（Lines） | 执行的代码行比例 | ≥ 80% |
+
+**Vitest 覆盖率配置**
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',  // 或 'istanbul'
+      reporter: ['text', 'html', 'lcov'],
+      thresholds: {
+        statements: 80,
+        branches: 75,
+        functions: 80,
+        lines: 80,
+      },
+      exclude: [
+        'node_modules/',
+        'src/types/',
+        '**/*.config.*',
+        '**/*.d.ts',
+      ],
+    },
+  },
+});
+```
+
+**覆盖率反模式（要避免）**
+```typescript
+// ❌ 为了覆盖率写无意义断言
+it('does something', () => {
+  expect(doSomething()).toBeDefined();  // 没有验证具体行为
+});
+
+// ✅ 验证真实业务逻辑
+it('should return correct discounted price', () => {
+  expect(calculatePrice(100, 0.1)).toBe(90);
+});
+```
+
+**CI 集成**
+```yaml
+# .github/workflows/test.yml
+- name: Run tests with coverage
+  run: npm run test -- --coverage
+
+- name: Comment coverage on PR
+  uses: MishaKav/jest-coverage-comment@main
+  with:
+    coverage-summary-path: ./coverage/coverage-summary.json
+```
+
+输出格式：Markdown 测试方案文档，含测试用例设计（AAA 格式）、Mock 策略说明、覆盖率目标和 CI 配置示例
+
+## 系统设计
+
+触发：系统设计 | system design | 架构设计 | architecture design
+说明：从需求澄清到架构设计全流程，完成高并发分布式系统的方案设计与权衡分析
+
+1. 需求澄清与范围界定
+在动手设计前，花 5 分钟澄清需求：
+
+**功能需求（Functional Requirements）**
+- 系统的核心用例是什么？（写出 3-5 个最关键的）
+- 哪些功能在 scope 内，哪些明确 out of scope？
+- 用户角色有哪些？各自的主要操作是什么？
+
+**非功能需求（Non-Functional Requirements）**
+
+| 维度 | 问题 | 示例指标 |
+|------|------|---------|
+| 规模 | 用户量 / DAU / QPS 是多少？ | 1亿用户，1000万 DAU |
+| 性能 | 读写延迟要求？P99 是多少？ | P99 < 100ms |
+| 可用性 | 允许多少停机时间？ | 99.9%（每年 8.7h） |
+| 一致性 | 强一致 or 最终一致？ | 最终一致（可接受） |
+| 持久性 | 数据丢失容忍度？ | RPO = 0（不允许丢失） |
+
+**明确边界的示例问题**
+```
+Q: 设计一个 Twitter
+A（先澄清）:
+- 只需要发推/关注/Feed 功能吗？（排除私信、广告）
+- 用户规模：3亿用户，1亿 DAU？
+- 读写比例：推文读多写少，100:1？
+- 媒体文件：支持图片/视频吗？
+- 全球分发还是单地区？
+```
+
+2. 容量估算（Back-of-Envelope）
+快速估算系统规模，为架构决策提供数据依据：
+
+**常用基准数字**
+```
+内存访问：    ~100ns
+SSD 访问：    ~100μs
+HDD 访问：    ~10ms
+网络往返（同数据中心）：~0.5ms
+网络往返（跨地区）：    ~100ms
+
+1 MB = 10^6 bytes
+1 GB = 10^9 bytes
+1 TB = 10^12 bytes
+```
+
+**估算示例：设计微博（Twitter-like）**
+```
+用户数据：
+- DAU: 1亿
+- 每用户每天发1条推文 → 写 QPS = 100M / 86400 ≈ 1160 QPS
+- 每用户每天读100条 → 读 QPS = 100 × 1160 = 116,000 QPS
+
+存储估算：
+- 单条推文: 140字 × 2字节(UTF-16) = 280字节 ≈ 300字节
+- 元数据(user_id, timestamp等): 100字节
+- 每条推文总计: ~400字节
+- 每日新增: 1.16K QPS × 400字节 × 86400 = ~40 GB/天
+- 5年存储: 40GB × 365 × 5 ≈ 73 TB
+
+带宽估算：
+- 写带宽: 1160 × 400字节 = ~450 KB/s
+- 读带宽: 116K × 400字节 = ~45 MB/s
+```
+
+**结论：** 读多写少（100:1），需要读缓存；存储量大需分库分表；单机无法支撑读 QPS 需多副本。
+
+3. 高层架构设计
+从整体入手，画出系统的核心模块和数据流：
+
+**通用分层架构**
+```
+客户端 (Web/Mobile/API Consumer)
+         │
+         ▼
+   DNS + CDN (静态资源 / 地理路由)
+         │
+         ▼
+   Load Balancer (L4/L7, 负载均衡 + SSL 终止)
+    ┌────┴────┐
+    ▼         ▼
+ API Srv   API Srv   (无状态，水平扩展)
+    │
+    ├──→ Cache (Redis: 热数据)
+    ├──→ Message Queue (Kafka: 异步解耦)
+    ├──→ Primary DB (写操作)
+    └──→ Read Replica (读操作)
+         │
+         ▼
+   Object Storage (S3: 文件/媒体)
+   Search Engine (Elasticsearch)
+```
+
+**架构选型决策点**
+
+| 场景 | 选型建议 |
+|------|---------|
+| 读多写少 | 读写分离 + 缓存层 |
+| 高写入吞吐 | 异步消息队列削峰 |
+| 数据量超百亿行 | 分库分表 / NoSQL |
+| 强一致性 | 单主 / Paxos / Raft |
+| 最终一致性 | 多主 / CRDT |
+| 低延迟全球访问 | CDN + 多地域部署 |
+| 复杂查询 | 专用搜索引擎 |
+
+**微服务 vs 单体 决策**
+- 团队 < 10人，初创期：单体优先（避免过度工程）
+- 明确的服务边界、独立扩展需求：拆分微服务
+- 拆分原则：按业务边界（DDD 限界上下文），而非技术层
+
+4. 核心组件深度设计
+针对最关键的 2-3 个组件进行深入设计：
+
+**数据库 Schema 设计**
+```sql
+-- 示例：推文表设计
+CREATE TABLE tweets (
+  id          BIGINT PRIMARY KEY,      -- Snowflake ID（分布式唯一ID）
+  user_id     BIGINT NOT NULL,
+  content     VARCHAR(280) NOT NULL,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  like_count  INT DEFAULT 0,
+  retweet_count INT DEFAULT 0,
+  INDEX idx_user_created (user_id, created_at DESC)  -- 用户时间线查询
+);
+
+-- Fan-out 策略：预写 vs 拉取
+-- 方案A: Push（写扩散）: 发推时写入所有粉丝的 Feed 表
+-- 方案B: Pull（读扩散）: 读取时聚合关注者的推文
+-- 混合方案: 普通用户 Push，大V（粉丝>100万）Pull
+```
+
+**缓存策略**
+```
+Cache-Aside（旁路缓存）- 最通用
+读: 查缓存 → miss → 查DB → 写缓存 → 返回
+写: 更新DB → 删除缓存（避免双写不一致）
+
+Write-Through（写穿）- 一致性高
+写: 同时写DB和缓存
+
+Write-Behind（写回）- 高性能
+写: 先写缓存，异步批量写DB（风险：缓存宕机丢数据）
+
+缓存 Key 设计示例:
+user:{userId}:profile      → 用户资料
+user:{userId}:feed:page:{n} → 用户 Feed 分页
+tweet:{tweetId}            → 单条推文
+```
+
+**API 接口设计**
+```
+POST /tweets              发布推文
+GET  /users/{id}/feed     获取 Feed (cursor分页)
+POST /tweets/{id}/like    点赞
+GET  /tweets/{id}         获取单条推文
+
+分页策略: cursor-based > offset-based（大数据量场景）
+cursor: base64(created_at + tweet_id)
+```
+
+5. 可扩展性与可用性权衡
+**CAP 定理实践**
+```
+C（一致性）+ A（可用性）+ P（分区容错）三选二
+网络分区不可避免 → 通常是 CP 或 AP 的选择
+
+CP 系统: ZooKeeper, HBase（金融交易、库存扣减）
+AP 系统: Cassandra, DynamoDB（社交Feed、购物车）
+```
+
+**水平扩展策略**
+
+| 层次 | 策略 |
+|------|------|
+| 无状态应用层 | 直接水平扩展 + 负载均衡 |
+| 有状态缓存 | 一致性哈希分片（Redis Cluster） |
+| 数据库水平 | 分库分表（按 user_id % N） |
+| 数据库垂直 | 主从复制，读写分离 |
+
+**单点故障（SPOF）消除清单**
+- [ ] Load Balancer 双活/主备
+- [ ] 数据库主从 + 自动故障转移（MHA/Orchestrator）
+- [ ] 缓存集群（Redis Sentinel / Cluster）
+- [ ] 消息队列多副本（Kafka Replication Factor ≥ 3）
+- [ ] 跨可用区部署（Multi-AZ）
+
+**限流与熔断**
+```
+限流: Token Bucket（突发流量友好）
+     Sliding Window（精准限流）
+     分级限流: 用户级 → 接口级 → 全局
+
+熔断: Closed → Open（失败率>50%）→ Half-Open（探测恢复）
+工具: Resilience4j（Java）/ hystrix-go / Polly(.NET)
+```
+
+6. 输出系统设计文档
+整理为结构化设计文档：
+
+```markdown
+## 系统设计方案：[系统名称]
+
+### 1. 需求概述
+**功能需求**（核心功能列表）
+**非功能需求**（QPS / 延迟 / 可用性 / 存储）
+
+### 2. 容量估算
+| 指标 | 估算值 |
+|------|-------|
+| DAU | X 万 |
+| 写 QPS | X |
+| 读 QPS | X |
+| 存储（5年） | X TB |
+
+### 3. 系统架构图
+[ASCII 图或 Mermaid 图]
+
+### 4. 核心组件设计
+- **数据库 Schema**：[关键表设计]
+- **缓存策略**：[策略选择与理由]
+- **API 设计**：[关键接口]
+
+### 5. 扩展性方案
+- **瓶颈点**：[识别的瓶颈]
+- **解决方案**：[具体方案]
+
+### 6. 权衡与风险
+[已知权衡和设计风险]
+```
+
+输出格式：Markdown 系统设计文档，含需求澄清结果、容量估算数据、架构图、核心组件设计方案和扩展性权衡分析
+
+## 数据库优化
+
+触发：数据库优化 | database optimize | 慢查询 | slow query
+说明：系统诊断数据库性能问题，涵盖 Schema 审查、索引设计、慢查询分析和 N+1 修复
+
+1. Schema 设计审查
+检查数据库表结构是否存在设计问题：
+
+**规范化检查（防止冗余）**
+```sql
+-- ❌ 反模式：在用户表存储地址字符串
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR(100),
+  address VARCHAR(500)  -- 难以精准查询城市/省份
+);
+
+-- ✅ 正确：拆分为 addresses 表
+CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100));
+CREATE TABLE addresses (
+  id INT PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  province VARCHAR(50),
+  city VARCHAR(50),
+  detail VARCHAR(200)
+);
+```
+
+**数据类型选择**
+
+| 场景 | 推荐类型 | 避免 |
+|------|---------|------|
+| 主键 | BIGINT / UUID | INT（可能溢出） |
+| 状态枚举 | TINYINT / ENUM | VARCHAR |
+| 金额 | DECIMAL(10,2) | FLOAT（精度丢失）|
+| 时间 | TIMESTAMP / DATETIME | VARCHAR |
+| 短字符串(≤255) | VARCHAR(N) | TEXT |
+| 布尔值 | TINYINT(1) | VARCHAR('true') |
+
+**常见 Schema 问题清单**
+- [ ] 是否有未使用的列？
+- [ ] VARCHAR 长度是否合理（不要都 VARCHAR(255)）？
+- [ ] 外键是否有索引？
+- [ ] 是否有重复的字段（非规范化导致）？
+- [ ] 是否用了 TEXT/BLOB 存储应该单独存储的大文件？
+
+2. 索引设计策略
+**索引类型选择**
+
+```sql
+-- 单列索引：高选择性字段（如 email、手机号）
+CREATE INDEX idx_users_email ON users(email);
+
+-- 联合索引：遵循最左前缀原则
+-- 适合查询: WHERE status = ? AND created_at > ?
+-- 适合查询: WHERE status = ?
+-- 不适合:   WHERE created_at > ?  （无法命中）
+CREATE INDEX idx_orders_status_created ON orders(status, created_at);
+
+-- 覆盖索引：索引包含查询所有字段，避免回表
+-- 查询: SELECT user_id, status FROM orders WHERE order_no = ?
+CREATE INDEX idx_orders_covering ON orders(order_no, user_id, status);
+
+-- 前缀索引：长字符串节省空间
+CREATE INDEX idx_url_prefix ON pages(url(50));
+
+-- 函数索引（MySQL 8.0+）：对表达式建索引
+CREATE INDEX idx_lower_email ON users((LOWER(email)));
+```
+
+**EXPLAIN 分析索引使用**
+```sql
+EXPLAIN SELECT * FROM orders
+WHERE user_id = 1001 AND status = 'PAID'
+ORDER BY created_at DESC LIMIT 10;
+
+-- 关注字段:
+-- type:  ref > range > index > ALL（ALL 最差）
+-- key:   使用的索引名（NULL 表示未使用索引）
+-- rows:  预估扫描行数（越小越好）
+-- Extra: Using filesort / Using temporary（需优化的信号）
+```
+
+**索引原则**
+- 高频查询的 WHERE / JOIN / ORDER BY 字段建索引
+- 选择性低的字段慎建索引（如 status 只有3个值）
+- 避免在频繁更新的列上建过多索引（写性能代价）
+- 复合索引字段顺序：等值条件在前，范围条件在后
+
+3. 慢查询分析与优化
+**开启慢查询日志**
+```sql
+-- MySQL 配置
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;  -- 超过1秒记录
+SET GLOBAL log_queries_not_using_indexes = 'ON';
+
+-- 查看慢查询日志文件位置
+SHOW VARIABLES LIKE 'slow_query_log_file';
+
+-- 使用 pt-query-digest 分析日志
+pt-query-digest /var/log/mysql/slow.log | head -100
+```
+
+**常见慢查询模式与修复**
+```sql
+-- ❌ 问题1: SELECT * 全列查询
+SELECT * FROM orders WHERE user_id = 1001;
+-- ✅ 修复: 只查需要的列
+SELECT id, order_no, status, total FROM orders WHERE user_id = 1001;
+
+-- ❌ 问题2: 对索引列使用函数，导致索引失效
+SELECT * FROM orders WHERE DATE(created_at) = '2024-01-01';
+-- ✅ 修复: 使用范围查询
+SELECT * FROM orders
+WHERE created_at >= '2024-01-01' AND created_at < '2024-01-02';
+
+-- ❌ 问题3: OR 导致索引失效（某些情况）
+SELECT * FROM users WHERE email = ? OR phone = ?;
+-- ✅ 修复: UNION ALL
+SELECT * FROM users WHERE email = ?
+UNION ALL
+SELECT * FROM users WHERE phone = ?;
+
+-- ❌ 问题4: LIKE 前缀通配符
+SELECT * FROM products WHERE name LIKE '%iPhone%';
+-- ✅ 修复: 使用全文索引或 Elasticsearch
+SELECT * FROM products WHERE MATCH(name) AGAINST('iPhone' IN BOOLEAN MODE);
+
+-- ❌ 问题5: 隐式类型转换
+SELECT * FROM users WHERE user_id = '1001';  -- user_id 是 INT
+-- ✅ 修复: 类型匹配
+SELECT * FROM users WHERE user_id = 1001;
+```
+
+4. N+1 查询识别与修复
+**N+1 问题定义**：查询1次获取N条记录，再针对每条记录查询1次，共 N+1 次数据库访问。
+
+**ORM 场景中的 N+1**
+```typescript
+// ❌ TypeORM N+1 示例：查100个用户 → 执行101次SQL
+const users = await userRepository.find();  // Query 1: SELECT * FROM users
+for (const user of users) {
+  const orders = await user.orders;         // Query 2-101: 每个用户各查一次
+  console.log(orders.length);
+}
+
+// ✅ 修复：使用 eager loading（JOIN）
+const users = await userRepository.find({
+  relations: ['orders'],  // 一次 JOIN 查询搞定
+});
+
+// ✅ 或使用 QueryBuilder（更精确控制）
+const users = await userRepository
+  .createQueryBuilder('user')
+  .leftJoinAndSelect('user.orders', 'order')
+  .where('order.status = :status', { status: 'PAID' })
+  .getMany();
+```
+
+**原生 SQL 批量查询模式**
+```sql
+-- ❌ N+1: 循环查询
+-- for user_id in user_ids: SELECT * FROM orders WHERE user_id = ?
+
+-- ✅ 批量查询 + 应用层 Map 聚合
+SELECT user_id, COUNT(*) as order_count, SUM(total) as total_amount
+FROM orders
+WHERE user_id IN (1,2,3,...,100)  -- 一次查询
+GROUP BY user_id;
+-- 在应用层用 Map 按 user_id 聚合
+```
+
+**检测 N+1 工具**
+```
+- Laravel Debugbar（PHP）
+- Django Debug Toolbar（Python）
+- Bullet gem（Rails）
+- TypeORM logging: { logging: true } 观察 SQL 数量
+- DataLoader（GraphQL 场景批量加载）
+```
+
+5. 分区与分表策略
+**表分区（Partitioning）— 单机方案**
+```sql
+-- 按时间范围分区（适合日志、订单历史）
+CREATE TABLE orders (
+  id BIGINT,
+  user_id INT,
+  created_at DATETIME,
+  total DECIMAL(10,2)
+) PARTITION BY RANGE (YEAR(created_at)) (
+  PARTITION p2022 VALUES LESS THAN (2023),
+  PARTITION p2023 VALUES LESS THAN (2024),
+  PARTITION p2024 VALUES LESS THAN (2025),
+  PARTITION pmax  VALUES LESS THAN MAXVALUE
+);
+
+-- 分区裁剪：查询自动只扫描相关分区
+SELECT * FROM orders WHERE created_at >= '2024-01-01';
+-- 只扫描 p2024 分区，跳过历史分区
+```
+
+**分库分表策略（超千万行后考虑）**
+
+| 方案 | 分片键选择 | 适用场景 |
+|------|----------|---------|
+| 水平分表（同库） | user_id % N | 单库容量瓶颈 |
+| 水平分库 | user_id % N | 读写 QPS 瓶颈 |
+| 按地区分库 | region | 合规/延迟要求 |
+
+```
+分片键选择原则:
+- 选择查询中高频使用的字段（避免跨分片查询）
+- 选择数据分布均匀的字段（避免热点）
+- 一旦确定不能轻易更改
+
+常见工具:
+- ShardingSphere（Java）
+- Vitess（MySQL 集群，YouTube 方案）
+- Citus（PostgreSQL 分布式扩展）
+```
+
+**读写分离配置**
+```
+主库（Primary）: 处理写操作 + 强一致读
+从库（Replica）: 处理读操作（注意主从延迟，通常 <1s）
+
+适用于读写比 > 4:1 的场景
+注意: 写后立即读可能读到旧数据（主从同步延迟）
+解决: 重要读操作路由到主库；或用 Redis 缓存最新写入
+```
+
+输出格式：Markdown 优化报告，含 Schema 问题列表、索引设计方案、慢查询 EXPLAIN 分析、N+1 修复代码示例和分区建议
+
+## Docker 容器化
+
+触发：Docker | docker | 容器化 | containerization
+说明：编写生产级 Dockerfile，实现多阶段构建、镜像优化和 docker-compose 编排
+
+1. Dockerfile 基础最佳实践
+**基础规则清单**
+
+```dockerfile
+# ✅ 使用具体版本标签，避免 latest（不可复现）
+FROM node:20.11-alpine3.19
+
+# ✅ 设置工作目录（避免在根目录操作）
+WORKDIR /app
+
+# ✅ 先复制依赖文件，利用层缓存
+# 依赖文件不变时，npm install 层直接复用缓存
+COPY package*.json ./
+RUN npm ci --only=production
+
+# ✅ 再复制源码（源码改变不影响依赖缓存）
+COPY . .
+
+# ✅ 使用非 root 用户运行（安全最佳实践）
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+# ✅ 仅暴露必要端口
+EXPOSE 3000
+
+# ✅ 使用 ENTRYPOINT + CMD 组合（更灵活）
+ENTRYPOINT ["node"]
+CMD ["dist/index.js"]
+```
+
+**层缓存优化原则**
+```
+构建缓存命中规则：指令 + 参数 + 上下文文件 都相同才命中缓存
+
+优化策略:
+1. 变化频率低的指令放前面（基础镜像、系统依赖）
+2. 变化频率高的指令放后面（应用代码）
+3. 合并 RUN 指令减少层数
+
+# ❌ 多个 RUN 产生多个层
+RUN apt-get update
+RUN apt-get install -y curl
+RUN apt-get clean
+
+# ✅ 合并为一个 RUN，减少层数 + 及时清理缓存
+RUN apt-get update && apt-get install -y curl     && rm -rf /var/lib/apt/lists/*
+```
+
+2. 多阶段构建（Multi-Stage Build）
+多阶段构建将构建环境与运行环境分离，显著减小生产镜像体积：
+
+**Node.js 应用示例**
+```dockerfile
+# ===== Stage 1: Build =====
+FROM node:20.11-alpine3.19 AS builder
+WORKDIR /app
+
+# 安装所有依赖（含 devDependencies）
+COPY package*.json ./
+RUN npm ci
+
+# 编译 TypeScript
+COPY . .
+RUN npm run build
+
+# ===== Stage 2: Dependencies =====
+FROM node:20.11-alpine3.19 AS deps
+WORKDIR /app
+COPY package*.json ./
+# 只安装生产依赖
+RUN npm ci --only=production
+
+# ===== Stage 3: Production =====
+FROM node:20.11-alpine3.19 AS production
+WORKDIR /app
+
+# 只从前两个阶段复制必要文件
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+
+# 非 root 用户
+RUN addgroup -S app && adduser -S app -G app
+USER app
+
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:3000/health || exit 1
+CMD ["node", "dist/index.js"]
+```
+
+**效果对比**
+```
+单阶段构建（含 devDeps + 源码）:  ~800 MB
+多阶段构建（只含运行时）:          ~120 MB
+体积减少约 85%
+```
+
+**Go 应用（静态二进制最小镜像）**
+```dockerfile
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o server .
+
+# 使用 scratch（空镜像）或 distroless
+FROM gcr.io/distroless/static-debian12
+COPY --from=builder /app/server /server
+EXPOSE 8080
+ENTRYPOINT ["/server"]
+# 最终镜像仅 ~10MB
+```
+
+3. .dockerignore 与镜像安全
+**配置 .dockerignore**
+```dockerignore
+# 排除不需要的文件，减小构建上下文
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.*
+*.md
+.DS_Store
+coverage/
+dist/
+.nyc_output
+__tests__
+*.test.ts
+Dockerfile*
+docker-compose*
+```
+
+**镜像安全扫描**
+```bash
+# Trivy（推荐，免费开源）
+docker pull aquasec/trivy
+trivy image --severity HIGH,CRITICAL myapp:latest
+
+# 输出示例:
+# CRITICAL: CVE-2024-xxxx in openssl 3.0.0 → 升级到 3.0.13
+
+# 集成到 CI（GitHub Actions）
+- name: Scan Docker image
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: 'myapp:${{ github.sha }}'
+    severity: 'CRITICAL,HIGH'
+    exit-code: '1'  # 发现高危漏洞时 CI 失败
+```
+
+**容器运行时安全配置**
+```bash
+# 禁止 root 运行（Dockerfile 中已设置 USER，运行时再确认）
+docker run --user 1001:1001 myapp:latest
+
+# 只读文件系统（防止容器内写文件）
+docker run --read-only --tmpfs /tmp myapp:latest
+
+# 限制资源
+docker run --memory="256m" --cpus="0.5" myapp:latest
+
+# 丢弃不需要的 Linux Capabilities
+docker run --cap-drop ALL --cap-add NET_BIND_SERVICE myapp:latest
+
+# 禁止权限提升
+docker run --security-opt no-new-privileges myapp:latest
+```
+
+4. Docker Compose 服务编排
+**生产级 docker-compose.yml 示例**
+```yaml
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production        # 指定多阶段构建的目标阶段
+    image: myapp:${APP_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}    # 从 .env 文件读取，不硬编码
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy     # 等待健康检查通过
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+```
+
+**常用 Compose 命令**
+```bash
+docker compose up -d               # 后台启动
+docker compose up -d --build       # 重新构建并启动
+docker compose logs -f app         # 实时查看日志
+docker compose exec app sh         # 进入容器 shell
+docker compose ps                  # 查看服务状态
+docker compose down -v             # 停止并删除 volume
+```
+
+5. 镜像优化与发布
+**镜像大小优化总结**
+
+| 优化手段 | 效果 |
+|---------|------|
+| 使用 Alpine 基础镜像 | node:20 → node:20-alpine，1.1GB → 150MB |
+| 多阶段构建 | 去除构建工具 & devDependencies |
+| .dockerignore | 减小构建上下文 |
+| 合并 RUN 清理缓存 | 减少层数和大小 |
+| distroless/scratch | Go/Rust 应用极小镜像 |
+
+**镜像打标签规范**
+```bash
+# 语义化版本 + git commit hash
+docker build -t myapp:1.2.3 -t myapp:1.2.3-abc1234 .
+
+# CI 中自动打标签
+docker build   -t myregistry/myapp:${VERSION}   -t myregistry/myapp:latest   --label "git.commit=${GIT_SHA}"   --label "build.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"   .
+```
+
+**镜像推送到 Registry**
+```bash
+# 登录到 GitHub Container Registry
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+
+# 推送
+docker push ghcr.io/org/myapp:1.2.3
+
+# 使用 Docker BuildKit（并行构建，更快）
+DOCKER_BUILDKIT=1 docker build .
+
+# 多平台构建（兼容 ARM Mac 和 x86 服务器）
+docker buildx build --platform linux/amd64,linux/arm64   -t myapp:latest --push .
+```
+
+输出格式：Markdown 容器化方案，含优化后的 Dockerfile、.dockerignore、docker-compose.yml 配置和安全加固建议
+
+## CI/CD 流水线
+
+触发：CI/CD | cicd | 流水线 | pipeline
+说明：设计完整 CI/CD 流水线，涵盖流水线阶段设计、测试自动化、部署门控和回滚策略
+
+1. 流水线阶段设计
+**标准 CI/CD 流水线结构**
+
+```
+Push/PR → [CI 阶段] → [镜像构建] → [部署到 Staging] → [部署到 Production]
+
+CI 阶段（每次 Push/PR 触发）:
+  ├── 代码检查: Lint + Type Check
+  ├── 单元测试: Unit Tests + Coverage
+  ├── 安全扫描: SAST + Dependency Audit
+  └── 构建验证: Build Success Check
+
+镜像构建（CI 通过后）:
+  ├── Docker Build（多平台）
+  ├── 镜像安全扫描（Trivy）
+  └── 推送到 Registry（打 tag）
+
+部署流程:
+  ├── Staging（自动，合并到 main 后）
+  │   ├── 集成测试
+  │   └── E2E 测试（冒烟）
+  └── Production（需审批 or 手动触发）
+      ├── 部署策略（蓝绿/金丝雀）
+      └── 部署后验证（健康检查）
+```
+
+**快速反馈原则**
+- CI 总时长目标：< 10 分钟（开发者等待阈值）
+- 测试并行化：单元测试 → 集成测试 → E2E（分层执行）
+- Fail Fast：代码格式错误最先检查，最快发现
+
+2. GitHub Actions 流水线配置
+**完整 CI 工作流示例**
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ─── 代码质量检查 ───────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  # ─── 测试 ────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test -- --coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ─── 安全扫描 ───────────────────────────────────
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm audit --audit-level=high
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: github/codeql-action/analyze@v3
+
+  # ─── 构建镜像 ───────────────────────────────────
+  build:
+    name: Build & Push Image
+    needs: [lint, test, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+```
+
+3. 构建速度优化
+**缓存策略**
+```yaml
+# npm/yarn 依赖缓存
+- uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    restore-keys: |
+      ${{ runner.os }}-node-
+
+# Docker layer 缓存（使用 GitHub Actions Cache）
+- uses: docker/build-push-action@v5
+  with:
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
+```
+
+**并行执行策略**
+```yaml
+# 使用 matrix 并行运行测试
+jobs:
+  test:
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]     # 4个并行 runner
+    steps:
+      - run: npm test -- --shard=${{ matrix.shard }}/4
+```
+
+**跳过不必要的 CI**
+```yaml
+# 路径过滤：文档变更不触发完整 CI
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+
+# 或者使用 paths 只触发相关路径
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package*.json'
+```
+
+**Self-hosted Runner（节省 CI 费用）**
+```
+适用场景: 大型项目、私有依赖、特殊硬件需求
+注意事项:
+- 安全隔离（不要在 public repo 使用 self-hosted runner）
+- 定期更新 runner 软件
+- 隔离不同项目的 runner（避免环境污染）
+```
+
+4. 部署策略与门控
+**三种主要部署策略**
+
+**蓝绿部署（Blue-Green）**
+```
+适用: 需要零停机、可快速回滚的场景
+成本: 双倍资源（同时运行两套环境）
+
+Blue（当前生产）: v1.0 → 接收所有流量
+Green（新版本）:  v1.1 → 部署验证中
+切换: 负载均衡器流量从 Blue → Green（瞬间完成）
+回滚: 流量切回 Blue（秒级）
+```
+
+**金丝雀部署（Canary Release）**
+```
+适用: 高风险变更、需要渐进式验证
+流程:
+  1%流量 → 新版本（观察5min）
+  → 10%（观察15min）
+  → 50%（观察30min）
+  → 100%（全量）
+
+Kubernetes 实现:
+kubectl scale deployment app-v2 --replicas=1   # 1/10 = 10%
+kubectl scale deployment app-v1 --replicas=9
+```
+
+**部署门控（Deployment Gates）配置**
+```yaml
+# GitHub Environments 配置审批
+deploy-production:
+  environment:
+    name: production
+    url: https://app.example.com
+  # 需要人工审批
+  steps:
+    - name: Request approval
+      uses: trstringer/manual-approval@v1
+      with:
+        approvers: team-lead,cto
+        minimum-approvals: 1
+
+# 自动门控：基于健康检查
+deploy-production:
+  steps:
+    - name: Deploy
+      run: kubectl apply -f k8s/
+    - name: Wait for rollout
+      run: kubectl rollout status deployment/app --timeout=5m
+    - name: Smoke test
+      run: |
+        sleep 10
+        curl -f https://api.example.com/health || exit 1
+```
+
+5. 回滚策略与监控告警
+**自动回滚触发条件**
+```yaml
+# 部署后自动验证，失败则回滚
+steps:
+  - name: Deploy to production
+    id: deploy
+    run: kubectl set image deployment/app app=${{ env.NEW_IMAGE }}
+
+  - name: Monitor deployment health
+    run: |
+      # 等待10分钟，监控错误率
+      for i in {1..20}; do
+        ERROR_RATE=$(curl -s https://metrics.example.com/api/error-rate)
+        if (( $(echo "$ERROR_RATE > 5" | bc -l) )); then
+          echo "Error rate $ERROR_RATE% exceeds threshold, rolling back!"
+          kubectl rollout undo deployment/app
+          exit 1
+        fi
+        sleep 30
+      done
+
+  - name: Rollback on failure
+    if: failure() && steps.deploy.outcome == 'success'
+    run: kubectl rollout undo deployment/app
+```
+
+**Kubernetes 滚动更新配置**
+```yaml
+# deployment.yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # 最多多启动1个 Pod
+      maxUnavailable: 0    # 始终保持满负载（零停机）
+  minReadySeconds: 30      # Pod 就绪后等待30s再继续
+```
+
+**部署通知**
+```yaml
+# 部署成功/失败通知到 Slack
+- name: Notify deployment status
+  uses: slackapi/slack-github-action@v1
+  with:
+    channel-id: 'deployments'
+    slack-message: |
+      ${{ job.status == 'success' && '✅' || '❌' }} Deployment to Production
+      Version: ${{ github.sha }}
+      Actor: ${{ github.actor }}
+      Status: ${{ job.status }}
+  env:
+    SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+```
+
+**关键 CI/CD 指标**
+
+| 指标 | 目标 | 说明 |
+|------|------|------|
+| Lead Time | < 1天 | 代码到生产的时间 |
+| Deploy Frequency | 每日1次+ | 部署频率 |
+| MTTR | < 1小时 | 故障恢复时间 |
+| Change Failure Rate | < 15% | 部署导致故障比例 |
+
+输出格式：Markdown CI/CD 方案文档，含流水线阶段图、GitHub Actions YAML 配置、部署策略对比和回滚方案
+
+## 性能优化
+
+触发：性能优化 | performance | 页面慢 | 接口慢
+说明：系统化分析和优化前后端性能瓶颈，涵盖分析工具使用、优化策略和量化指标
+
+1. 建立性能基线与目标
+优化前先量化，避免盲目优化。
+
+**前端核心指标（Core Web Vitals）**
+| 指标 | 含义 | 优秀 | 需改进 | 差 |
+|------|------|------|--------|-----|
+| LCP | 最大内容绘制 | ≤ 2.5s | ≤ 4s | > 4s |
+| INP | 交互响应延迟 | ≤ 200ms | ≤ 500ms | > 500ms |
+| CLS | 累积布局偏移 | ≤ 0.1 | ≤ 0.25 | > 0.25 |
+| TTFB | 首字节时间 | ≤ 800ms | ≤ 1.8s | > 1.8s |
+
+**采集工具**
+```bash
+npm install -g @lhci/cli
+lhci autorun --collect.url=https://yoursite.com
+
+npx autocannon -c 100 -d 30 http://localhost:3000/api/users
+```
+
+2. 前端性能优化
+**资源加载优化**
+```html
+<link rel="preload" href="/fonts/main.woff2" as="font" crossorigin>
+<link rel="preconnect" href="https://api.example.com">
+<img src="hero.jpg" loading="eager" fetchpriority="high" />
+<img src="below-fold.jpg" loading="lazy" />
+```
+
+**代码拆分（React）**
+```typescript
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+
+// 虚拟列表（大数据量）
+import { FixedSizeList } from 'react-window';
+<FixedSizeList height={600} itemCount={10000} itemSize={50}>
+  {({ index, style }) => <div style={style}>Row {index}</div>}
+</FixedSizeList>
+```
+
+**打包体积优化**
+```bash
+npx vite-bundle-visualizer
+# Tree-shaking: 按需引入
+import { debounce } from 'lodash-es';  // ✅ 非 import _ from 'lodash'
+```
+
+3. 后端与数据库性能优化
+**数据库查询优化**
+```sql
+EXPLAIN ANALYZE SELECT u.*, COUNT(o.id)
+FROM users u LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.status = 'active' GROUP BY u.id;
+
+-- 复合索引
+CREATE INDEX idx_user_status_created ON users(status, created_at);
+```
+
+**缓存策略（Redis）**
+```typescript
+async function getUserProfile(userId: string) {
+  const cacheKey = `user:profile:${userId}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+  const user = await db.users.findUnique({ where: { id: userId } });
+  const ttl = 300 + Math.floor(Math.random() * 60); // 随机TTL防雪崩
+  await redis.setex(cacheKey, ttl, JSON.stringify(user));
+  return user;
+}
+```
+
+**并行化异步操作**
+```typescript
+// ✅ 并行（快）
+const [user, orders] = await Promise.all([getUser(id), getOrders(id)]);
+```
+
+4. 性能优化 Checklist 与持续监控
+**优化优先级矩阵**
+| 优化项 | 影响 | 成本 | 优先级 |
+|--------|------|------|--------|
+| 图片压缩/WebP | 高 | 低 | 🔴 立即 |
+| 关键资源预加载 | 高 | 低 | 🔴 立即 |
+| 数据库慢查询修复 | 高 | 中 | 🔴 立即 |
+| 代码拆分/懒加载 | 高 | 中 | 🟡 近期 |
+| Redis 缓存层 | 高 | 高 | 🟡 规划 |
+
+**Lighthouse CI 集成**
+```yaml
+- name: Lighthouse CI
+  uses: treosh/lighthouse-ci-action@v10
+  with:
+    urls: https://yoursite.com
+    uploadArtifacts: true
+```
+
+**性能优化报告模板**
+```
+优化前：LCP 4.8s | FCP 3.2s | P99 API 1200ms
+已实施：图片WebP → LCP -1.8s；加索引 → P99 -600ms
+优化后：LCP 2.3s ✅ | FCP 1.4s ✅ | P99 380ms ✅
+```
+
+输出格式：Markdown 性能分析报告，含当前指标基线、瓶颈列表、优化方案和预期收益
+
+## 代码重构
+
+触发：代码重构 | refactoring | refactor | 重构
+说明：系统化识别代码坏味道，运用重构手法安全改善代码结构，不改变外部行为
+
+1. 识别代码坏味道（Bad Smells）
+重构前先诊断，明确改善目标：
+
+**最常见的 12 种坏味道**
+
+| 坏味道 | 症状 | 危害 |
+|--------|------|------|
+| **重复代码** | 相同逻辑出现 ≥2 处 | 修改需同步多处，极易遗漏 |
+| **过长函数** | 函数 > 20 行 | 难以理解、测试、复用 |
+| **过大的类** | 类承担过多职责 | 违反 SRP，耦合严重 |
+| **过长参数列表** | 参数 > 4 个 | 调用复杂，难以记忆 |
+| **发散式变化** | 一个类因不同原因被修改 | 违反 SRP |
+| **散弹式修改** | 一个变化需改多处 | 高耦合，遗漏风险高 |
+| **依恋情结** | 方法频繁访问其他类数据 | 逻辑放错了地方 |
+| **数据泥团** | 多处总是成组出现的数据 | 缺少封装 |
+| **基本类型偏执** | 用原始类型代替小对象 | 缺少领域建模 |
+| **注释过多** | 用注释弥补代码的不清晰 | 注释是坏味道的遮羞布 |
+| **过深嵌套** | 条件/循环嵌套 > 3 层 | 圈复杂度高，难以追踪 |
+| **僵尸代码** | 死代码、被注释的代码块 | 干扰阅读，增加维护负担 |
+
+```bash
+# 快速扫描工具
+npx eslint src --rule '{"complexity": ["warn", 10]}'  # 圈复杂度
+npx jscpd src --threshold 5                           # 重复代码检测
+ethan scan --todo                                      # TODO/FIXME 清单
+```
+
+2. 核心重构手法
+**提炼函数（Extract Function）** — 最常用
+
+```typescript
+// Before: 过长函数，注释掩盖意图
+function processOrder(order: Order) {
+  // 计算折扣
+  let discount = 0;
+  if (order.user.isPremium) discount = 0.1;
+  if (order.total > 1000) discount += 0.05;
+  const finalPrice = order.total * (1 - discount);
+
+  // 发送确认邮件
+  const subject = `订单 ${order.id} 确认`;
+  sendEmail(order.user.email, subject, finalPrice);
+}
+
+// After: 每个函数做一件事
+function calculateDiscount(order: Order): number {
+  let discount = 0;
+  if (order.user.isPremium) discount = 0.1;
+  if (order.total > 1000) discount += 0.05;
+  return discount;
+}
+
+function sendOrderConfirmation(order: Order, finalPrice: number): void {
+  const subject = `订单 ${order.id} 确认`;
+  sendEmail(order.user.email, subject, finalPrice);
+}
+
+function processOrder(order: Order) {
+  const discount = calculateDiscount(order);
+  const finalPrice = order.total * (1 - discount);
+  sendOrderConfirmation(order, finalPrice);
+}
+```
+
+**以多态取代条件（Replace Conditional with Polymorphism）**
+
+```typescript
+// Before: switch 散弹式修改
+function getShippingCost(order: Order): number {
+  switch (order.type) {
+    case 'standard': return order.weight * 10;
+    case 'express': return order.weight * 20 + 50;
+    case 'overnight': return order.weight * 30 + 100;
+  }
+}
+
+// After: 策略模式/多态
+abstract class ShippingStrategy {
+  abstract calculate(order: Order): number;
+}
+class StandardShipping extends ShippingStrategy {
+  calculate(order: Order) { return order.weight * 10; }
+}
+class ExpressShipping extends ShippingStrategy {
+  calculate(order: Order) { return order.weight * 20 + 50; }
+}
+```
+
+**引入参数对象（Introduce Parameter Object）**
+
+```typescript
+// Before: 过长参数列表
+function createReport(startDate: Date, endDate: Date, userId: string, format: string) {}
+
+// After: 封装为值对象
+interface ReportParams { dateRange: DateRange; userId: string; format: string; }
+function createReport(params: ReportParams) {}
+```
+
+**其他常用手法速查**
+
+| 手法 | 适用场景 |
+|------|---------|
+| 提炼类（Extract Class） | 一个类承担过多职责 |
+| 移动函数（Move Function） | 方法与数据不在一处 |
+| 内联函数（Inline Function） | 函数体比名字更清晰 |
+| 分解条件（Decompose Conditional） | 复杂 if-else 逻辑 |
+| 卫语句（Guard Clauses） | 深层嵌套 → 提前返回 |
+| 以查询取代临时变量 | 中间临时变量过多 |
+
+3. 重构安全网：测试先行
+**重构铁律：没有测试，不要重构**
+
+```bash
+# Step 1: 确保现有测试覆盖率充足
+npm run test:coverage
+# 目标：被重构的模块覆盖率 > 80%
+
+# Step 2: 若无测试，先补特征测试（Characterization Test）
+# 不是测试"应该如何"，而是记录"当前如何"
+it('characterization: processOrder returns expected price', () => {
+  const result = processOrder(mockOrder);
+  expect(result).toMatchSnapshot(); // 先快照，重构后验证不变
+});
+
+# Step 3: 小步前进 — 每次重构后立即运行测试
+npm test -- --watch
+```
+
+**重构工作流**
+
+```
+识别目标 → 写/补测试 → 最小重构 → 运行测试 → 提交
+     ↑____________________________|
+           循环，每次改动 < 30min
+```
+
+**IDE 辅助重构（减少手工失误）**
+
+| 操作 | VS Code / WebStorm |
+|------|-------------------|
+| 提炼函数 | Ctrl+Shift+R → Extract Method |
+| 重命名 | F2 → 自动更新所有引用 |
+| 移动文件 | 拖拽 → 自动更新 import |
+| 提炼变量 | Ctrl+Shift+R → Extract Variable |
+
+4. 重构策略与输出
+**Boy Scout Rule（童子军规则）**
+> 让代码比你来时更干净一点，每次 PR 顺手重构接触到的代码。
+
+**大规模重构策略：Strangler Fig Pattern（绞杀榕模式）**
+
+```
+旧系统 ──[façade]──→ 新模块（逐步替换）
+         |
+         └──→ 旧模块（逐步废弃）
+```
+
+1. 在旧代码外包一层 Façade/Adapter
+2. 新功能全部写在新结构中
+3. 旧调用方逐步迁移到新结构
+4. 旧代码最终归零删除
+
+**何时停止重构**
+
+| 信号 | 建议 |
+|------|------|
+| 测试全绿，代码可读性提升 | 提交，结束本轮 |
+| 发现需要改外部接口 | 创建新 Issue，本次不做 |
+| 重构范围不断扩大 | 停止，重新评估范围 |
+
+**重构输出清单**
+- [ ] 坏味道清单（标注优先级 P1/P2/P3）
+- [ ] 本次重构的 Diff 说明（what changed & why）
+- [ ] 测试覆盖率前后对比
+- [ ] 技术债记录到 Issue/Backlog
+
+输出格式：Markdown 重构报告：坏味道清单 + 重构手法说明 + 测试覆盖率变化 + 技术债 Backlog
+
+## 可观测性
+
+触发：可观测性 | observability | 监控 | monitoring
+说明：建立日志、指标、链路追踪三支柱体系，实现系统状态完全可观测，快速定位生产问题
+
+1. 三支柱体系设计
+**可观测性三支柱（Three Pillars of Observability）**
+
+| 支柱 | 回答的问题 | 工具栈 |
+|------|-----------|--------|
+| **Logs（日志）** | 发生了什么？ | Winston/Pino + ELK/Loki |
+| **Metrics（指标）** | 系统状况如何？ | Prometheus + Grafana |
+| **Traces（链路）** | 请求经过了哪里？ | OpenTelemetry + Jaeger/Tempo |
+
+**选型建议**
+
+```
+轻量级单体:  Pino + Prometheus + Grafana
+微服务标准:  OpenTelemetry SDK → Collector → Jaeger + Prometheus + Loki
+云原生托管:  Datadog / New Relic / AWS CloudWatch (开箱即用)
+```
+
+**黄金信号（Golden Signals）— 4个必监控指标**
+
+| 信号 | 说明 | 告警阈值示例 |
+|------|------|-------------|
+| **Latency（延迟）** | P50/P99/P999 响应时间 | P99 > 500ms |
+| **Traffic（流量）** | RPS / 并发连接数 | 环比突增 50% |
+| **Errors（错误率）** | 5xx / 业务错误比例 | > 0.1% |
+| **Saturation（饱和度）** | CPU/内存/队列深度 | CPU > 80% |
+
+2. 结构化日志规范
+**日志必须是结构化 JSON，不要用 console.log**
+
+```typescript
+// ❌ Bad: 非结构化，无法机器解析
+console.log(`用户 ${userId} 下单失败: ${error.message}`);
+
+// ✅ Good: 结构化 JSON 日志（使用 Pino）
+import pino from 'pino';
+const logger = pino({ level: 'info' });
+
+logger.error({
+  event: 'order.create.failed',
+  userId,
+  orderId,
+  errorCode: error.code,
+  msg: error.message,
+  durationMs: Date.now() - startTime,
+});
+```
+
+**日志级别规范**
+
+| 级别 | 使用场景 | 生产建议 |
+|------|---------|---------|
+| ERROR | 需要立即处理的错误 | 触发告警 |
+| WARN | 不影响功能但需关注 | 记录 + 汇总 |
+| INFO | 关键业务事件（下单/登录） | 默认级别 |
+| DEBUG | 调试信息，技术细节 | 生产关闭 |
+
+**必带字段（Mandatory Fields）**
+
+```typescript
+interface LogContext {
+  traceId: string;    // 链路追踪 ID
+  spanId: string;     // 当前 Span ID
+  userId?: string;    // 用户 ID（有则带）
+  requestId: string;  // 请求唯一 ID
+  service: string;    // 服务名
+  version: string;    // 服务版本
+  env: string;        // prod / staging
+}
+```
+
+**日志采样策略**
+
+```typescript
+// 高流量场景：ERROR 全量，INFO 10% 采样
+const shouldLog = (level: string) =>
+  level === 'error' || Math.random() < 0.1;
+```
+
+3. 指标采集与告警（Prometheus + Grafana）
+**RED 方法论（微服务推荐）**
+- **R**ate — 每秒请求数
+- **E**rrors — 错误率
+- **D**uration — 请求时延分布
+
+```typescript
+// Node.js 指标暴露（prom-client）
+import { Counter, Histogram, register } from 'prom-client';
+
+const httpRequests = new Counter({
+  name: 'http_requests_total',
+  help: 'Total HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+});
+
+const httpDuration = new Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP request duration in seconds',
+  labelNames: ['method', 'route'],
+  buckets: [0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
+});
+
+// Express 中间件
+app.use((req, res, next) => {
+  const end = httpDuration.startTimer({ method: req.method, route: req.path });
+  res.on('finish', () => {
+    httpRequests.inc({ method: req.method, route: req.path, status: res.statusCode });
+    end();
+  });
+  next();
+});
+
+// 暴露 /metrics 端点
+app.get('/metrics', async (_, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+```
+
+**Grafana 告警规则示例（Alertmanager）**
+
+```yaml
+groups:
+  - name: api-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "错误率超过 1%，当前: {{ $value | humanizePercentage }}"
+
+      - alert: SlowP99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P99 延迟超过 1s"
+```
+
+4. 分布式链路追踪（OpenTelemetry）
+**OpenTelemetry 是行业标准 —— 一次接入，多后端支持**
+
+```typescript
+// 初始化 OTel（Node.js）
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter({
+    url: 'http://otel-collector:4318/v1/traces',
+  }),
+  instrumentations: [
+    getNodeAutoInstrumentations(), // 自动追踪 HTTP/Express/DB
+  ],
+  serviceName: 'order-service',
+});
+sdk.start();
+```
+
+**手动创建 Span（业务关键路径）**
+
+```typescript
+import { trace } from '@opentelemetry/api';
+const tracer = trace.getTracer('order-service');
+
+async function createOrder(data: OrderData) {
+  return tracer.startActiveSpan('order.create', async (span) => {
+    try {
+      span.setAttributes({
+        'order.user_id': data.userId,
+        'order.item_count': data.items.length,
+        'order.total': data.total,
+      });
+
+      const order = await db.orders.create(data);
+      span.setStatus({ code: SpanStatusCode.OK });
+      return order;
+    } catch (err) {
+      span.recordException(err as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR });
+      throw err;
+    } finally {
+      span.end();
+    }
+  });
+}
+```
+
+**SLO 定义模板**
+
+```yaml
+SLO: API 可用性
+SLI: (成功请求数 / 总请求数) * 100%
+目标: ≥ 99.9% (月度 = 允许 43.8 min 故障)
+告警: 1h 内错误预算消耗 > 5% 时 PagerDuty 通知
+```
+
+输出格式：Markdown 可观测性方案：技术栈选型 + 日志/指标/链路配置代码 + 告警规则 + SLO 定义
+
+## 设计模式
+
+触发：设计模式 | design pattern | design patterns | 模式
+说明：识别适用场景，选择合适的 GoF 设计模式，提升代码可扩展性与可维护性
+
+1. 三大类模式全景
+**23 种 GoF 模式分类速查**
+
+| 类型 | 模式 | 解决的核心问题 |
+|------|------|--------------|
+| **创建型** | Factory Method | 子类决定创建哪种对象 |
+| | Abstract Factory | 创建一族相关对象 |
+| | Builder | 分步骤构建复杂对象 |
+| | Singleton | 全局唯一实例 |
+| | Prototype | 克隆已有对象 |
+| **结构型** | Adapter | 接口转换，兼容不兼容的接口 |
+| | Decorator | 动态添加行为（不继承） |
+| | Facade | 简化复杂子系统的接口 |
+| | Proxy | 控制对象访问（缓存/权限/懒加载）|
+| | Composite | 树形结构，统一处理单个和组合 |
+| **行为型** | Observer | 一对多事件通知 |
+| | Strategy | 运行时切换算法 |
+| | Command | 将请求封装为对象（支持撤销）|
+| | Iterator | 统一遍历集合的方式 |
+| | State | 状态机，行为随状态变化 |
+| | Chain of Responsibility | 请求沿链传递，直到被处理 |
+| | Template Method | 算法骨架固定，子类填充步骤 |
+
+**最常用的 5 个（优先掌握）**：Strategy, Observer, Factory, Decorator, Proxy
+
+2. 高频模式 TypeScript 实现
+**策略模式（Strategy）— 取代 if/switch 的最佳武器**
+
+```typescript
+// 场景：支付方式可扩展
+interface PaymentStrategy {
+  pay(amount: number): Promise<void>;
+}
+
+class WechatPay implements PaymentStrategy {
+  async pay(amount: number) { /* 微信支付逻辑 */ }
+}
+class AlipayStrategy implements PaymentStrategy {
+  async pay(amount: number) { /* 支付宝逻辑 */ }
+}
+
+class PaymentService {
+  constructor(private strategy: PaymentStrategy) {}
+  async checkout(amount: number) {
+    await this.strategy.pay(amount);
+  }
+}
+
+// 运行时切换，新增支付方式不改原有代码
+const service = new PaymentService(new WechatPay());
+```
+
+**观察者模式（Observer / EventEmitter）**
+
+```typescript
+// 场景：订单状态变更通知多个系统
+class OrderEventEmitter extends EventEmitter {
+  emitOrderCreated(order: Order) {
+    this.emit('order:created', order);
+  }
+}
+
+const emitter = new OrderEventEmitter();
+emitter.on('order:created', sendConfirmationEmail);
+emitter.on('order:created', updateInventory);
+emitter.on('order:created', triggerRecommendation);
+```
+
+**装饰器模式（Decorator）— 不改原类，添加横切关注点**
+
+```typescript
+// 场景：为任意服务添加缓存
+function withCache<T extends object>(service: T, ttlMs = 60_000): T {
+  return new Proxy(service, {
+    get(target, prop) {
+      const original = (target as Record<string, unknown>)[prop as string];
+      if (typeof original !== 'function') return original;
+      const cache = new Map<string, { value: unknown; expiry: number }>();
+      return async (...args: unknown[]) => {
+        const key = JSON.stringify(args);
+        const cached = cache.get(key);
+        if (cached && Date.now() < cached.expiry) return cached.value;
+        const value = await (original as Function).apply(target, args);
+        cache.set(key, { value, expiry: Date.now() + ttlMs });
+        return value;
+      };
+    },
+  });
+}
+
+const cachedUserService = withCache(userService, 30_000);
+```
+
+3. 创建型模式实践
+**工厂模式（Factory）— 解耦对象创建与使用**
+
+```typescript
+// 场景：根据配置创建不同日志处理器
+interface Logger {
+  log(message: string): void;
+}
+
+class ConsoleLogger implements Logger {
+  log(message: string) { console.log(message); }
+}
+class FileLogger implements Logger {
+  log(message: string) { fs.appendFile('app.log', message); }
+}
+
+// 工厂函数（简单场景推荐函数而非类）
+function createLogger(type: 'console' | 'file'): Logger {
+  if (type === 'file') return new FileLogger();
+  return new ConsoleLogger();
+}
+```
+
+**建造者模式（Builder）— 处理复杂对象构造**
+
+```typescript
+// 场景：SQL 查询构建，参数组合多变
+class QueryBuilder {
+  private query = { table: '', conditions: [] as string[], limit: 100 };
+
+  from(table: string) { this.query.table = table; return this; }
+  where(condition: string) { this.query.conditions.push(condition); return this; }
+  limit(n: number) { this.query.limit = n; return this; }
+  build() {
+    const where = this.query.conditions.length
+      ? `WHERE ${this.query.conditions.join(' AND ')}`
+      : '';
+    return `SELECT * FROM ${this.query.table} ${where} LIMIT ${this.query.limit}`;
+  }
+}
+
+// 链式调用，可读性极强
+const sql = new QueryBuilder()
+  .from('orders')
+  .where('status = "pending"')
+  .where('created_at > NOW() - INTERVAL 7 DAY')
+  .limit(50)
+  .build();
+```
+
+**单例注意事项**
+
+```typescript
+// ⚠️ 单例慎用：全局状态 = 隐式耦合
+// 适用：DB连接池、全局配置、Logger
+// 不适用：有状态的业务逻辑
+
+// Node.js 模块缓存天然单例
+export const db = createDbPool(); // 模块级单例，足够用
+```
+
+4. 模式选型指南与反模式
+**场景 → 模式 速查表**
+
+| 遇到这种问题 | 考虑使用 |
+|------------|---------|
+| if/switch 随需求不断增长 | Strategy / Command |
+| 一个变化需要修改多处 | Observer / Mediator |
+| 需要在运行时给对象加功能 | Decorator / Proxy |
+| 创建逻辑复杂，参数多 | Factory / Builder |
+| 需要统一处理树形结构 | Composite |
+| 需要兼容旧接口/第三方库 | Adapter / Facade |
+| 请求需要多步验证/处理 | Chain of Responsibility |
+| 对象行为随状态显著变化 | State |
+
+**反模式：过度设计的信号**
+
+```
+❌ 为了用设计模式而用设计模式
+❌ 一个功能引入 3 层抽象（不超过 2 个接口）
+❌ 到处都是 Manager / Handler / Processor 命名
+❌ 接口只有一个实现类（YAGNI 原则）
+
+✅ 正确姿势：先写简单代码，当变化来临时再重构引入模式
+```
+
+**SOLID 原则与模式的关系**
+
+| 原则 | 对应常用模式 |
+|------|------------|
+| S 单一职责 | Facade, Extract Class |
+| O 开闭原则 | Strategy, Decorator |
+| L 里氏替换 | Template Method |
+| I 接口隔离 | Adapter |
+| D 依赖倒置 | Factory, DI Container |
+
+**输出清单**
+- [ ] 识别到的模式应用场景（带代码位置）
+- [ ] 选型理由（为什么选这个模式而不是另一个）
+- [ ] 实现示例（TypeScript，保持 < 50 行）
+- [ ] 过度设计风险说明
+
+输出格式：Markdown 设计模式方案：场景分析 + 模式选型理由 + TypeScript 实现示例 + 反模式警示
 
 ---
 规则：严格按步骤执行，不跳步，输出遵循各 Skill 的格式模板。
