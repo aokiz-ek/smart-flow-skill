@@ -297,9 +297,195 @@ program
   });
 
 // ─── slash-install 命令 ──────────────────────────────────────────────────────
+
+/** 工作流 Slash 命令定义（不依赖 SkillDefinition，直接内联） */
+const WORKFLOW_SLASH_COMMANDS = [
+  // ── Git 集成 ──────────────────────────────────────────────
+  {
+    id: 'commit',
+    name: 'Git Commit',
+    category: 'Git 集成',
+    description: '读取 staged diff，生成符合 Conventional Commits 规范的提交信息',
+    prompt:
+      `# Ethan — Git Commit\n\n` +
+      `请分析当前暂存区（staged）的 Git 变更，按照 **Conventional Commits** 规范生成提交信息。\n\n` +
+      `格式：\`type(scope): subject\`\n\n` +
+      `type 枚举：feat | fix | docs | style | refactor | perf | test | chore | ci | revert\n\n` +
+      `要求：\n- subject 不超过 72 字符，使用动词开头（小写）\n` +
+      `- 有破坏性变更时附加 BREAKING CHANGE footer\n` +
+      `- 如有必要，提供 body 说明"为什么"而非"做了什么"\n\n` +
+      `如果终端可用，也可直接运行：\`ethan commit\``,
+  },
+  {
+    id: 'review',
+    name: 'Code Review',
+    category: 'Git 集成',
+    description: '读取分支 diff，输出 Blocker/Major/Minor 分级审查报告',
+    prompt:
+      `# Ethan — Code Review\n\n` +
+      `请对当前分支与主干的差异执行系统性代码审查，按严重程度分级输出：\n\n` +
+      `- 🔴 **Blocker**：必须修复，阻塞合入\n` +
+      `- 🟠 **Major**：重要问题，强烈建议修复\n` +
+      `- 🟡 **Minor**：轻微问题，建议优化\n` +
+      `- 💚 **Praise**：值得肯定的写法\n\n` +
+      `审查维度：正确性、安全性、性能、可读性、测试覆盖率、边界条件\n\n` +
+      `如果终端可用，也可直接运行：\`ethan review\``,
+  },
+  {
+    id: 'pr',
+    name: 'PR 描述生成',
+    category: 'Git 集成',
+    description: '生成结构化 PR 标题 + 正文 + Checklist',
+    prompt:
+      `# Ethan — PR 描述生成\n\n` +
+      `请根据本次变更内容生成一份完整的 Pull Request 描述，包含：\n\n` +
+      `## 结构\n` +
+      `- **标题**：\`type: 简洁描述（不超过 72 字符）\`\n` +
+      `- **Summary**：1-3 句话说明改了什么、为什么改\n` +
+      `- **变更列表**：bullet 形式的具体变更点\n` +
+      `- **测试方案**：如何验证本次改动\n` +
+      `- **Checklist**：[ ] 自测通过 [ ] 无破坏性变更 [ ] 文档已更新\n\n` +
+      `如果终端可用，也可直接运行：\`ethan pr\``,
+  },
+  {
+    id: 'standup',
+    name: '站会发言稿',
+    category: 'Git 集成',
+    description: '根据近期提交历史生成站会发言稿',
+    prompt:
+      `# Ethan — 站会发言稿\n\n` +
+      `请根据近期 Git 提交记录生成简洁的每日站会发言，格式：\n\n` +
+      `**昨天完成**：（基于实际提交）\n` +
+      `**今天计划**：（基于待处理事项）\n` +
+      `**阻塞风险**：（如有）\n\n` +
+      `发言控制在 3 分钟以内，突出业务价值而非技术细节。\n\n` +
+      `如果终端可用，也可直接运行：\`ethan standup\``,
+  },
+  {
+    id: 'changelog',
+    name: 'CHANGELOG 生成',
+    category: 'Git 集成',
+    description: '生成两个版本标签之间的 CHANGELOG',
+    prompt:
+      `# Ethan — CHANGELOG 生成\n\n` +
+      `请根据提交历史按 [Keep a Changelog](https://keepachangelog.com) 规范生成 CHANGELOG，分组：\n\n` +
+      `### Added | Changed | Deprecated | Removed | Fixed | Security\n\n` +
+      `每条变更简洁描述，关联 commit hash，破坏性变更加 ⚠️ 标记。\n\n` +
+      `如果终端可用，也可直接运行：\`ethan changelog\``,
+  },
+  // ── 有状态工作流 ────────────────────────────────────────────
+  {
+    id: 'workflow-start',
+    name: '启动工作流',
+    category: '有状态工作流',
+    description: '启动指定 Pipeline 的有状态工作流会话',
+    prompt:
+      `# Ethan — 启动工作流\n\n` +
+      `我需要启动一个 Ethan 有状态工作流会话。请告诉我：\n\n` +
+      `1. 选择 Pipeline：dev-workflow | reporting | quality-workflow | full-dev-cycle | incident-response | new-feature\n` +
+      `2. 描述任务上下文（如"实现用户登录功能"）\n\n` +
+      `启动后，逐步执行每个 Skill 步骤，完成后用 \`ethan workflow done\` 推进。\n\n` +
+      `CLI 用法：\`ethan workflow start <pipeline> -c "任务描述"\``,
+  },
+  {
+    id: 'workflow-done',
+    name: '完成当前步骤',
+    category: '有状态工作流',
+    description: '记录本步摘要并推进工作流到下一步',
+    prompt:
+      `# Ethan — 完成当前工作流步骤\n\n` +
+      `请帮我总结本步骤的执行结果，并推进到下一步：\n\n` +
+      `1. 用 2-3 句话总结本步完成了什么\n` +
+      `2. 列出关键产出物或决策\n` +
+      `3. 标注任何阻塞或风险\n\n` +
+      `然后展示下一步的 Skill 提示词。\n\n` +
+      `CLI 用法：\`ethan workflow done "本步摘要"\``,
+  },
+  {
+    id: 'workflow-status',
+    name: '工作流状态',
+    category: '有状态工作流',
+    description: '查看当前工作流进度与各步骤完成情况',
+    prompt:
+      `# Ethan — 工作流状态查看\n\n` +
+      `请展示当前工作流的进度看板：\n\n` +
+      `- 当前 Pipeline 与总步数\n` +
+      `- 已完成步骤（✅）与待执行步骤（⬜）\n` +
+      `- 当前步骤名称与简短说明\n` +
+      `- 预计剩余步骤\n\n` +
+      `CLI 用法：\`ethan workflow status\``,
+  },
+  // ── Auto-Pilot ──────────────────────────────────────────────
+  {
+    id: 'auto',
+    name: 'Auto-Pilot 超级 Prompt',
+    category: 'Auto-Pilot',
+    description: '生成一键链式执行完整 Pipeline 的超级 prompt',
+    prompt:
+      `# Ethan — Auto-Pilot\n\n` +
+      `请为我生成一个 Auto-Pilot 超级 prompt，让 AI 自动链式执行完整 Pipeline，无需每步手动推进。\n\n` +
+      `选择要执行的 Pipeline：\n` +
+      `- \`dev-workflow\`：需求理解 → 任务拆解 → 方案设计 → 执行实现\n` +
+      `- \`full-dev-cycle\`：需求 → 接口设计 → 方案 → 实现 → 审查 → 部署\n` +
+      `- \`new-feature\`：PRD → 技术调研 → 接口设计 → 任务拆解 → 实现\n` +
+      `- \`quality-workflow\`：代码审查 → 故障排查\n` +
+      `- \`reporting\`：进度跟踪 → 任务报告 → 周报生成\n` +
+      `- \`incident-response\`：故障排查 → 技术调研 → 任务报告\n\n` +
+      `描述你的任务上下文，我将生成完整的超级 prompt。\n\n` +
+      `CLI 用法：\`ethan auto <pipeline> -c "任务描述"\``,
+  },
+  // ── 开发工具 ────────────────────────────────────────────────
+  {
+    id: 'explain',
+    name: '代码解释',
+    category: '开发工具',
+    description: '多层次解释代码逻辑（junior/senior/principal 视角）',
+    prompt:
+      `# Ethan — 代码解释\n\n` +
+      `请从以下视角解释指定代码：\n\n` +
+      `- **Junior**：逐行讲解，说明每个概念\n` +
+      `- **Senior**：聚焦设计决策和权衡取舍\n` +
+      `- **Principal**：架构影响、扩展性、潜在风险\n\n` +
+      `请提供要解释的代码片段，并指定希望的解释深度。\n\n` +
+      `CLI 用法：\`ethan explain [file] --level junior|senior|principal\``,
+  },
+  {
+    id: 'test-case',
+    name: '测试用例生成',
+    category: '开发工具',
+    description: '为指定函数/模块生成完整单元测试提示词',
+    prompt:
+      `# Ethan — 测试用例生成\n\n` +
+      `请为指定代码生成完整的单元测试，遵循 AAA 模式（Arrange-Act-Assert）：\n\n` +
+      `- 正向用例：正常输入的预期结果\n` +
+      `- 边界用例：空值、极值、边界条件\n` +
+      `- 异常用例：非法输入、异常抛出\n` +
+      `- Mock 策略：外部依赖如何 mock\n\n` +
+      `框架：Vitest / Jest（默认 Vitest）\n\n` +
+      `CLI 用法：\`ethan test-case <file> --framework vitest\``,
+  },
+  {
+    id: 'estimate',
+    name: '任务估算',
+    category: '开发工具',
+    description: '三点估算（乐观/悲观/最可能）+ T-shirt Size',
+    prompt:
+      `# Ethan — 任务估算\n\n` +
+      `请对当前任务进行三点估算：\n\n` +
+      `| 估算维度 | 说明 |\n` +
+      `|---------|------|\n` +
+      `| 乐观估算 (O) | 一切顺利时的最短时间 |\n` +
+      `| 悲观估算 (P) | 遇到阻碍时的最长时间 |\n` +
+      `| 最可能 (M) | 最现实的估算 |\n` +
+      `| 期望值 E | (O + 4M + P) / 6 |\n\n` +
+      `同时给出 T-shirt Size（XS/S/M/L/XL）和主要风险点。\n\n` +
+      `CLI 用法：\`ethan estimate --style hours|story-points|days\``,
+  },
+] as const;
+
 program
   .command('slash-install')
-  .description('为各平台生成专属 Slash 命令文件（Claude Code 原生 /ethan-xxx、其他平台速查表）')
+  .description('为各平台生成专属 Slash 命令文件（Skills + 工作流指令，Claude Code 原生 /ethan-xxx、其他平台速查表）')
   .option(
     '-p, --platform <platform>',
     '目标平台：claude-code | cursor | codebuddy | copilot | cline | windsurf | zed | jetbrains | continue | lingma | all',
@@ -357,18 +543,46 @@ program
             `## 执行步骤\n\n${stepsText}\n\n` +
             `## 输出格式\n\n${skill.outputFormat}\n`;
 
-          const fileName = `ethan-${skill.id}.md`;
-          fs.writeFileSync(path.join(outDir, fileName), content, 'utf-8');
+          fs.writeFileSync(path.join(outDir, `ethan-${skill.id}.md`), content, 'utf-8');
           total++;
         }
-        console.log(`  ✅  claude-code  →  .claude/commands/ethan-{skill}.md × ${skills.length}`);
-        console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-{skill-id}`);
+        console.log(`  ✅  claude-code  →  Skills: .claude/commands/ethan-{skill}.md × ${skills.length}`);
+
+        // ── Claude Code：工作流 Slash 命令 ─────────────────────────────────
+        for (const cmd of WORKFLOW_SLASH_COMMANDS) {
+          const content =
+            `---\n` +
+            `description: "Ethan — ${cmd.name}：${cmd.description}"\n` +
+            `---\n\n` +
+            `${cmd.prompt}\n`;
+          fs.writeFileSync(path.join(outDir, `ethan-${cmd.id}.md`), content, 'utf-8');
+          total++;
+        }
+        console.log(`  ✅  claude-code  →  工作流: .claude/commands/ethan-{cmd}.md × ${WORKFLOW_SLASH_COMMANDS.length}`);
+        console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-commit、/ethan-auto 等`);
 
       } else {
-        // ── 其他平台：生成统一的 ethan-commands.md 速查表 ───────────────────
-        const rows = skills
-          .map((s) => `| \`/ethan-${s.id}\` | \`@ethan ${s.id}\` | ${s.name} | ${s.description} |`)
+        // ── 其他平台：生成统一的 ethan-commands.md 速查表（Skills + 工作流）──
+        const skillRows = skills
+          .map((s) => `| \`/ethan-${s.id}\` | \`@ethan ${s.id}\` | ${s.name} | Skill | ${s.description} |`)
           .join('\n');
+
+        // 按分类分组工作流命令
+        const wfByCategory = WORKFLOW_SLASH_COMMANDS.reduce<Record<string, typeof WORKFLOW_SLASH_COMMANDS[number][]>>(
+          (acc, cmd) => {
+            (acc[cmd.category] ??= []).push(cmd);
+            return acc;
+          },
+          {}
+        );
+        const wfSections = Object.entries(wfByCategory)
+          .map(([cat, cmds]) => {
+            const rows = cmds
+              .map((c) => `| \`/ethan-${c.id}\` | \`@ethan ${c.id}\` | ${c.name} | 工作流 | ${c.description} |`)
+              .join('\n');
+            return `### ${cat}\n\n| Slash 命令 | @ethan 形式 | 名称 | 类型 | 说明 |\n|-----------|------------|------|------|------|\n${rows}`;
+          })
+          .join('\n\n');
 
         const platformLabel: Record<string, string> = {
           cursor:    'Cursor（在 Composer 中输入）',
@@ -385,18 +599,20 @@ program
         const content =
           `# Ethan Slash 命令速查表 — ${platformLabel[p] ?? p}\n\n` +
           `> 生成时间：${new Date().toISOString()}\n\n` +
-          `## 使用方式\n\n` +
-          `在 AI 聊天框中输入以下任意命令即可触发对应 Skill：\n\n` +
-          `| Slash 命令 | @ethan 形式 | Skill 名称 | 说明 |\n` +
-          `|-----------|------------|-----------|------|\n` +
-          `${rows}\n\n` +
+          `## Skills 命令（24 个）\n\n` +
+          `| Slash 命令 | @ethan 形式 | Skill 名称 | 类型 | 说明 |\n` +
+          `|-----------|------------|-----------|------|------|\n` +
+          `${skillRows}\n\n` +
+          `## 工作流命令\n\n` +
+          `${wfSections}\n\n` +
           `## 快速示例\n\n` +
           `\`\`\`\n` +
-          `/ethan-requirement-understanding  # 需求理解\n` +
-          `/ethan-code-review                # 代码审查\n` +
-          `/ethan-git-workflow               # Git 工作流\n` +
-          `@ethan commit                     # 提交规范\n` +
-          `@ethan review                     # 代码审查\n` +
+          `/ethan-code-review      # Skill：代码审查\n` +
+          `/ethan-git-workflow     # Skill：Git 工作流\n` +
+          `/ethan-commit           # 工作流：生成提交信息\n` +
+          `/ethan-review           # 工作流：Code Review\n` +
+          `/ethan-auto             # 工作流：Auto-Pilot 超级 Prompt\n` +
+          `/ethan-workflow-start   # 工作流：启动有状态工作流\n` +
           `\`\`\`\n`;
 
         const destFile = path.join(outDir, 'ethan-commands.md');
@@ -406,7 +622,11 @@ program
       }
     }
 
-    console.log(`\n共生成 ${total} 个 Slash 命令文件（目录：${dir}）`);
+    const totalFiles = platform === 'claude-code'
+      ? skills.length + WORKFLOW_SLASH_COMMANDS.length
+      : total;
+    console.log(`\n共生成 ${totalFiles} 个 Slash 命令文件（目录：${dir}）`);
+    console.log(`  Skills: ${skills.length} 个 | 工作流: ${WORKFLOW_SLASH_COMMANDS.length} 个`);
     console.log('重启 AI 编辑器后，slash 命令即可生效。');
   });
 
