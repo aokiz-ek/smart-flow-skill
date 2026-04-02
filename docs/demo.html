@@ -1267,7 +1267,7 @@
             <div class="terminal-dot red"></div>
             <div class="terminal-dot yellow"></div>
             <div class="terminal-dot green"></div>
-            <div class="terminal-title">Terminal — ethan autopilot</div>
+            <div class="terminal-title">Terminal — ethan auto</div>
           </div>
           <div class="terminal-body" id="tbody-autopilot">
             <div class="terminal-play-overlay" id="overlay-autopilot" onclick="playAnim('autopilot')">
@@ -1286,7 +1286,7 @@
         <h3>⚡ Auto-Pilot — 全自动链式执行</h3>
         <p>不再需要每步手动 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">workflow done</code>。生成超级 prompt，粘贴到 AI 后自动链式跑完所有步骤，中间折叠，只看最终结果。</p>
         <div class="desc-steps">
-          <div class="desc-step"><div class="desc-step-num">1</div><div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan autopilot dev-workflow -c "需求"</code></div></div>
+          <div class="desc-step"><div class="desc-step-num">1</div><div>运行 <code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan auto dev-workflow -c "需求"</code></div></div>
           <div class="desc-step"><div class="desc-step-num">2</div><div>超级 prompt 自动复制到剪贴板，粘贴到 AI 编辑器</div></div>
           <div class="desc-step"><div class="desc-step-num">3</div><div>AI 自动执行全部 4 步，每步折叠展示，最终输出完整报告</div></div>
           <div class="desc-step"><div class="desc-step-num" style="background:linear-gradient(135deg,#007AFF,#BF5AF2);">✦</div><div>或直接在 AI 对话中说「<strong>启动工作流 dev-workflow</strong>」，无需 CLI</div></div>
@@ -1335,7 +1335,7 @@
           </div>
           <div class="desc-step">
             <div class="desc-step-num">3</div>
-            <div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan autopilot --with-context</code> 将快照注入超级 prompt，AI 不再询问项目信息</div>
+            <div><code style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">ethan auto --with-context</code> 将快照注入超级 prompt，AI 不再询问项目信息</div>
           </div>
           <div class="desc-step">
             <div class="desc-step-num" style="background:linear-gradient(135deg,#34C759,#007AFF)">✦</div>
@@ -1776,7 +1776,7 @@ async function animAutopilot() {
   updateBar(id, 0);
 
   const lines = [
-    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">autopilot dev-workflow</span> <span style="color:#666">-c "实现用户认证模块"</span></span></div>`],
+    [0,   `<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">auto dev-workflow</span> <span style="color:#666">-c "实现用户认证模块"</span></span></div>`],
     [700, `<div class="term-blank"></div>`],
     [800, `<div class="term-output highlight">🚀 超级 prompt 已生成：开发工作流（4 步）</div>`],
     [1100,`<div class="term-output dim">─────────────────────────────────────────────</div>`],
@@ -1838,7 +1838,7 @@ async function animContext() {
     [3400,`<div class="term-blank"></div>`],
     [3500,`<div class="term-output success">✅ 已缓存到 .ethan/context.json（TTL 30min）</div>`],
     [3800,`<div class="term-blank"></div>`],
-    [3900,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">autopilot dev-workflow</span> <span class="cmd-flag">--with-context</span> <span style="color:#666">-c "实现登录功能"</span></span></div>`],
+    [3900,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> <span class="cmd-name">ethan</span> <span class="cmd-arg">auto dev-workflow</span> <span class="cmd-flag">--with-context</span> <span style="color:#666">-c "实现登录功能"</span></span></div>`],
     [4500,`<div class="term-output success">🚀 超级 prompt 已生成（含项目上下文注入）</div>`],
     [4800,`<div class="term-output dim">   AI 不再需要询问：你用的什么框架？</div>`],
     [5100,`<div class="term-line"><span class="term-prompt">$</span><span class="term-cursor"></span></div>`],

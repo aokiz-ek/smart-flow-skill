@@ -3365,10 +3365,11 @@ qualityCmd
     console.log('');
   });
 
-// ─── autopilot 命令 ──────────────────────────────────────────────────────────
+// ─── auto 命令 ──────────────────────────────────────────────────────────
 
 program
-  .command('autopilot [pipelineId]')
+  .command('auto [pipelineId]')
+  .alias('autopilot')
   .description('生成「超级 prompt」：一次粘贴即可让 AI 自动链式执行完整 Pipeline，无需手动推进每一步')
   .option('-c, --context <context>', '任务上下文描述（如"实现用户登录功能"）', '')
   .option('--all', '生成全部 3 条 Pipeline 的超级 prompt')

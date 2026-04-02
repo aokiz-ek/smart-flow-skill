@@ -455,6 +455,7 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
+| **v1.9.0** | `ethan autopilot` 命令重命名为 `ethan auto`（原命令保留为别名兼容） |
 | **v1.8.0** | 新增 10 个 Skill（Git 工作流/单元测试/系统设计/数据库优化/Docker/CI/CD/性能优化/代码重构/可观测性/设计模式）；Skills 14 → 24；docs ReactBits 风格重设计 |
 | **v1.7.0** | 新增 4 个 Skill（接口设计/安全审查/部署上线/PRD 编写）；新增 3 条 Pipeline（full-dev-cycle/incident-response/new-feature）；自定义 Pipeline 加载（`.ethan/pipelines/`）；MCP 工具 19 → 23 |
 | **v1.6.0** | 自定义 Skill 支持 `.md` 格式（YAML frontmatter + Markdown body）；`ethan skill new --format md`；新增 MCP `ethan_autopilot` 和 `ethan_context_snapshot` 工具 |
