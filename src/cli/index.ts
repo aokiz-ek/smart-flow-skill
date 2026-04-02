@@ -92,6 +92,27 @@ async function getActiveSkills() {
   return [...ALL_SKILLS, ...custom];
 }
 
+// ─── Node.js 最低版本检查 ────────────────────────────────────────────────────
+;(() => {
+  const MIN_MAJOR = 18;
+  const cur = process.versions.node;
+  const major = parseInt(cur.split('.')[0], 10);
+  if (major < MIN_MAJOR) {
+    process.stderr.write(
+      `\n  ╭──────────────────────────────────────────────────────╮\n` +
+      `  │  ❌  Node.js 版本过低，Ethan 无法运行                  │\n` +
+      `  │                                                        │\n` +
+      `  │  当前版本：v${cur.padEnd(12)} 最低要求：v${MIN_MAJOR}.0.0         │\n` +
+      `  │                                                        │\n` +
+      `  │  升级方法：                                            │\n` +
+      `  │    nvm install ${MIN_MAJOR}   # 推荐 nvm 管理版本             │\n` +
+      `  │    https://nodejs.org         # 或官网下载             │\n` +
+      `  ╰──────────────────────────────────────────────────────╯\n\n`
+    );
+    process.exit(1);
+  }
+})();
+
 const pkg = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf-8')
 );
@@ -273,6 +294,120 @@ program
     if (installed > 0) {
       console.log('Restart your AI editor to apply the new rules.');
     }
+  });
+
+// ─── slash-install 命令 ──────────────────────────────────────────────────────
+program
+  .command('slash-install')
+  .description('为各平台生成专属 Slash 命令文件（Claude Code 原生 /ethan-xxx、其他平台速查表）')
+  .option(
+    '-p, --platform <platform>',
+    '目标平台：claude-code | cursor | codebuddy | copilot | cline | windsurf | zed | jetbrains | continue | lingma | all',
+    'all'
+  )
+  .option('-d, --dir <dir>', '目标目录（默认为当前目录）', process.cwd())
+  .action(async (options: { platform: string; dir: string }) => {
+    const { platform, dir } = options;
+    const skills = await getActiveSkills();
+
+    // 支持的平台列表
+    const ALL_PLATFORMS = [
+      'claude-code', 'cursor', 'codebuddy', 'copilot', 'cline',
+      'windsurf', 'zed', 'jetbrains', 'continue', 'lingma',
+    ];
+    const targets = platform === 'all' ? ALL_PLATFORMS : [platform];
+    if (!ALL_PLATFORMS.includes(targets[0])) {
+      console.error(`Unknown platform: ${platform}`);
+      console.error(`Available: ${ALL_PLATFORMS.join(' | ')} | all`);
+      process.exit(1);
+    }
+
+    // 各平台默认安装目录
+    const platformDirMap: Record<string, string> = {
+      'claude-code': path.join(dir, '.claude/commands'),
+      cursor:        path.join(dir, '.cursor/rules'),
+      codebuddy:     dir,
+      copilot:       path.join(dir, '.github'),
+      cline:         dir,
+      windsurf:      path.join(dir, '.windsurf/rules'),
+      zed:           dir,
+      jetbrains:     path.join(dir, '.github'),
+      continue:      dir,
+      lingma:        path.join(dir, '.lingma/rules'),
+    };
+
+    let total = 0;
+
+    for (const p of targets) {
+      const outDir = platformDirMap[p];
+      if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+      if (p === 'claude-code') {
+        // ── Claude Code：每个 Skill 生成独立 .md slash 命令文件 ──────────────
+        for (const skill of skills) {
+          const stepsText = skill.steps
+            .map((s) => `### ${s.title}\n${s.content}`)
+            .join('\n\n');
+          const content =
+            `---\n` +
+            `description: "Ethan — ${skill.name}：${skill.description.substring(0, 60)}"\n` +
+            `---\n\n` +
+            `# Ethan Skill：${skill.name}\n\n` +
+            `${skill.detailDescription}\n\n` +
+            `## 执行步骤\n\n${stepsText}\n\n` +
+            `## 输出格式\n\n${skill.outputFormat}\n`;
+
+          const fileName = `ethan-${skill.id}.md`;
+          fs.writeFileSync(path.join(outDir, fileName), content, 'utf-8');
+          total++;
+        }
+        console.log(`  ✅  claude-code  →  .claude/commands/ethan-{skill}.md × ${skills.length}`);
+        console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-{skill-id}`);
+
+      } else {
+        // ── 其他平台：生成统一的 ethan-commands.md 速查表 ───────────────────
+        const rows = skills
+          .map((s) => `| \`/ethan-${s.id}\` | \`@ethan ${s.id}\` | ${s.name} | ${s.description} |`)
+          .join('\n');
+
+        const platformLabel: Record<string, string> = {
+          cursor:    'Cursor（在 Composer 中输入）',
+          codebuddy: 'CodeBuddy（/命令触发）',
+          copilot:   'GitHub Copilot（@workspace 触发）',
+          cline:     'Cline（AI 对话中触发）',
+          windsurf:  'Windsurf（AI Chat 中输入）',
+          zed:       'Zed（AI 助手中输入）',
+          jetbrains: 'JetBrains AI（AI Chat 触发）',
+          continue:  'Continue（@ethan 触发）',
+          lingma:    '灵码（@ethan 触发）',
+        };
+
+        const content =
+          `# Ethan Slash 命令速查表 — ${platformLabel[p] ?? p}\n\n` +
+          `> 生成时间：${new Date().toISOString()}\n\n` +
+          `## 使用方式\n\n` +
+          `在 AI 聊天框中输入以下任意命令即可触发对应 Skill：\n\n` +
+          `| Slash 命令 | @ethan 形式 | Skill 名称 | 说明 |\n` +
+          `|-----------|------------|-----------|------|\n` +
+          `${rows}\n\n` +
+          `## 快速示例\n\n` +
+          `\`\`\`\n` +
+          `/ethan-requirement-understanding  # 需求理解\n` +
+          `/ethan-code-review                # 代码审查\n` +
+          `/ethan-git-workflow               # Git 工作流\n` +
+          `@ethan commit                     # 提交规范\n` +
+          `@ethan review                     # 代码审查\n` +
+          `\`\`\`\n`;
+
+        const destFile = path.join(outDir, 'ethan-commands.md');
+        fs.writeFileSync(destFile, content, 'utf-8');
+        console.log(`  ✅  ${p.padEnd(12)} →  ${path.relative(dir, destFile)}`);
+        total++;
+      }
+    }
+
+    console.log(`\n共生成 ${total} 个 Slash 命令文件（目录：${dir}）`);
+    console.log('重启 AI 编辑器后，slash 命令即可生效。');
   });
 
 // ─── list 命令 ──────────────────────────────────────────────────────────────

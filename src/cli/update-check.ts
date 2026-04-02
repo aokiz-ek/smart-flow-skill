@@ -1,5 +1,5 @@
 /**
- * 静默版本检测：异步查询 npm registry，有新版本时打印提示。
+ * 静默版本检测：异步查询 npm registry，有新版本时自动后台升级。
  * 使用 Node 18+ 内置 fetch，无需额外依赖。
  * 结果缓存到 ~/.ethan-update-cache.json，每 24 小时检查一次。
  */
@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { spawn } from 'child_process';
 
 const CACHE_FILE = path.join(os.homedir(), '.ethan-update-cache.json');
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -14,6 +15,7 @@ const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h
 interface UpdateCache {
   lastChecked: number;
   latestVersion: string;
+  upgradedVersion?: string; // 已触发自动升级的版本，防重复
 }
 
 function readCache(): UpdateCache | null {
@@ -45,8 +47,37 @@ function compareVersions(current: string, latest: string): boolean {
 }
 
 /**
- * 后台静默检查更新，不阻塞 CLI 启动。
- * 在当前进程退出前异步打印提示（如有新版本）。
+ * 后台静默自动升级，不阻塞父进程退出。
+ * 防重复：若缓存中 upgradedVersion === latest 则跳过。
+ */
+function autoUpgrade(packageName: string, latest: string, cache: UpdateCache | null, now: number): void {
+  if (cache?.upgradedVersion === latest) return; // 已升级过，跳过
+
+  const isWin = process.platform === 'win32';
+  const npm = isWin ? 'npm.cmd' : 'npm';
+
+  try {
+    const child = spawn(npm, ['install', '-g', `${packageName}@latest`], {
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref(); // 不阻塞父进程
+  } catch {
+    // spawn 失败静默忽略（如 npm 不在 PATH）
+    return;
+  }
+
+  // 写缓存，记录已触发升级
+  writeCache({ lastChecked: now, latestVersion: latest, upgradedVersion: latest });
+
+  // 进程退出时打印简短通知
+  process.on('exit', () => {
+    process.stderr.write(`\n  🔄  Ethan 正在后台自动升级到 v${latest}，重启终端后生效。\n\n`);
+  });
+}
+
+/**
+ * 后台静默检查更新，有新版本时自动触发升级，不阻塞 CLI 启动。
  */
 export function checkForUpdates(currentVersion: string, packageName: string): void {
   const cache = readCache();
@@ -55,7 +86,7 @@ export function checkForUpdates(currentVersion: string, packageName: string): vo
   // 使用缓存结果（未超过 24h）
   if (cache && now - cache.lastChecked < CHECK_INTERVAL_MS) {
     if (compareVersions(currentVersion, cache.latestVersion)) {
-      printUpdateNotice(currentVersion, cache.latestVersion, packageName);
+      autoUpgrade(packageName, cache.latestVersion, cache, now);
     }
     return;
   }
@@ -68,33 +99,12 @@ export function checkForUpdates(currentVersion: string, packageName: string): vo
     .then((data: unknown) => {
       const latest = (data as Record<string, string>).version;
       if (typeof latest !== 'string') return;
-      writeCache({ lastChecked: now, latestVersion: latest });
+      writeCache({ lastChecked: now, latestVersion: latest, upgradedVersion: cache?.upgradedVersion });
       if (compareVersions(currentVersion, latest)) {
-        // 注册进程退出时打印，避免干扰命令输出
-        process.on('exit', () => {
-          printUpdateNotice(currentVersion, latest, packageName);
-        });
+        autoUpgrade(packageName, latest, cache, now);
       }
     })
     .catch(() => {
       // 网络失败静默忽略
     });
-}
-
-function printUpdateNotice(current: string, latest: string, packageName: string): void {
-  const lines = [
-    '',
-    `  ╭─────────────────────────────────────────╮`,
-    `  │                                         │`,
-    `  │   🆕  Ethan 有新版本可用！              │`,
-    `  │                                         │`,
-    `  │   ${current.padEnd(10)} → ${latest.padEnd(10)}              │`,
-    `  │                                         │`,
-    `  │   npm install -g ${packageName}         │`,
-    `  │   npx ${packageName}@latest             │`,
-    `  │                                         │`,
-    `  ╰─────────────────────────────────────────╯`,
-    '',
-  ];
-  process.stderr.write(lines.join('\n') + '\n');
 }
