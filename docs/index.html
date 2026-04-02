@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ethan - Your AI Workflow Assistant</title>
-  <meta name="description" content="Ethan v1.10.0 — 24 个标准化工作流 Skill，23 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。新增 Git 工作流/单元测试/系统设计/数据库优化/Docker/CI/CD/性能优化/重构/可观测性/设计模式 10 个 Skill，6 条内置 Pipeline，Context 引擎，ethan auto 全自动链式执行。" />
+  <meta name="description" content="Ethan v1.10.0 — 24 个标准化工作流 Skill，23 个 MCP 工具，40+ CLI 命令，11 个 AI 编辑器平台。ethan slash-install 为 Claude Code 生成原生 /ethan-xxx 命令；自动后台静默升级；Node 版本友好检测；6 条内置 Pipeline，Context 引擎，ethan auto 全自动链式执行。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -2321,6 +2321,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Step 4 -->
+      <div class="install-step reveal">
+        <div class="step-number" aria-hidden="true">04</div>
+        <div class="step-content">
+          <div class="step-title">生成 Slash 命令（可选）</div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" data-code="ethan slash-install --platform claude-code" aria-label="复制命令">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <pre>ethan slash-install --platform claude-code
+# → .claude/commands/ethan-code-review.md 等 24 个文件
+# 输入 /ethan-code-review 即可在 Claude Code 中直接触发</pre>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2330,15 +2353,29 @@
   <section id="advanced" aria-label="高级功能">
     <div class="section-header reveal">
       <h2 class="section-title">高级功能</h2>
-      <p class="section-subtitle">v1.10.0 — 24 个 Skill · 6 条 Pipeline · 自定义 Skill/Pipeline · Context 引擎 · Skill 质量评分闭环</p>
+      <p class="section-subtitle">v1.10.0 — 24 个 Skill · 6 条 Pipeline · Slash 命令生成 · 自动升级 · Context 引擎 · Skill 质量评分闭环</p>
     </div>
 
     <div class="adv-grid">
       <!-- Card 1 -->
-      <article class="adv-card reveal" aria-label="版本更新检测">
+      <article class="adv-card reveal" aria-label="自动后台升级">
         <div class="adv-icon" aria-hidden="true">🔄</div>
-        <div class="adv-title">版本更新检测</div>
-        <div class="adv-desc">每次启动自动静默检查 npm 新版本，进程退出时提示升级，无感知保持最新</div>
+        <div class="adv-title">自动后台静默升级</div>
+        <div class="adv-desc">检测到新版本后，自动在后台执行 <code>npm install -g</code> 静默升级，退出时提示「重启终端生效」，无需手动运行任何命令</div>
+      </article>
+
+      <!-- Card 1b -->
+      <article class="adv-card reveal reveal-delay-1" aria-label="Node 版本检测">
+        <div class="adv-icon" aria-hidden="true">🛡️</div>
+        <div class="adv-title">Node 版本友好检测</div>
+        <div class="adv-desc">启动时自动检测 Node.js 版本，版本过低时显示友好提示框（含 nvm 升级命令），不再抛出难以理解的原始报错</div>
+      </article>
+
+      <!-- Card 1c -->
+      <article class="adv-card reveal reveal-delay-2" aria-label="Slash 命令生成">
+        <div class="adv-icon" aria-hidden="true">⌨️</div>
+        <div class="adv-title">平台专属 Slash 命令</div>
+        <div class="adv-desc"><code>ethan slash-install</code> 一键生成：Claude Code 原生 <code>/ethan-code-review</code> 等 24 个命令文件；其他平台生成 <code>/ethan-{skill}</code> + <code>@ethan {skill}</code> 速查表</div>
       </article>
 
       <!-- Card 2 -->
@@ -2846,6 +2883,10 @@
       <div class="cli-item reveal">
         <div class="cli-cmd">ethan install</div>
         <div class="cli-desc">安装规则文件到指定平台，支持 --platform / --lang / --auto-context</div>
+      </div>
+      <div class="cli-item reveal reveal-delay-1">
+        <div class="cli-cmd">ethan slash-install</div>
+        <div class="cli-desc">生成平台专属 Slash 命令文件：Claude Code 原生 /ethan-xxx，其他平台生成速查表</div>
       </div>
       <div class="cli-item reveal reveal-delay-1">
         <div class="cli-cmd">ethan run</div>

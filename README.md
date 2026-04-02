@@ -19,6 +19,8 @@
 | **6 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量 / 完整周期 / 故障响应 / 新功能），有状态持久化推进 |
 | **23 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算 |
 | **40+ CLI 命令** | Git 集成、开发工具、记忆库、估算、插件 OS 全覆盖 |
+| **Slash 命令生成** | `ethan slash-install` 一键为 Claude Code 生成 `/ethan-xxx` 原生命令，其他平台生成速查表 |
+| **自动升级** | 检测到新版本时自动后台 `npm install -g` 静默升级，重启终端即用新版 |
 | **自定义 Skill** | `.ethan/skills/*.yaml/.md`，YAML frontmatter + Markdown body |
 | **自定义 Pipeline** | `.ethan/pipelines/*.yaml`，引用内置或自定义 Skill 自由组合 |
 | **浏览器扩展** | Chrome/Edge MV3，GitHub PR 一键 Review + 右键菜单 |
@@ -139,6 +141,7 @@ ethan install --platform cursor
 
 ```bash
 ethan install [--platform <platform>] [--lang en]   # 安装规则文件
+ethan slash-install [--platform <platform>]          # 生成平台专属 Slash 命令文件
 ethan list [--json]                                  # 列出所有 Skill（含自定义）
 ethan run                                            # 交互式 Skill 执行向导
 ethan init                                           # 生成 .ethanrc.json 配置文件
@@ -265,6 +268,40 @@ ethan plugin registry --set <url>                     # 配置私有插件注册
 ethan plugin registry --show                          # 查看当前注册表配置
 ethan plugin search <keyword> [-n <limit>]            # 搜索社区插件（ethan-skill-*）
 ```
+
+---
+
+## Slash 命令生成（`ethan slash-install`）
+
+为各 AI 平台生成专属 Slash 命令配置文件，让 `/ethan-commit`、`/ethan-review` 等命令直接在 AI 聊天中可用：
+
+```bash
+# Claude Code：生成 .claude/commands/ethan-{skill}.md × 24 个原生 slash 命令
+ethan slash-install --platform claude-code
+
+# Cursor / CodeBuddy / Windsurf 等：生成 ethan-commands.md 速查表
+ethan slash-install --platform cursor
+ethan slash-install --platform codebuddy
+
+# 全平台一键生成
+ethan slash-install
+```
+
+**Claude Code 使用方式**：安装后在对话中直接输入 `/ethan-code-review`、`/ethan-git-workflow` 等，无需再手动触发。
+
+**其他平台**：在 AI 聊天框输入 `/ethan-{skill-id}` 或 `@ethan {skill-id}`，参考生成的 `ethan-commands.md` 速查表。
+
+---
+
+## 自动升级
+
+Ethan 每次启动都会静默检查 npm 最新版本（24h 缓存，不阻塞 CLI）。检测到新版本后，**自动在后台执行 `npm install -g ethan-skill@latest`**，退出时显示：
+
+```
+🔄  Ethan 正在后台自动升级到 v{latest}，重启终端后生效。
+```
+
+无需手动运行升级命令，始终保持最新版本。
 
 ---
 
