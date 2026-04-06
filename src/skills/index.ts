@@ -27,6 +27,18 @@ export { performanceSkill } from './21-performance';
 export { refactoringSkill } from './22-refactoring';
 export { observabilitySkill } from './23-observability';
 export { designPatternsSkill } from './24-design-patterns';
+export { specProposalSkill } from './25-spec-proposal';
+export { specReviewSkill } from './26-spec-review';
+export { techDebtSkill } from './27-tech-debt';
+export { apiMockSkill } from './28-api-mock';
+export { dataMigrationSkill } from './29-data-migration';
+export { llmFeatureSkill } from './30-llm-feature';
+export { threatModelSkill } from './31-threat-model';
+export { greenCodeSkill } from './32-green-code';
+export { serviceCatalogSkill } from './33-service-catalog';
+export { mobileReviewSkill } from './34-mobile-review';
+export { dataPipelineSkill } from './35-data-pipeline';
+export { mlExperimentSkill } from './36-ml-experiment';
 
 export type { SkillDefinition, SkillStep, SkillExample, Platform, BuildContext, PipelineDefinition } from './types';
 
@@ -54,6 +66,18 @@ import { performanceSkill } from './21-performance';
 import { refactoringSkill } from './22-refactoring';
 import { observabilitySkill } from './23-observability';
 import { designPatternsSkill } from './24-design-patterns';
+import { specProposalSkill } from './25-spec-proposal';
+import { specReviewSkill } from './26-spec-review';
+import { techDebtSkill } from './27-tech-debt';
+import { apiMockSkill } from './28-api-mock';
+import { dataMigrationSkill } from './29-data-migration';
+import { llmFeatureSkill } from './30-llm-feature';
+import { threatModelSkill } from './31-threat-model';
+import { greenCodeSkill } from './32-green-code';
+import { serviceCatalogSkill } from './33-service-catalog';
+import { mobileReviewSkill } from './34-mobile-review';
+import { dataPipelineSkill } from './35-data-pipeline';
+import { mlExperimentSkill } from './36-ml-experiment';
 
 /** 所有 Skill 按顺序排列 */
 export const ALL_SKILLS = [
@@ -81,4 +105,16 @@ export const ALL_SKILLS = [
   refactoringSkill,
   observabilitySkill,
   designPatternsSkill,
+  specProposalSkill,
+  specReviewSkill,
+  techDebtSkill,
+  apiMockSkill,
+  dataMigrationSkill,
+  llmFeatureSkill,
+  threatModelSkill,
+  greenCodeSkill,
+  serviceCatalogSkill,
+  mobileReviewSkill,
+  dataPipelineSkill,
+  mlExperimentSkill,
 ];

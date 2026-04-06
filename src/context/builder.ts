@@ -8,6 +8,7 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { detectProjectContext } from './detector';
 import { isGitRepo, getCurrentBranch } from '../git/utils';
+import { hasOpenSpec, listSpecs, listChanges, loadLatestChange } from '../spec/index';
 
 export interface ProjectSnapshot {
   projectName: string;
@@ -23,6 +24,13 @@ export interface ProjectSnapshot {
   changedFiles: string[];
   /** 渲染后的文本目录树（depth=2） */
   directoryTree: string;
+  /** OpenSpec 信息（检测到 openspec/ 目录时存在） */
+  openspec?: {
+    specsCount: number;
+    changesCount: number;
+    capabilities: string[];
+    latestChangeId?: string;
+  };
   /** ISO 时间戳 */
   generatedAt: string;
   cwd: string;
@@ -116,6 +124,20 @@ export function buildProjectSnapshot(cwd: string = process.cwd()): ProjectSnapsh
   const changedFiles = gitRepo ? getChangedFiles(cwd) : [];
   const directoryTree = buildDirectoryTree(cwd);
 
+  // ─── OpenSpec detection ────────────────────────────────────────────────────
+  let openspecInfo: ProjectSnapshot['openspec'];
+  if (hasOpenSpec(cwd)) {
+    const specs = listSpecs(cwd);
+    const changes = listChanges(cwd);
+    const latestChange = loadLatestChange(cwd);
+    openspecInfo = {
+      specsCount: specs.length,
+      changesCount: changes.length,
+      capabilities: specs.map((s) => s.capability),
+      latestChangeId: latestChange?.id,
+    };
+  }
+
   const snapshot: ProjectSnapshot = {
     projectName,
     techSummary: ctx.summary,
@@ -126,6 +148,7 @@ export function buildProjectSnapshot(cwd: string = process.cwd()): ProjectSnapsh
     currentBranch,
     changedFiles,
     directoryTree,
+    ...(openspecInfo ? { openspec: openspecInfo } : {}),
     generatedAt: new Date().toISOString(),
     cwd,
   };
@@ -155,6 +178,12 @@ export function formatSnapshotForPrompt(snapshot: ProjectSnapshot, isEn = false)
     if (snapshot.directoryTree) {
       lines.push('', '**Project Structure**:', '```', snapshot.directoryTree, '```');
     }
+    if (snapshot.openspec) {
+      const os = snapshot.openspec;
+      lines.push('', `**OpenSpec**: ${os.specsCount} spec(s), ${os.changesCount} change(s)`);
+      if (os.capabilities.length) lines.push(`**Capabilities**: ${os.capabilities.join(', ')}`);
+      if (os.latestChangeId) lines.push(`**Latest Change**: ${os.latestChangeId}`);
+    }
   } else {
     lines.push('## 项目上下文（自动采集）', '');
     lines.push(`**项目名称**：${snapshot.projectName}`);
@@ -172,6 +201,12 @@ export function formatSnapshotForPrompt(snapshot: ProjectSnapshot, isEn = false)
     }
     if (snapshot.directoryTree) {
       lines.push('', '**目录结构**：', '```', snapshot.directoryTree, '```');
+    }
+    if (snapshot.openspec) {
+      const os = snapshot.openspec;
+      lines.push('', `**OpenSpec**：${os.specsCount} 个 spec，${os.changesCount} 个变更提案`);
+      if (os.capabilities.length) lines.push(`**Capability 列表**：${os.capabilities.join('、')}`);
+      if (os.latestChangeId) lines.push(`**最新变更 ID**：${os.latestChangeId}`);
     }
   }
 

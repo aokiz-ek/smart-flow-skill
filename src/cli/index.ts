@@ -296,7 +296,7 @@ program
     }
   });
 
-// ─── slash-install 命令 ──────────────────────────────────────────────────────
+// ─── slash 命令 ──────────────────────────────────────────────────────────────
 
 /** 工作流 Slash 命令定义（不依赖 SkillDefinition，直接内联） */
 const WORKFLOW_SLASH_COMMANDS = [
@@ -382,7 +382,7 @@ const WORKFLOW_SLASH_COMMANDS = [
     prompt:
       `# Ethan — 启动工作流\n\n` +
       `我需要启动一个 Ethan 有状态工作流会话。请告诉我：\n\n` +
-      `1. 选择 Pipeline：dev-workflow | reporting | quality-workflow | full-dev-cycle | incident-response | new-feature\n` +
+      `1. 选择 Pipeline：dev-workflow | reporting | quality-workflow | full-dev-cycle | incident-response | new-feature | spec-workflow\n` +
       `2. 描述任务上下文（如"实现用户登录功能"）\n\n` +
       `启动后，逐步执行每个 Skill 步骤，完成后用 \`ethan workflow done\` 推进。\n\n` +
       `CLI 用法：\`ethan workflow start <pipeline> -c "任务描述"\``,
@@ -481,10 +481,158 @@ const WORKFLOW_SLASH_COMMANDS = [
       `同时给出 T-shirt Size（XS/S/M/L/XL）和主要风险点。\n\n` +
       `CLI 用法：\`ethan estimate --style hours|story-points|days\``,
   },
+  // ── OpenSpec 集成 ────────────────────────────────────────────
+  {
+    id: 'spec-proposal',
+    name: 'Spec 变更提案',
+    category: 'OpenSpec',
+    description: '在编码前生成完整 OpenSpec 变更提案包（proposal + design + tasks + spec delta）',
+    prompt:
+      `# Ethan — Spec Proposal\n\n` +
+      `请基于 OpenSpec 规范，为本次变更生成完整提案包。在开始编码之前，先对齐需求意图和实现范围。\n\n` +
+      `**请提供**：\n` +
+      `1. 变更描述（做什么、为什么）\n` +
+      `2. 涉及的功能模块（capability）\n\n` +
+      `**将生成文件**：\n` +
+      `- \`openspec/changes/[id]/proposal.md\`（变更提案）\n` +
+      `- \`openspec/changes/[id]/design.md\`（技术方案）\n` +
+      `- \`openspec/changes/[id]/tasks.md\`（分阶段任务）\n` +
+      `- \`openspec/changes/[id]/specs/[capability].md\`（spec delta）\n\n` +
+      `原则：**Review intent, not just code**\n\n` +
+      `CLI 用法：\`ethan spec proposal <capability> -c "变更描述"\``,
+  },
+  {
+    id: 'spec-review',
+    name: 'Spec 意图审查',
+    category: 'OpenSpec',
+    description: '对比 spec delta 与代码实现，执行意图级 Review，输出对齐矩阵和偏差报告',
+    prompt:
+      `# Ethan — Spec Review（意图审查）\n\n` +
+      `请执行意图级 Spec Review，对照 openspec/changes/ 中的 spec delta 与代码变更：\n\n` +
+      `**审查维度**：\n` +
+      `1. 🗺️ **意图对齐矩阵**：每个 spec 需求/场景 → 对应代码位置 → ✅/⚠️/❌\n` +
+      `2. 🔴 **意图偏差（Critical）**：实现与 spec 意图相反或严重不符\n` +
+      `3. 🟡 **遗漏需求（Warning）**：spec 中有但代码未实现的场景\n` +
+      `4. 💡 **超范围实现（Info）**：代码实现了 spec 未定义的功能\n\n` +
+      `请先读取 openspec/changes/ 中最新的变更提案，再对照代码变更执行审查。\n\n` +
+      `CLI 用法：\`ethan spec review\``,
+  },
+  {
+    id: 'spec-validate',
+    name: 'Spec 规范校验',
+    category: 'OpenSpec',
+    description: '校验 openspec/ 目录结构完整性：Requirements 编号、GIVEN/WHEN/THEN 格式',
+    prompt:
+      `# Ethan — Spec Validate\n\n` +
+      `请校验项目 openspec/ 目录的规范完整性，检查：\n\n` +
+      `- 每个 capability 是否包含 Purpose / Requirements / Scenarios 章节\n` +
+      `- Requirements 编号是否连续（REQ-001, REQ-002...）\n` +
+      `- Scenario 是否使用完整的 GIVEN/WHEN/THEN 格式\n` +
+      `- 是否存在空内容的占位模板\n\n` +
+      `输出：问题列表（按严重程度分级）+ 合格/不合格摘要\n\n` +
+      `CLI 用法：\`ethan spec validate [capability]\``,
+  },
+  // ── 分析工具 ─────────────────────────────────────────────────
+  {
+    id: 'dora',
+    name: 'DORA 指标分析',
+    category: '分析工具',
+    description: '基于 git 历史统计 DORA 四键指标（部署频率/变更前置时间/故障率/恢复时间）',
+    prompt:
+      `# Ethan — DORA 四键指标\n\n` +
+      `请基于 git 历史分析团队的 DORA 四键指标：\n\n` +
+      `1. **Deployment Frequency（部署频率）**：多久发布一次\n` +
+      `2. **Lead Time for Changes（变更前置时间）**：代码从提交到上线耗时\n` +
+      `3. **Change Failure Rate（变更失败率）**：hotfix/revert 占比\n` +
+      `4. **Time to Restore（恢复时间）**：故障修复平均耗时\n\n` +
+      `分级：Elite / High / Medium / Low\n\n` +
+      `CLI 用法：\`ethan dora --since 30\``,
+  },
+  {
+    id: 'diff',
+    name: '变更风险分析',
+    category: '分析工具',
+    description: '读取 git diff，分析变更影响面与风险等级',
+    prompt:
+      `# Ethan — 变更风险分析\n\n` +
+      `请分析当前 git diff 的变更风险：\n\n` +
+      `- **影响面**：涉及的模块/服务/接口\n` +
+      `- **风险等级**：🔴 高 / 🟡 中 / 🟢 低（附理由）\n` +
+      `- **高风险点**：需要重点测试的代码路径\n` +
+      `- **建议**：回滚方案、监控指标、测试 Checklist\n\n` +
+      `CLI 用法：\`ethan diff [base] [head]\``,
+  },
+  {
+    id: 'deps',
+    name: '依赖健康检查',
+    category: '分析工具',
+    description: '扫描 package.json，生成依赖过期、漏洞和升级建议报告',
+    prompt:
+      `# Ethan — 依赖健康检查\n\n` +
+      `请分析项目依赖的健康状态：\n\n` +
+      `1. **过期依赖**：主版本落后 2+ 个版本的包\n` +
+      `2. **安全漏洞**：High/Critical CVE（npm audit 结果）\n` +
+      `3. **升级建议**：按优先级排列，附 breaking change 风险\n` +
+      `4. **废弃 API**：使用了 deprecated API 的直接依赖\n\n` +
+      `输出：依赖健康评分 + 行动计划\n\n` +
+      `CLI 用法：\`ethan deps [--fix]\``,
+  },
+  {
+    id: 'mermaid',
+    name: 'Mermaid 图表生成',
+    category: '分析工具',
+    description: '根据描述生成 Mermaid 流程图/时序图/ER 图/架构图',
+    prompt:
+      `# Ethan — Mermaid 图表生成\n\n` +
+      `请根据我的描述生成 Mermaid 图表代码：\n\n` +
+      `**支持类型**：\n` +
+      `- \`flowchart\`：业务流程图、决策树\n` +
+      `- \`sequence\`：API 调用时序图\n` +
+      `- \`er\`：数据库 ER 图\n` +
+      `- \`architecture\`：系统架构图\n` +
+      `- \`gantt\`：项目甘特图\n\n` +
+      `请描述要绘制的内容，并指定图表类型。\n\n` +
+      `CLI 用法：\`ethan mermaid --type sequence --desc "描述"\``,
+  },
+  {
+    id: 'migrate',
+    name: '框架迁移助手',
+    category: '分析工具',
+    description: '生成从旧框架/工具迁移到新版本的分步迁移方案',
+    prompt:
+      `# Ethan — 框架迁移助手\n\n` +
+      `请生成框架/工具迁移方案，包含：\n\n` +
+      `1. **迁移前提**：前置条件与兼容性检查\n` +
+      `2. **迁移步骤**：分阶段、可回滚的操作序列\n` +
+      `3. **代码变更模式**：Before/After 对照示例\n` +
+      `4. **常见陷阱**：迁移过程中的已知问题\n` +
+      `5. **验证方案**：每步完成后的检验方法\n\n` +
+      `请告知迁移来源和目标（如 CRA → Vite，Webpack 4 → 5，Jest → Vitest）\n\n` +
+      `CLI 用法：\`ethan migrate --from cra --to vite\``,
+  },
+  {
+    id: 'postmortem',
+    name: '故障复盘报告',
+    category: '分析工具',
+    description: '根据事故信息生成结构化的 Postmortem 报告',
+    prompt:
+      `# Ethan — 故障复盘（Postmortem）\n\n` +
+      `请生成标准化的故障复盘报告，格式遵循 Google SRE 最佳实践：\n\n` +
+      `## 报告结构\n` +
+      `- **事故摘要**：时间线、影响范围、严重程度\n` +
+      `- **根因分析**（5 Why）\n` +
+      `- **贡献因素**（技术、流程、人员）\n` +
+      `- **时间线**：详细事件序列\n` +
+      `- **后续行动**：P0/P1/P2 改进项（附责任人和截止日期）\n` +
+      `- **经验教训**\n\n` +
+      `请描述事故经过，我来整理成规范报告。\n\n` +
+      `CLI 用法：\`ethan postmortem --incident INC-001\``,
+  },
 ] as const;
 
 program
-  .command('slash-install')
+  .command('slash')
+  .alias('slash-install')
   .description('为各平台生成专属 Slash 命令文件（Skills + 工作流指令，Claude Code 原生 /ethan-xxx、其他平台速查表）')
   .option(
     '-p, --platform <platform>',
@@ -511,8 +659,8 @@ program
     // 各平台默认安装目录
     const platformDirMap: Record<string, string> = {
       'claude-code': path.join(dir, '.claude/commands'),
+      codebuddy:     path.join(dir, '.codebuddy/commands'),
       cursor:        path.join(dir, '.cursor/rules'),
-      codebuddy:     dir,
       copilot:       path.join(dir, '.github'),
       cline:         dir,
       windsurf:      path.join(dir, '.windsurf/rules'),
@@ -528,8 +676,11 @@ program
       const outDir = platformDirMap[p];
       if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-      if (p === 'claude-code') {
-        // ── Claude Code：每个 Skill 生成独立 .md slash 命令文件 ──────────────
+      if (p === 'claude-code' || p === 'codebuddy') {
+        const isClaudeCode = p === 'claude-code';
+        const cmdDir = isClaudeCode ? '.claude/commands' : '.codebuddy/commands';
+
+        // ── 每个 Skill 生成独立 .md slash 命令文件 ──────────────────────────────
         for (const skill of skills) {
           const stepsText = skill.steps
             .map((s) => `### ${s.title}\n${s.content}`)
@@ -546,20 +697,127 @@ program
           fs.writeFileSync(path.join(outDir, `ethan-${skill.id}.md`), content, 'utf-8');
           total++;
         }
-        console.log(`  ✅  claude-code  →  Skills: .claude/commands/ethan-{skill}.md × ${skills.length}`);
+        console.log(`  ✅  ${p.padEnd(12)} →  Skills: ${cmdDir}/ethan-{skill}.md × ${skills.length}`);
 
-        // ── Claude Code：工作流 Slash 命令 ─────────────────────────────────
-        for (const cmd of WORKFLOW_SLASH_COMMANDS) {
-          const content =
-            `---\n` +
-            `description: "Ethan — ${cmd.name}：${cmd.description}"\n` +
-            `---\n\n` +
-            `${cmd.prompt}\n`;
-          fs.writeFileSync(path.join(outDir, `ethan-${cmd.id}.md`), content, 'utf-8');
-          total++;
+        // ── 工作流 Slash 命令 ────────────────────────────────────────────────────
+        if (isClaudeCode) {
+          // Claude Code：动态注入（$(!ethan ... --no-copy)）
+          // CLI 调用映射（$ARGUMENTS 会被替换为用户输入的参数）
+          const CLI_INVOCATIONS: Record<string, string> = {
+            'commit':          'ethan commit --no-copy $ARGUMENTS',
+            'review':          'ethan review --no-copy $ARGUMENTS',
+            'pr':              'ethan pr --no-copy $ARGUMENTS',
+            'standup':         'ethan standup --no-copy $ARGUMENTS',
+            'changelog':       'ethan changelog --no-copy $ARGUMENTS',
+            'workflow-start':  'ethan workflow start $ARGUMENTS',
+            'workflow-done':   'ethan workflow done $ARGUMENTS',
+            'workflow-status': 'ethan workflow status',
+            'auto':            'ethan auto $ARGUMENTS --no-copy',
+            'explain':         'ethan explain $ARGUMENTS --no-copy',
+            'test-case':       'ethan test-case $ARGUMENTS --no-copy',
+            'estimate':        'ethan estimate --no-copy $ARGUMENTS',
+            'spec-proposal':   'ethan spec proposal --no-copy $ARGUMENTS',
+            'spec-review':     'ethan spec review --no-copy',
+            'spec-validate':   'ethan spec validate --no-copy $ARGUMENTS',
+            'dora':            'ethan dora --no-copy $ARGUMENTS',
+            'diff':            'ethan diff --no-copy $ARGUMENTS',
+            'deps':            'ethan deps --no-copy',
+            'postmortem':      'ethan postmortem --no-copy $ARGUMENTS',
+            'mermaid':         'ethan mermaid --no-copy $ARGUMENTS',
+            'migrate':         'ethan migrate --no-copy $ARGUMENTS',
+          };
+
+          // 需要参数的命令：无参调用时显示用法说明（printf 内 \n 为换行）
+          const PIPELINE_LIST =
+            'dev-workflow: 需求理解->拆解->设计->实现\\n' +
+            '- full-dev-cycle: 需求->接口->方案->实现->审查->部署\\n' +
+            '- new-feature: PRD->技术调研->接口->拆解->实现\\n' +
+            '- quality-workflow: 代码审查->故障排查\\n' +
+            '- reporting: 进度跟踪->任务报告->周报\\n' +
+            '- incident-response: 故障排查->技术调研->任务报告\\n' +
+            '- spec-workflow: Spec提案->方案设计->任务拆解->实现->意图审查\\n' +
+            '- bugfix-workflow: 故障排查->变更提案->实现->单元测试->意图审查\\n' +
+            '- security-audit-workflow: 威胁建模->安全审查->变更提案->实现->意图审查\\n' +
+            '- open-source-release: 技术调研->代码审查->单元测试->部署上线';
+
+          const SLASH_USAGE_FALLBACKS: Record<string, string> = {
+            'auto':
+              '## Ethan Auto-Pilot — 缺少参数\\n\\n' +
+              '用法: /ethan-auto <pipeline> [-c 任务描述]\\n\\n' +
+              '可用 Pipeline:\\n- ' + PIPELINE_LIST,
+            'workflow-start':
+              '## Ethan 启动工作流 — 缺少参数\\n\\n' +
+              '用法: /ethan-workflow-start <pipeline> -c 任务描述\\n\\n' +
+              '可用 Pipeline:\\n- ' + PIPELINE_LIST,
+            'workflow-done':
+              '## Ethan 完成工作流步骤 — 缺少参数\\n\\n' +
+              '用法: /ethan-workflow-done 本步完成了什么（2-3句话摘要）',
+            'explain':
+              '## Ethan 代码解释 — 缺少参数\\n\\n' +
+              '用法: /ethan-explain <文件路径> [--level junior|senior|principal]\\n\\n' +
+              '示例: /ethan-explain src/auth.ts --level senior',
+            'test-case':
+              '## Ethan 测试用例 — 缺少参数\\n\\n' +
+              '用法: /ethan-test-case <文件路径> [--framework vitest|jest]\\n\\n' +
+              '示例: /ethan-test-case src/utils.ts --framework vitest',
+            'dora':
+              '## Ethan DORA — 用法\\n\\n' +
+              '/ethan-dora [--since 30]\\n\\n' +
+              '统计最近 N 天的 DORA 四键指标（部署频率/前置时间/恢复时间/变更失败率）',
+            'diff':
+              '## Ethan Diff — 用法\\n\\n' +
+              '/ethan-diff [base] [head]\\n\\n' +
+              '分析 git diff 变更风险，输出变更摘要与潜在影响',
+            'mermaid':
+              '## Ethan Mermaid — 用法\\n\\n' +
+              '/ethan-mermaid --type <sequence|flowchart|er|gantt> --desc "图表描述"\\n\\n' +
+              '生成 Mermaid 图表提示词',
+            'migrate':
+              '## Ethan Migrate — 用法\\n\\n' +
+              '/ethan-migrate --from <来源> --to <目标>\\n\\n' +
+              '示例: /ethan-migrate --from cra --to vite',
+          };
+
+          for (const cmd of WORKFLOW_SLASH_COMMANDS) {
+            const invocation = CLI_INVOCATIONS[cmd.id];
+            const fallback = SLASH_USAGE_FALLBACKS[cmd.id];
+
+            let body: string;
+            if (invocation && fallback) {
+              // 有参数要求的命令：无参时显示用法说明，有参时动态执行
+              body = `$(![ -n "$ARGUMENTS" ] && ${invocation} 2>/dev/null || printf "${fallback}")\n`;
+            } else if (invocation) {
+              // 无参数要求的命令：直接动态执行
+              body = `$(!${invocation} 2>/dev/null)\n`;
+            } else {
+              body = `${cmd.prompt}\n`;
+            }
+
+            const content =
+              `---\n` +
+              `description: "Ethan — ${cmd.name}：${cmd.description}"\n` +
+              `---\n\n` +
+              body;
+            fs.writeFileSync(path.join(outDir, `ethan-${cmd.id}.md`), content, 'utf-8');
+            total++;
+          }
+          console.log(`  ✅  claude-code  →  工作流: ${cmdDir}/ethan-{cmd}.md × ${WORKFLOW_SLASH_COMMANDS.length}`);
+          console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-commit、/ethan-auto 等`);
+          console.log(`       ⚡ 动态注入：提示词自动注入对话，无需复制粘贴`);
+        } else {
+          // CodeBuddy：静态提示词（各 /ethan-xxx 命令文件）
+          for (const cmd of WORKFLOW_SLASH_COMMANDS) {
+            const content =
+              `---\n` +
+              `description: "Ethan — ${cmd.name}：${cmd.description}"\n` +
+              `---\n\n` +
+              `${cmd.prompt}\n`;
+            fs.writeFileSync(path.join(outDir, `ethan-${cmd.id}.md`), content, 'utf-8');
+            total++;
+          }
+          console.log(`  ✅  codebuddy    →  工作流: ${cmdDir}/ethan-{cmd}.md × ${WORKFLOW_SLASH_COMMANDS.length}`);
+          console.log(`       使用方式：在 CodeBuddy 聊天中输入 /ethan-commit、/ethan-auto 等`);
         }
-        console.log(`  ✅  claude-code  →  工作流: .claude/commands/ethan-{cmd}.md × ${WORKFLOW_SLASH_COMMANDS.length}`);
-        console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-commit、/ethan-auto 等`);
 
       } else {
         // ── 其他平台：生成统一的 ethan-commands.md 速查表（Skills + 工作流）──
@@ -622,7 +880,7 @@ program
       }
     }
 
-    const totalFiles = platform === 'claude-code'
+    const totalFiles = (platform === 'claude-code' || platform === 'codebuddy')
       ? skills.length + WORKFLOW_SLASH_COMMANDS.length
       : total;
     console.log(`\n共生成 ${totalFiles} 个 Slash 命令文件（目录：${dir}）`);
@@ -3913,6 +4171,1071 @@ skillIds:
     fs.writeFileSync(filePath, template, 'utf-8');
     console.log(`\n✅ 自定义 Pipeline 模板已生成：${filePath}`);
     console.log(`\n💡 编辑后运行：ethan workflow start ${options.name} -c "任务描述"\n`);
+  });
+
+// ─── spec 命令组 ─────────────────────────────────────────────────────────────
+const specCmd = program.command('spec').description('OpenSpec 规范驱动开发工具集');
+
+specCmd
+  .command('init <capability>')
+  .description('初始化 openspec/specs/[capability]/spec.md 规范文件')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .action(async (capability: string, options: { dir: string }) => {
+    const { writeSpecFile, specTemplate } = await import('../spec/index');
+    const filePath = writeSpecFile(capability, specTemplate(capability), options.dir);
+    console.log(`\n✅ Spec 文件已创建：${filePath}`);
+    console.log(`\n💡 编辑文件填写需求和场景，再运行 ethan spec validate ${capability} 检查格式\n`);
+  });
+
+specCmd
+  .command('list')
+  .description('列出所有 openspec/specs/ 下的 capability')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .action(async (options: { dir: string }) => {
+    const { hasOpenSpec, listSpecs, listChanges } = await import('../spec/index');
+    if (!hasOpenSpec(options.dir)) {
+      console.log('\n⚠️  当前项目未检测到 openspec/ 目录。');
+      console.log('运行 ethan spec init <capability> 初始化第一个 spec 文件。\n');
+      return;
+    }
+    const specs = listSpecs(options.dir);
+    const changes = listChanges(options.dir);
+    console.log('\n📋 OpenSpec 规范目录\n');
+    if (specs.length === 0) {
+      console.log('  （openspec/specs/ 暂无 spec 文件）');
+    } else {
+      for (const spec of specs) {
+        const lines = spec.content.split('\n').filter(Boolean);
+        const reqCount = (spec.content.match(/### REQ-/g) || []).length;
+        const scenCount = (spec.content.match(/### Scenario/g) || []).length;
+        console.log(`  📄 ${spec.capability}  (${reqCount} 需求, ${scenCount} 场景)`);
+        if (lines[0]) console.log(`     ${lines[0].replace(/^#+\s*/, '')}`);
+      }
+    }
+    console.log(`\n📁 变更提案：${changes.length} 个`);
+    for (const c of changes.slice(0, 5)) {
+      const title = c.proposalContent?.split('\n').find((l) => l.startsWith('# '))?.replace('# ', '') || c.id;
+      console.log(`  📝 ${c.id}  ${title}`);
+    }
+    console.log('');
+  });
+
+specCmd
+  .command('show <capability>')
+  .description('显示指定 capability 的 spec.md 内容')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .action(async (capability: string, options: { dir: string }) => {
+    const { listSpecs } = await import('../spec/index');
+    const specs = listSpecs(options.dir);
+    const spec = specs.find((s) => s.capability === capability);
+    if (!spec) {
+      console.error(`\n❌ 未找到 capability: ${capability}`);
+      console.error(`可用：${specs.map((s) => s.capability).join(', ') || '（无）'}\n`);
+      process.exit(1);
+    }
+    console.log(`\n📄 ${capability}\n\n${spec.content}\n`);
+  });
+
+specCmd
+  .command('validate [capability]')
+  .description('校验 openspec/ 规范完整性（Requirements 编号、GIVEN/WHEN/THEN 格式）')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action(async (capability: string | undefined, options: { dir: string; copy: boolean }) => {
+    const { hasOpenSpec, listSpecs } = await import('../spec/index');
+    if (!hasOpenSpec(options.dir)) {
+      console.error('\n❌ 当前项目未检测到 openspec/ 目录。\n');
+      process.exit(1);
+    }
+    const specs = listSpecs(options.dir);
+    const filtered = capability ? specs.filter((s) => s.capability === capability) : specs;
+    if (filtered.length === 0) {
+      console.error(capability ? `\n❌ 未找到 capability: ${capability}\n` : '\n⚠️  openspec/specs/ 下没有任何 spec 文件\n');
+      process.exit(1);
+    }
+    let totalIssues = 0;
+    for (const spec of filtered) {
+      const issues: string[] = [];
+      const content = spec.content;
+      if (!content.includes('## Purpose') && !content.includes('## 用途')) issues.push('缺少 ## Purpose 章节');
+      if (!content.includes('## Requirements') && !content.includes('## 需求')) issues.push('缺少 ## Requirements 章节');
+      if (!content.includes('## Scenarios') && !content.includes('## 场景')) issues.push('缺少 ## Scenarios 章节');
+      const gwtRegex = /GIVEN[\s\S]*?WHEN[\s\S]*?THEN/i;
+      if (content.includes('Scenario') && !gwtRegex.test(content)) issues.push('存在 Scenario 但未使用 GIVEN/WHEN/THEN 格式');
+      totalIssues += issues.length;
+      const icon = issues.length === 0 ? '✅' : issues.length <= 2 ? '⚠️ ' : '❌';
+      console.log(`\n${icon} ${spec.capability}`);
+      if (issues.length === 0) {
+        console.log('   规范结构完整，无问题。');
+      } else {
+        issues.forEach((issue) => console.log(`   - ${issue}`));
+      }
+    }
+    console.log(`\n汇总：${filtered.length} 个 capability，发现 ${totalIssues} 个问题。${totalIssues === 0 ? ' 🎉 全部通过！' : ''}\n`);
+  });
+
+specCmd
+  .command('proposal <capability>')
+  .description('生成 OpenSpec 变更提案包（proposal.md + design.md + tasks.md + spec delta）')
+  .option('-c, --context <context>', '变更描述（如"新增用户邮箱二次验证"）', '')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action(async (capability: string, options: { context: string; dir: string; copy: boolean }) => {
+    const description = options.context || capability;
+    const {
+      listSpecs, generateChangeId, proposalTemplate, designTemplate, tasksTemplate,
+      specDeltaTemplate, writeChangeFiles, hasOpenSpec,
+    } = await import('../spec/index');
+
+    if (!hasOpenSpec(options.dir)) {
+      console.log('\n⚠️  未检测到 openspec/ 目录，自动初始化...');
+      const { writeSpecFile, specTemplate } = await import('../spec/index');
+      writeSpecFile(capability, specTemplate(capability), options.dir);
+      console.log(`   已创建 openspec/specs/${capability}/spec.md\n`);
+    }
+
+    const changeId = generateChangeId();
+    const proposal = proposalTemplate(changeId, description);
+    const design = designTemplate(description);
+    const tasks = tasksTemplate(description);
+    const specDelta = specDeltaTemplate(capability, description);
+
+    const changeDir = writeChangeFiles(
+      changeId,
+      { proposal, design, tasks, specDeltas: [{ capability, content: specDelta }] },
+      options.dir
+    );
+
+    const specs = listSpecs(options.dir);
+    console.log(`\n✅ 变更提案包已生成：${changeDir}`);
+    console.log(`   📝 proposal.md — 填写变更描述和影响范围`);
+    console.log(`   🏗️  design.md — 填写技术方案和架构决策`);
+    console.log(`   📋 tasks.md — 填写分阶段任务列表`);
+    console.log(`   📄 specs/${capability}.md — 填写需求变更 delta`);
+    console.log(`\n💡 编辑完成后运行 ethan spec review 执行意图审查\n`);
+    console.log(`   Change ID: ${changeId}`);
+    if (specs.length > 0) {
+      console.log(`   已有 Capability: ${specs.map((s) => s.capability).join(', ')}`);
+    }
+    console.log('');
+  });
+
+specCmd
+  .command('review')
+  .description('意图级 Spec Review：对比 spec delta 与代码变更，输出对齐矩阵和偏差报告')
+  .option('--change-id <id>', '指定 Change ID（不填则取最新）', '')
+  .option('-d, --dir <dir>', '项目目录', process.cwd())
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action(async (options: { changeId: string; dir: string; copy: boolean }) => {
+    const { hasOpenSpec, loadLatestChange, listChanges, truncateSpec } = await import('../spec/index');
+
+    if (!hasOpenSpec(options.dir)) {
+      console.error('\n❌ 当前项目未检测到 openspec/ 目录。先运行 ethan spec init <capability> 初始化。\n');
+      process.exit(1);
+    }
+
+    const changes = listChanges(options.dir);
+    if (changes.length === 0) {
+      console.error('\n⚠️  未找到任何变更提案（openspec/changes/ 为空）。先运行 ethan spec proposal <capability> 创建提案。\n');
+      process.exit(1);
+    }
+
+    const change = options.changeId
+      ? (changes.find((c) => c.id === options.changeId) ?? loadLatestChange(options.dir))
+      : loadLatestChange(options.dir);
+
+    if (!change) {
+      console.error(`\n❌ 未找到 Change ID: ${options.changeId}\n`);
+      process.exit(1);
+    }
+
+    const gitDiff = isGitRepo(options.dir) ? getBranchDiff(options.dir) : '';
+    const truncatedDiff = gitDiff ? truncateDiff(gitDiff, 6000) : '（非 git 仓库或无代码变更）';
+
+    let prompt = `# Spec Review — ${change.id}\n\n`;
+    if (change.proposalContent) {
+      prompt += `## 变更提案\n\n${truncateSpec(change.proposalContent, 800)}\n\n`;
+    }
+    if (change.specDeltas.length > 0) {
+      prompt += `## Spec Delta（需求变更）\n\n`;
+      for (const delta of change.specDeltas) {
+        prompt += `### ${delta.capability}\n\n${truncateSpec(delta.content, 600)}\n\n`;
+      }
+    }
+    prompt += `## 代码变更（Diff）\n\n\`\`\`diff\n${truncatedDiff}\n\`\`\`\n\n`;
+    prompt += `---\n\n## 意图审查任务\n\n`;
+    prompt += `请对照上方 spec delta 与代码 diff，执行意图级 Review：\n\n`;
+    prompt += `1. **意图对齐矩阵**\n\n   | Spec 需求/场景 | 代码位置 | 状态 | 说明 |\n   |---|---|---|---|\n\n`;
+    prompt += `2. **🔴 意图偏差（Critical）**：实现与 spec 意图严重不符，必须修复\n`;
+    prompt += `3. **🟡 遗漏需求（Warning）**：spec 有但代码未实现\n`;
+    prompt += `4. **💡 超范围实现（Info）**：代码实现了 spec 未定义的功能\n`;
+    prompt += `5. **审查结论**：可合并 / 需要修复 / 需要更新 spec\n\n`;
+    prompt += `> Review intent, not just code。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ Spec Review 提示词已复制到剪贴板（Change: ${change.id}）`);
+      console.log('   粘贴到 AI 编辑器执行意图审查。\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── diff ─────────────────────────────────────────────────────────────────────
+program
+  .command('diff [base] [head]')
+  .description('读取 git diff，生成变更风险分析提示词')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((base: string | undefined, head: string | undefined, options: { copy: boolean }) => {
+    if (!isGitRepo(process.cwd())) {
+      console.error('\n❌ 当前目录不是 git 仓库\n');
+      process.exit(1);
+    }
+    const ref = base && head ? `${base}..${head}` : (base ?? 'HEAD');
+    const diffArgs = base && head ? [base, head] : base ? [base] : [];
+    const result = spawnSync('git', ['diff', ...diffArgs, '--stat', '--no-color'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    });
+    const stat = result.stdout ?? '';
+    const fullDiff = spawnSync('git', ['diff', ...diffArgs, '--no-color'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    }).stdout ?? '';
+    const truncated = truncateDiff(fullDiff, 5000);
+
+    const prompt =
+      `# 变更风险分析\n\n` +
+      `**范围**: \`git diff ${ref}\`\n\n` +
+      `## 变更统计\n\n\`\`\`\n${stat || '(无统计输出)'}\n\`\`\`\n\n` +
+      `## Diff 内容\n\n\`\`\`diff\n${truncated || '(无变更)'}\n\`\`\`\n\n` +
+      `---\n\n` +
+      `请分析上述代码变更，输出：\n` +
+      `1. **变更摘要**：一句话概括本次改动目的\n` +
+      `2. **风险评估**（高/中/低）：潜在 Bug、破坏性变更、性能影响\n` +
+      `3. **关注点**：最需要审查的文件/逻辑\n` +
+      `4. **建议**：测试覆盖缺口、文档更新建议`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log('\n✅ 变更风险分析提示词已复制到剪贴板\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── deps ─────────────────────────────────────────────────────────────────────
+program
+  .command('deps')
+  .description('读取 package.json + npm outdated 生成依赖健康报告提示词')
+  .option('--fix', '同时输出升级命令', false)
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { fix: boolean; copy: boolean }) => {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    if (!fs.existsSync(pkgPath)) {
+      console.error('\n❌ 未找到 package.json\n');
+      process.exit(1);
+    }
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    const outdatedResult = spawnSync('npm', ['outdated', '--json'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    });
+    const outdated = outdatedResult.stdout ? JSON.parse(outdatedResult.stdout) : {};
+    const auditResult = spawnSync('npm', ['audit', '--json'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    });
+    let auditSummary = '（npm audit 失败）';
+    try {
+      const auditData = JSON.parse(auditResult.stdout ?? '{}');
+      const vuln = auditData.metadata?.vulnerabilities ?? {};
+      auditSummary = `critical: ${vuln.critical ?? 0}, high: ${vuln.high ?? 0}, moderate: ${vuln.moderate ?? 0}, low: ${vuln.low ?? 0}`;
+    } catch { /* ignore */ }
+
+    const outdatedEntries = Object.entries(outdated).slice(0, 20)
+      .map(([name, info]: [string, unknown]) => {
+        const d = info as Record<string, string>;
+        return `- ${name}: ${d.current} → ${d.latest} (wanted: ${d.wanted})`;
+      }).join('\n');
+
+    const prompt =
+      `# 依赖健康报告\n\n` +
+      `**项目**: ${pkg.name ?? 'unknown'} v${pkg.version ?? '?'}\n\n` +
+      `## 安全漏洞摘要\n\n${auditSummary}\n\n` +
+      `## 过时依赖（前20项）\n\n${outdatedEntries || '（无过时依赖）'}\n\n` +
+      `## 依赖数量\n\n` +
+      `- dependencies: ${Object.keys(pkg.dependencies ?? {}).length}\n` +
+      `- devDependencies: ${Object.keys(pkg.devDependencies ?? {}).length}\n\n` +
+      (options.fix ? `## 建议升级命令\n\nnpm update\nnpm audit fix\n\n` : '') +
+      `---\n\n请分析依赖健康状况，输出优先级排序的升级建议和安全漏洞修复方案。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log('\n✅ 依赖健康报告提示词已复制到剪贴板\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── dora ─────────────────────────────────────────────────────────────────────
+program
+  .command('dora')
+  .description('统计 git 历史，计算 DORA 四键指标')
+  .option('--since <days>', '统计最近 N 天', '30')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { since: string; copy: boolean }) => {
+    if (!isGitRepo(process.cwd())) {
+      console.error('\n❌ 当前目录不是 git 仓库\n');
+      process.exit(1);
+    }
+    const days = parseInt(options.since, 10) || 30;
+    const since = `${days}.days.ago`;
+
+    // Deploy Frequency: count merges to main
+    const merges = spawnSync('git', ['log', '--merges', '--oneline', `--since=${since}`], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    }).stdout ?? '';
+    const mergeCount = merges.trim() ? merges.trim().split('\n').length : 0;
+    const deployFreq = (mergeCount / days).toFixed(2);
+
+    // Tags as releases
+    const tags = spawnSync('git', ['log', '--tags', '--oneline', `--since=${since}`, '--simplify-by-decoration'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    }).stdout ?? '';
+    const tagCount = tags.trim() ? tags.trim().split('\n').length : 0;
+
+    // Commit count for lead time proxy
+    const commits = spawnSync('git', ['log', '--oneline', `--since=${since}`], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    }).stdout ?? '';
+    const commitCount = commits.trim() ? commits.trim().split('\n').length : 0;
+
+    const freqLevel = mergeCount / days >= 1 ? 'Elite' : mergeCount / days >= 1/7 ? 'High' : mergeCount / days >= 1/30 ? 'Medium' : 'Low';
+
+    const report =
+      `# DORA 四键指标报告\n\n` +
+      `**统计范围**: 最近 ${days} 天\n\n` +
+      `| 指标 | 数值 | 等级 |\n` +
+      `|------|------|------|\n` +
+      `| 部署频率 (Deploy Frequency) | ${deployFreq} 次/天（共 ${mergeCount} 次合并） | **${freqLevel}** |\n` +
+      `| 版本发布 (Tags/Releases) | ${tagCount} 次 | — |\n` +
+      `| 提交总数 (Commit Count) | ${commitCount} 次 | — |\n\n` +
+      `> 等级：Elite（每天多次）> High（每天1次）> Medium（每周1次）> Low（每月1次）\n\n` +
+      `---\n\n` +
+      `请根据以上 DORA 数据，分析工程效能现状，并给出：\n` +
+      `1. **当前等级评估** 及改进空间\n` +
+      `2. **瓶颈分析**：部署频率低的可能原因\n` +
+      `3. **改进建议**：3-5条可操作的效能提升措施`;
+
+    if (options.copy !== false) {
+      copyToClipboard(report);
+      console.log(`\n✅ DORA 指标报告已复制到剪贴板（最近 ${days} 天）\n`);
+    } else {
+      console.log(report);
+    }
+  });
+
+// ─── pr-analytics ─────────────────────────────────────────────────────────────
+program
+  .command('pr-analytics')
+  .description('分析 PR 合并历史：大小分布、热点文件 Top 10')
+  .option('--days <n>', '统计最近 N 天', '30')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { days: string; copy: boolean }) => {
+    if (!isGitRepo(process.cwd())) {
+      console.error('\n❌ 当前目录不是 git 仓库\n');
+      process.exit(1);
+    }
+    const days = parseInt(options.days, 10) || 30;
+    const merges = spawnSync('git', ['log', '--merges', `--since=${days}.days.ago`, '--format=%H %s'], {
+      cwd: process.cwd(), encoding: 'utf-8',
+    }).stdout ?? '';
+    const mergeLines = merges.trim() ? merges.trim().split('\n') : [];
+
+    // Count changed files across merges (sample up to 10)
+    const fileChanges: Record<string, number> = {};
+    for (const line of mergeLines.slice(0, 10)) {
+      const hash = line.split(' ')[0];
+      const files = spawnSync('git', ['diff-tree', '--no-commit-id', '-r', '--name-only', hash], {
+        cwd: process.cwd(), encoding: 'utf-8',
+      }).stdout ?? '';
+      for (const f of files.trim().split('\n').filter(Boolean)) {
+        fileChanges[f] = (fileChanges[f] ?? 0) + 1;
+      }
+    }
+    const hotFiles = Object.entries(fileChanges)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([f, n]) => `- ${f} (${n} 次)`)
+      .join('\n');
+
+    const report =
+      `# PR 分析报告\n\n` +
+      `**统计范围**: 最近 ${days} 天 | **合并 PR 数**: ${mergeLines.length}\n\n` +
+      `## 热点文件 Top 10（变更最频繁）\n\n${hotFiles || '（无数据）'}\n\n` +
+      `---\n\n请分析 PR 模式，给出：\n` +
+      `1. PR 规模是否合理（是否有超大 PR）\n` +
+      `2. 热点文件是否存在过度耦合或技术债\n` +
+      `3. 改进建议`;
+
+    if (options.copy !== false) {
+      copyToClipboard(report);
+      console.log('\n✅ PR 分析报告已复制到剪贴板\n');
+    } else {
+      console.log(report);
+    }
+  });
+
+// ─── adr ──────────────────────────────────────────────────────────────────────
+program
+  .command('adr <action> [title]')
+  .description('管理 ADR（架构决策记录）：new | list | show <n>')
+  .action((action: string, title: string | undefined) => {
+    const adrDir = path.join(process.cwd(), 'docs', 'adr');
+    if (action === 'list') {
+      if (!fs.existsSync(adrDir)) { console.log('(无 ADR 记录，运行 ethan adr new "标题" 创建)'); return; }
+      const files = fs.readdirSync(adrDir).filter((f) => f.endsWith('.md')).sort();
+      if (files.length === 0) { console.log('(无 ADR 记录)'); return; }
+      console.log('\n📋 ADR 列表:\n');
+      files.forEach((f) => console.log(`  ${f}`));
+      console.log('');
+    } else if (action === 'new') {
+      if (!title) { console.error('\n❌ 用法：ethan adr new "决策标题"\n'); process.exit(1); }
+      fs.mkdirSync(adrDir, { recursive: true });
+      const existing = fs.existsSync(adrDir) ? fs.readdirSync(adrDir).filter((f) => /^\d{4}/.test(f)) : [];
+      const num = String(existing.length + 1).padStart(4, '0');
+      const slug = title.toLowerCase().replace(/[\s/]+/g, '-').replace(/[^\w-]/g, '').slice(0, 50);
+      const filename = `${num}-${slug}.md`;
+      const content =
+        `# ${num}. ${title}\n\n` +
+        `**日期**: ${new Date().toISOString().split('T')[0]}\n` +
+        `**状态**: 提议中 (Proposed)\n\n` +
+        `## 背景\n\n[描述需要做出此决策的背景和问题]\n\n` +
+        `## 决策\n\n[描述做出的决策]\n\n` +
+        `## 后果\n\n[描述此决策带来的影响（正面和负面）]\n`;
+      fs.writeFileSync(path.join(adrDir, filename), content, 'utf-8');
+      console.log(`\n✅ ADR 已创建：docs/adr/${filename}\n`);
+    } else if (action === 'show') {
+      if (!title) { console.error('\n❌ 用法：ethan adr show <序号或文件名>\n'); process.exit(1); }
+      if (!fs.existsSync(adrDir)) { console.error('\n❌ docs/adr/ 目录不存在\n'); process.exit(1); }
+      const files = fs.readdirSync(adrDir).filter((f) => f.startsWith(title.padStart(4, '0')));
+      if (files.length === 0) { console.error(`\n❌ 未找到 ADR #${title}\n`); process.exit(1); }
+      console.log(fs.readFileSync(path.join(adrDir, files[0]), 'utf-8'));
+    } else {
+      console.error(`\n❌ 未知操作: ${action}（支持: new | list | show）\n`);
+      process.exit(1);
+    }
+  });
+
+// ─── mermaid ──────────────────────────────────────────────────────────────────
+program
+  .command('mermaid')
+  .description('生成 Mermaid 图表提示词（flowchart/sequence/er/architecture/gantt）')
+  .option('--type <type>', '图表类型：flowchart | sequence | er | architecture | gantt', 'flowchart')
+  .option('--desc <desc>', '图表描述', '')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { type: string; desc: string; copy: boolean }) => {
+    const typeGuide: Record<string, string> = {
+      flowchart:    '流程图（节点 + 判断分支 + 连线）',
+      sequence:     '时序图（参与者 + 消息序列）',
+      er:           'ER 图（实体 + 属性 + 关系）',
+      architecture: '架构图（服务/组件 + 依赖关系）',
+      gantt:        '甘特图（任务 + 时间轴）',
+    };
+    const guide = typeGuide[options.type] ?? typeGuide.flowchart;
+    const desc = options.desc || '请根据上下文自动推断内容';
+    const prompt =
+      `# Mermaid 图表生成\n\n` +
+      `**类型**: ${options.type}（${guide}）\n` +
+      `**描述**: ${desc}\n\n` +
+      `请生成一个标准的 Mermaid ${options.type} 图表，要求：\n` +
+      `1. 语法严格符合 Mermaid 规范，可直接粘贴到 Markdown 中渲染\n` +
+      `2. 节点/参与者命名清晰，使用中文标签\n` +
+      `3. 覆盖主要流程/关系，避免过度简化\n` +
+      `4. 输出格式：\`\`\`mermaid\\n...\\n\`\`\`\n\n` +
+      `同时附上简短说明，解释图表的核心逻辑。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ Mermaid ${options.type} 图表提示词已复制到剪贴板\n`);
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+program
+  .command('i18n [file]')
+  .description('扫描硬编码字符串，生成 i18n key 提取提案')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((file: string | undefined, options: { copy: boolean }) => {
+    let fileContent = '';
+    let targetDesc = '项目代码';
+    if (file) {
+      const fp = resolveFilePath(file);
+      if (!fs.existsSync(fp)) { console.error(`\n❌ 文件不存在: ${file}\n`); process.exit(1); }
+      fileContent = fs.readFileSync(fp, 'utf-8');
+      targetDesc = file;
+    }
+    const prompt =
+      `# i18n 国际化提取\n\n` +
+      `**目标**: ${targetDesc}\n\n` +
+      (fileContent ? `## 代码内容\n\n\`\`\`\n${fileContent.slice(0, 3000)}\n\`\`\`\n\n` : '') +
+      `## 任务\n\n` +
+      `1. **扫描硬编码字符串**：识别所有中文/英文界面文本（按钮、标题、提示、错误消息等）\n` +
+      `2. **生成 key 方案**：为每个字符串建议语义化的 i18n key（如 \`common.btn.submit\`）\n` +
+      `3. **输出 locale 文件**：生成 zh-CN.json 和 en-US.json 的初始内容\n` +
+      `4. **代码替换示例**：展示如何将硬编码替换为 i18n 调用（兼容 react-i18next / vue-i18n）\n` +
+      `5. **遗漏风险**：标注可能遗漏的动态字符串或复数形式`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log('\n✅ i18n 提取提案提示词已复制到剪贴板\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── onboard ──────────────────────────────────────────────────────────────────
+program
+  .command('onboard')
+  .description('生成新成员上手文档提示词')
+  .option('--lang <lang>', '编程语言/技术栈（可选）', '')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action(async (options: { lang: string; copy: boolean }) => {
+    const snapshot = await (async () => {
+      try {
+        const { buildProjectSnapshot } = await import('../context/builder');
+        return buildProjectSnapshot(process.cwd());
+      } catch { return null; }
+    })();
+
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    const pkg = fs.existsSync(pkgPath) ? JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) : {};
+
+    const prompt =
+      `# 新成员上手文档生成\n\n` +
+      `**项目**: ${pkg.name ?? path.basename(process.cwd())} v${pkg.version ?? '?'}\n` +
+      (options.lang ? `**技术栈**: ${options.lang}\n` : '') +
+      (snapshot ? `**项目快照**: ${JSON.stringify(snapshot).slice(0, 500)}\n` : '') +
+      `\n## 请生成以下上手文档：\n\n` +
+      `1. **项目概述**：用 3 句话解释这个项目是什么、解决什么问题\n` +
+      `2. **快速启动**：本地开发环境配置步骤（含前置条件）\n` +
+      `3. **目录结构**：核心目录说明（只解释重要的）\n` +
+      `4. **开发工作流**：分支策略、提交规范、PR 流程\n` +
+      `5. **关键概念**：新人必须理解的 3-5 个领域概念\n` +
+      `6. **常见问题**：FAQ（本地启动失败、测试怎么跑等）\n` +
+      `7. **联系方式**：谁负责什么模块（留空供补充）`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log('\n✅ 新成员上手文档提示词已复制到剪贴板\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── test-coverage ────────────────────────────────────────────────────────────
+program
+  .command('test-coverage')
+  .description('读取覆盖率报告，生成覆盖率优化提示词')
+  .option('--threshold <n>', '覆盖率目标（默认 80）', '80')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { threshold: string; copy: boolean }) => {
+    const summaryPath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
+    let summaryText = '（未找到 coverage/coverage-summary.json，请先运行 npm run test:coverage）';
+    if (fs.existsSync(summaryPath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+        const total = data.total ?? {};
+        summaryText =
+          `语句: ${total.statements?.pct ?? '?'}% | ` +
+          `分支: ${total.branches?.pct ?? '?'}% | ` +
+          `函数: ${total.functions?.pct ?? '?'}% | ` +
+          `行: ${total.lines?.pct ?? '?'}%`;
+      } catch { /* ignore */ }
+    }
+    const threshold = parseInt(options.threshold, 10) || 80;
+    const prompt =
+      `# 测试覆盖率优化\n\n` +
+      `**当前覆盖率**: ${summaryText}\n` +
+      `**目标覆盖率**: ${threshold}%\n\n` +
+      `## 任务\n\n` +
+      `1. **覆盖率差距分析**：当前覆盖率 vs 目标，差多少\n` +
+      `2. **优先补测区域**：哪些文件/函数覆盖率最低，业务风险最高\n` +
+      `3. **测试补充方案**：为低覆盖区域设计具体的测试用例（AAA 格式）\n` +
+      `4. **Mock 策略**：依赖外部服务的单元如何 Mock\n` +
+      `5. **CI 集成**：如何在 CI 中设置覆盖率门禁`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log('\n✅ 测试覆盖率优化提示词已复制到剪贴板\n');
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── migrate ──────────────────────────────────────────────────────────────────
+program
+  .command('migrate')
+  .description('生成框架/工具迁移助手提示词')
+  .option('--from <source>', '迁移来源（如 cra, webpack4, jest）', '')
+  .option('--to <target>', '迁移目标（如 vite, webpack5, vitest）', '')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { from: string; to: string; copy: boolean }) => {
+    const from = options.from || '（请指定 --from）';
+    const to = options.to || '（请指定 --to）';
+    const prompt =
+      `# 框架迁移方案：${from} → ${to}\n\n` +
+      `## 任务\n\n` +
+      `请生成从 **${from}** 迁移到 **${to}** 的完整方案：\n\n` +
+      `1. **迁移前提**：前置条件、兼容性检查、破坏性变更清单\n` +
+      `2. **迁移步骤**（分阶段，每步可回滚）：\n` +
+      `   - 安装新依赖\n   - 配置文件变更\n   - 代码变更模式（Before/After 对照）\n` +
+      `3. **常见陷阱**：迁移过程中的已知问题和解决方案\n` +
+      `4. **验证方案**：每步完成后的检验命令/检查项\n` +
+      `5. **回滚方案**：遇到阻塞时如何安全回退\n\n` +
+      `> 请基于最新版本的官方迁移指南，重点关注 Breaking Changes。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ 迁移方案提示词已复制（${from} → ${to}）\n`);
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── postmortem ───────────────────────────────────────────────────────────────
+program
+  .command('postmortem')
+  .description('生成结构化故障复盘（Postmortem）提示词')
+  .option('--incident <id>', '事故 ID（如 INC-001）', '')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { incident: string; copy: boolean }) => {
+    const incidentId = options.incident || `INC-${Date.now().toString().slice(-6)}`;
+    const recentCommits = isGitRepo(process.cwd())
+      ? (spawnSync('git', ['log', '--oneline', '-10'], { cwd: process.cwd(), encoding: 'utf-8' }).stdout ?? '')
+      : '';
+
+    const prompt =
+      `# 故障复盘（Postmortem）— ${incidentId}\n\n` +
+      (recentCommits ? `## 近期提交记录（参考）\n\n\`\`\`\n${recentCommits}\`\`\`\n\n` : '') +
+      `## 请生成标准化的 Postmortem 报告（Google SRE 格式）：\n\n` +
+      `### 1. 事故摘要\n- 开始/结束时间\n- 影响范围（用户/功能/地区）\n- 严重程度（P0-P3）\n- 一句话根因\n\n` +
+      `### 2. 时间线\n（请描述事故经过，我来整理成时间轴格式）\n\n` +
+      `### 3. 根因分析（5 Why）\n追问 5 次 "为什么" 直到找到系统性原因\n\n` +
+      `### 4. 贡献因素\n- 技术因素\n- 流程因素\n- 人员因素\n\n` +
+      `### 5. 后续行动（附责任人 + 截止日期）\n- P0（24h内）\n- P1（1周内）\n- P2（1月内）\n\n` +
+      `### 6. 经验教训\n\n> 请描述事故经过，我来生成完整复盘报告。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ Postmortem 提示词已复制（${incidentId}）\n`);
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── decision-log ─────────────────────────────────────────────────────────────
+program
+  .command('decision-log <action> [query]')
+  .description('管理技术决策记录（.ethan/decisions/）：new | list | search <关键词>')
+  .action((action: string, query: string | undefined) => {
+    const decDir = path.join(process.cwd(), '.ethan', 'decisions');
+    if (action === 'list') {
+      if (!fs.existsSync(decDir)) { console.log('(无决策记录，运行 ethan decision-log new 创建)'); return; }
+      const files = fs.readdirSync(decDir).filter((f) => f.endsWith('.md')).sort().reverse();
+      if (files.length === 0) { console.log('(无决策记录)'); return; }
+      console.log(`\n📋 决策记录（共 ${files.length} 条）:\n`);
+      files.forEach((f) => console.log(`  ${f}`));
+      console.log('');
+    } else if (action === 'new') {
+      fs.mkdirSync(decDir, { recursive: true });
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `${date}-decision.md`;
+      const fp = path.join(decDir, filename);
+      const content =
+        `# 技术决策记录\n\n` +
+        `**日期**: ${date}\n` +
+        `**状态**: 已决策\n\n` +
+        `## 背景\n\n[描述需要做出此决策的背景]\n\n` +
+        `## 决策\n\n[描述选择了什么方案]\n\n` +
+        `## 理由\n\n[为什么选这个方案而非其他]\n\n` +
+        `## 后果\n\n[此决策带来的影响]\n`;
+      fs.writeFileSync(fp, content, 'utf-8');
+      console.log(`\n✅ 决策记录已创建：.ethan/decisions/${filename}\n`);
+    } else if (action === 'search') {
+      if (!query) { console.error('\n❌ 用法：ethan decision-log search <关键词>\n'); process.exit(1); }
+      if (!fs.existsSync(decDir)) { console.log('(无决策记录)'); return; }
+      const files = fs.readdirSync(decDir).filter((f) => f.endsWith('.md'));
+      const matched = files.filter((f) => {
+        const content = fs.readFileSync(path.join(decDir, f), 'utf-8');
+        return content.includes(query) || f.includes(query);
+      });
+      if (matched.length === 0) { console.log(`(未找到包含 "${query}" 的决策记录)`); return; }
+      console.log(`\n🔍 匹配 "${query}" 的决策记录:\n`);
+      matched.forEach((f) => console.log(`  ${f}`));
+      console.log('');
+    } else {
+      console.error(`\n❌ 未知操作: ${action}（支持: new | list | search）\n`);
+      process.exit(1);
+    }
+  });
+
+// ─── knowledge ────────────────────────────────────────────────────────────────
+program
+  .command('knowledge <action> [entry]')
+  .description('管理团队知识库（.ethan/team-knowledge/）：add | list | search <关键词>')
+  .action((action: string, entry: string | undefined) => {
+    const kbDir = path.join(process.cwd(), '.ethan', 'team-knowledge');
+    if (action === 'list') {
+      if (!fs.existsSync(kbDir)) { console.log('(无知识条目，运行 ethan knowledge add "内容" 添加)'); return; }
+      const files = fs.readdirSync(kbDir).filter((f) => f.endsWith('.md')).sort().reverse();
+      if (files.length === 0) { console.log('(无知识条目)'); return; }
+      console.log(`\n📚 知识库（共 ${files.length} 条）:\n`);
+      files.slice(0, 20).forEach((f) => console.log(`  ${f}`));
+      if (files.length > 20) console.log(`  ... 还有 ${files.length - 20} 条`);
+      console.log('');
+    } else if (action === 'add') {
+      if (!entry) { console.error('\n❌ 用法：ethan knowledge add "知识内容"\n'); process.exit(1); }
+      fs.mkdirSync(kbDir, { recursive: true });
+      const date = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `${date}-knowledge.md`;
+      const content = `# 知识条目\n\n**日期**: ${date}\n\n${entry}\n`;
+      fs.writeFileSync(path.join(kbDir, filename), content, 'utf-8');
+      console.log(`\n✅ 知识条目已保存：.ethan/team-knowledge/${filename}\n`);
+    } else if (action === 'search') {
+      if (!entry) { console.error('\n❌ 用法：ethan knowledge search <关键词>\n'); process.exit(1); }
+      if (!fs.existsSync(kbDir)) { console.log('(无知识条目)'); return; }
+      const files = fs.readdirSync(kbDir).filter((f) => f.endsWith('.md'));
+      const matched: Array<{ file: string; excerpt: string }> = [];
+      for (const f of files) {
+        const content = fs.readFileSync(path.join(kbDir, f), 'utf-8');
+        if (content.includes(entry) || f.includes(entry)) {
+          const idx = content.indexOf(entry);
+          const excerpt = content.slice(Math.max(0, idx - 30), idx + 80).replace(/\n/g, ' ');
+          matched.push({ file: f, excerpt });
+        }
+      }
+      if (matched.length === 0) { console.log(`(未找到 "${entry}")`); return; }
+      console.log(`\n🔍 匹配 "${entry}" 的知识条目:\n`);
+      matched.slice(0, 10).forEach(({ file, excerpt }) => {
+        console.log(`  📄 ${file}`);
+        console.log(`     ...${excerpt}...`);
+      });
+      console.log('');
+    } else {
+      console.error(`\n❌ 未知操作: ${action}（支持: add | list | search）\n`);
+      process.exit(1);
+    }
+  });
+
+// ─── oss ──────────────────────────────────────────────────────────────────────
+program
+  .command('oss <action>')
+  .description('开源项目工具套件：triage | release-notes | contributor-guide | health-score')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((action: string, options: { copy: boolean }) => {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    const pkg = fs.existsSync(pkgPath) ? JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) : {};
+    const projName = pkg.name ?? path.basename(process.cwd());
+
+    const prompts: Record<string, string> = {
+      triage:
+        `# 开源 Issue Triage — ${projName}\n\n` +
+        `请帮我处理开源项目 Issue 分流：\n` +
+        `1. 对 Issue 进行分类：Bug / Feature Request / Question / Documentation\n` +
+        `2. 评估优先级（P0-P3）并说明理由\n` +
+        `3. 起草回复模板（友好、专业、附后续步骤）\n` +
+        `4. 建议 Label 标签\n\n请粘贴需要处理的 Issue 内容：`,
+      'release-notes':
+        `# Release Notes 生成 — ${projName}\n\n` +
+        (isGitRepo(process.cwd())
+          ? `## 最近提交\n\n\`\`\`\n${(spawnSync('git', ['log', '--oneline', '-20'], { cwd: process.cwd(), encoding: 'utf-8' }).stdout ?? '').trim()}\n\`\`\`\n\n`
+          : '') +
+        `请基于以上提交记录，生成规范的 Release Notes：\n` +
+        `1. 按类型分组：🚀 New Features / 🐛 Bug Fixes / ⚠️ Breaking Changes / 📚 Documentation\n` +
+        `2. 语言简洁，面向用户而非开发者\n` +
+        `3. 标注 Breaking Changes 的迁移指南\n` +
+        `4. 输出 Markdown 格式`,
+      'contributor-guide':
+        `# Contributor Guide 生成 — ${projName}\n\n` +
+        `请生成 CONTRIBUTING.md 内容：\n` +
+        `1. 开发环境配置（fork → clone → install → dev）\n` +
+        `2. 代码规范（命名 / 注释 / 测试要求）\n` +
+        `3. PR 提交流程（分支命名 / commit 规范 / PR 描述模板）\n` +
+        `4. Issue 报告规范\n` +
+        `5. 社区行为准则参考`,
+      'health-score':
+        `# 开源项目健康评分 — ${projName}\n\n` +
+        `请从以下维度评估开源项目健康度（各维度 0-10 分）：\n\n` +
+        `| 维度 | 评分 | 说明 |\n|------|------|------|\n` +
+        `| 文档完整性 | | README/CONTRIBUTING/CHANGELOG |\n` +
+        `| 测试覆盖率 | | 是否有 CI + 覆盖率报告 |\n` +
+        `| Issue 响应时间 | | 最近 issue 多久被回复 |\n` +
+        `| 版本发布规律 | | 是否定期发版 |\n` +
+        `| 社区活跃度 | | Star 趋势 / PR 数量 |\n` +
+        `| 依赖安全 | | 是否有高危 CVE |\n\n` +
+        `请基于仓库实际情况给出评分和改进建议。`,
+    };
+
+    const prompt = prompts[action];
+    if (!prompt) {
+      console.error(`\n❌ 未知操作: ${action}（支持: triage | release-notes | contributor-guide | health-score）\n`);
+      process.exit(1);
+    }
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ OSS ${action} 提示词已复制到剪贴板\n`);
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── prompt-lib ───────────────────────────────────────────────────────────────
+program
+  .command('prompt-lib <action> [name]')
+  .description('管理 Prompt 资产库（.ethan/prompts/）：add | list | search | show <名称>')
+  .option('--content <content>', 'Prompt 内容（add 时使用）', '')
+  .action((action: string, name: string | undefined, options: { content: string }) => {
+    const promptDir = path.join(process.cwd(), '.ethan', 'prompts');
+    if (action === 'list') {
+      if (!fs.existsSync(promptDir)) { console.log('(无 Prompt，运行 ethan prompt-lib add <名称> --content "内容" 添加)'); return; }
+      const files = fs.readdirSync(promptDir).filter((f) => f.endsWith('.md')).sort();
+      if (files.length === 0) { console.log('(无 Prompt)'); return; }
+      console.log(`\n📝 Prompt 库（共 ${files.length} 条）:\n`);
+      files.forEach((f) => console.log(`  ${f.replace('.md', '')}`));
+      console.log('');
+    } else if (action === 'add') {
+      if (!name) { console.error('\n❌ 用法：ethan prompt-lib add <名称> --content "Prompt内容"\n'); process.exit(1); }
+      if (!options.content) { console.error('\n❌ 缺少 --content 参数\n'); process.exit(1); }
+      fs.mkdirSync(promptDir, { recursive: true });
+      const filename = `${name.replace(/[/\\:*?"<>|]/g, '-')}.md`;
+      const content = `# ${name}\n\n**创建时间**: ${new Date().toISOString().split('T')[0]}\n\n## Prompt\n\n${options.content}\n`;
+      fs.writeFileSync(path.join(promptDir, filename), content, 'utf-8');
+      console.log(`\n✅ Prompt 已保存：.ethan/prompts/${filename}\n`);
+    } else if (action === 'show') {
+      if (!name) { console.error('\n❌ 用法：ethan prompt-lib show <名称>\n'); process.exit(1); }
+      if (!fs.existsSync(promptDir)) { console.error('\n❌ Prompt 库为空\n'); process.exit(1); }
+      const filename = `${name}.md`;
+      const fp = path.join(promptDir, filename);
+      if (!fs.existsSync(fp)) { console.error(`\n❌ 未找到 Prompt: ${name}\n`); process.exit(1); }
+      console.log(fs.readFileSync(fp, 'utf-8'));
+    } else if (action === 'search') {
+      if (!name) { console.error('\n❌ 用法：ethan prompt-lib search <关键词>\n'); process.exit(1); }
+      if (!fs.existsSync(promptDir)) { console.log('(Prompt 库为空)'); return; }
+      const files = fs.readdirSync(promptDir).filter((f) => f.endsWith('.md'));
+      const matched = files.filter((f) => {
+        const c = fs.readFileSync(path.join(promptDir, f), 'utf-8');
+        return c.includes(name) || f.includes(name);
+      });
+      if (matched.length === 0) { console.log(`(未找到 "${name}")`); return; }
+      console.log(`\n🔍 匹配的 Prompt:\n`);
+      matched.forEach((f) => console.log(`  ${f.replace('.md', '')}`));
+      console.log('');
+    } else {
+      console.error(`\n❌ 未知操作: ${action}（支持: add | list | search | show）\n`);
+      process.exit(1);
+    }
+  });
+
+// ─── scaffold ─────────────────────────────────────────────────────────────────
+program
+  .command('scaffold')
+  .description('黄金路径脚手架：生成项目模板结构提示词')
+  .option('--template <name>', '模板名称：react-ts | node-api | cli-tool | monorepo | library', '')
+  .option('--list', '列出所有可用模板', false)
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { template: string; list: boolean; copy: boolean }) => {
+    const templates: Record<string, string> = {
+      'react-ts':
+        `React + TypeScript + Vite + Vitest + Tailwind CSS\n` +
+        `目录：src/components/ src/hooks/ src/pages/ src/store/ src/types/ src/utils/`,
+      'node-api':
+        `Node.js + TypeScript + Express/Fastify + Prisma + Jest\n` +
+        `目录：src/routes/ src/services/ src/models/ src/middleware/ src/utils/ tests/`,
+      'cli-tool':
+        `Node.js CLI + TypeScript + Commander + Vitest\n` +
+        `目录：src/commands/ src/utils/ src/types/ tests/ dist/`,
+      'monorepo':
+        `pnpm Monorepo + Turborepo + TypeScript\n` +
+        `目录：packages/ui/ packages/core/ packages/cli/ apps/web/ apps/docs/`,
+      'library':
+        `TypeScript Library + Vitest + tsup + Changesets\n` +
+        `目录：src/ tests/ examples/ dist/`,
+    };
+
+    if (options.list) {
+      console.log('\n📦 可用脚手架模板:\n');
+      Object.entries(templates).forEach(([name, desc]) => {
+        console.log(`  ${name.padEnd(12)} ${desc.split('\n')[0]}`);
+      });
+      console.log('\n用法：ethan scaffold --template react-ts\n');
+      return;
+    }
+
+    const tmpl = options.template || 'react-ts';
+    const desc = templates[tmpl] ?? `自定义模板: ${tmpl}`;
+    const prompt =
+      `# 项目脚手架：${tmpl}\n\n` +
+      `**模板**: ${desc}\n\n` +
+      `## 请生成完整的项目初始结构：\n\n` +
+      `1. **目录结构**（tree 格式，含说明注释）\n` +
+      `2. **核心配置文件**：package.json / tsconfig.json / vite.config.ts（或对应工具）\n` +
+      `3. **代码规范配置**：ESLint + Prettier + .editorconfig\n` +
+      `4. **Git 配置**：.gitignore / .husky / commitlint\n` +
+      `5. **CI 配置**：GitHub Actions（lint + test + build）\n` +
+      `6. **入口文件**：最小可运行的 index.ts\n` +
+      `7. **README 模板**：含徽章、快速启动、贡献指南链接\n\n` +
+      `> 基于 2025 年最佳实践，使用最新稳定版本的依赖。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ 脚手架提示词已复制（${tmpl}）\n`);
+    } else {
+      console.log(prompt);
+    }
+  });
+
+// ─── benchmark ────────────────────────────────────────────────────────────────
+program
+  .command('benchmark')
+  .description('生成 Skill 质量基准报告')
+  .option('--skill <id>', '指定 Skill ID 分析', '')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action(async (options: { skill: string; copy: boolean }) => {
+    const statsPath = path.join(os.homedir(), '.ethan-stats.json');
+    let statsData: Record<string, unknown> = {};
+    if (fs.existsSync(statsPath)) {
+      try { statsData = JSON.parse(fs.readFileSync(statsPath, 'utf-8')); } catch { /* ignore */ }
+    }
+
+    const skills = await getActiveSkills();
+    const ratings = (statsData.ratings ?? {}) as Record<string, number[]>;
+    const usage = (statsData.usage ?? {}) as Record<string, number>;
+
+    const targetSkills = options.skill
+      ? skills.filter((s) => s.id === options.skill)
+      : skills;
+
+    const rows = targetSkills.map((s) => {
+      const r = ratings[s.id] ?? [];
+      const avg = r.length ? (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) : 'N/A';
+      const uses = usage[s.id] ?? 0;
+      return `| ${s.id.padEnd(25)} | ${String(uses).padStart(5)} | ${avg.toString().padStart(5)} | ${r.length} |`;
+    });
+
+    const report =
+      `# Skill 质量基准报告\n\n` +
+      `| Skill ID                  | 使用次数 | 平均评分 | 评分数 |\n` +
+      `|---------------------------|---------|---------|--------|\n` +
+      rows.join('\n') + '\n\n' +
+      `> 数据来源：~/.ethan-stats.json`;
+
+    if (options.copy !== false) {
+      copyToClipboard(report);
+      console.log('\n✅ 基准报告已复制到剪贴板\n');
+    } else {
+      console.log(report);
+    }
+  });
+
+// ─── sync ─────────────────────────────────────────────────────────────────────
+program
+  .command('sync <action>')
+  .description('配置同步：push（推送到 git）| pull（从 git 拉取）')
+  .action((action: string) => {
+    const syncBranch = 'ethan-config';
+    const ethanDir = path.join(process.cwd(), '.ethan');
+    if (!isGitRepo(process.cwd())) {
+      console.error('\n❌ 当前目录不是 git 仓库\n');
+      process.exit(1);
+    }
+    if (action === 'push') {
+      // Add .ethan/ to git and push to a special branch
+      console.log(`\n📤 同步配置到 git 分支 ${syncBranch}...\n`);
+      const r1 = spawnSync('git', ['add', '.ethan/'], { cwd: process.cwd(), encoding: 'utf-8' });
+      if (r1.status !== 0) { console.error('git add 失败'); process.exit(1); }
+      spawnSync('git', ['commit', '-m', 'chore: sync ethan config', '--allow-empty'], {
+        cwd: process.cwd(), encoding: 'utf-8',
+      });
+      console.log('✅ 已提交 .ethan/ 配置（注意：需手动 git push）\n');
+    } else if (action === 'pull') {
+      console.log(`\n📥 从 git 拉取配置...\n`);
+      const r = spawnSync('git', ['pull', '--no-rebase'], { cwd: process.cwd(), encoding: 'utf-8' });
+      console.log(r.stdout ?? '');
+      if (r.status !== 0) { console.error(r.stderr ?? 'pull 失败'); process.exit(1); }
+      if (fs.existsSync(ethanDir)) {
+        console.log('✅ 配置已同步\n');
+      } else {
+        console.log('ℹ️  .ethan/ 目录不存在，可能尚未有配置\n');
+      }
+    } else {
+      console.error(`\n❌ 未知操作: ${action}（支持: push | pull）\n`);
+      process.exit(1);
+    }
+  });
+
+// ─── compliance ───────────────────────────────────────────────────────────────
+program
+  .command('compliance')
+  .description('生成合规证据收集提示词（soc2 / gdpr / iso27001）')
+  .option('--standard <std>', '合规标准：soc2 | gdpr | iso27001', 'soc2')
+  .option('--no-copy', '不复制到剪贴板', false)
+  .action((options: { standard: string; copy: boolean }) => {
+    const standards: Record<string, { name: string; controls: string[] }> = {
+      soc2: {
+        name: 'SOC 2 Type II',
+        controls: [
+          '**CC6.1** 逻辑访问控制：MFA、最小权限原则、访问审查记录',
+          '**CC6.6** 网络安全控制：防火墙规则、TLS 加密、入侵检测',
+          '**CC7.1** 系统监控：日志集中管理、异常告警、保留 90 天',
+          '**CC7.2** 安全事件响应：Incident Response Plan、演练记录',
+          '**A1.1** 可用性：SLA 目标、备份策略、RTO/RPO 定义',
+          '**C1.1** 保密性：数据分类、加密传输存储、访问控制',
+        ],
+      },
+      gdpr: {
+        name: 'GDPR',
+        controls: [
+          '**Art. 13/14** 隐私政策：数据收集目的、保留期限、用户权利',
+          '**Art. 17** 删除权：用户数据删除接口及执行证明',
+          '**Art. 25** 隐私设计：数据最小化、假名化处理',
+          '**Art. 30** 处理活动记录（ROPA）',
+          '**Art. 32** 安全措施：加密、访问控制、漏洞管理',
+          '**Art. 33** 数据泄露通知流程：72 小时内报告机制',
+        ],
+      },
+      iso27001: {
+        name: 'ISO 27001:2022',
+        controls: [
+          '**A.5** 信息安全策略：书面安全政策、年度审查',
+          '**A.8** 资产管理：信息资产清单、数据分类',
+          '**A.9** 访问控制：用户管理流程、定期权限审查',
+          '**A.12** 运营安全：变更管理、恶意代码防护、日志监控',
+          '**A.16** 信息安全事件管理：事件响应程序',
+          '**A.17** 业务连续性：BCP/DRP 文档及演练',
+        ],
+      },
+    };
+
+    const std = standards[options.standard] ?? standards.soc2;
+    const controls = std.controls.map((c) => `- ${c}`).join('\n');
+
+    const prompt =
+      `# 合规证据收集 — ${std.name}\n\n` +
+      `## 需要收集的证据清单\n\n${controls}\n\n` +
+      `## 证据收集任务\n\n` +
+      `请为以上每项控制措施：\n\n` +
+      `1. **识别现有证据**：系统中已有哪些文档/配置可作为证据\n` +
+      `2. **差距分析**：缺少什么证据（❌ 表示缺失）\n` +
+      `3. **证据生成建议**：如何创建缺失证据（文档模板/配置截图/脚本）\n` +
+      `4. **优先级排序**：按审计风险从高到低排列\n\n` +
+      `> 请基于技术实现现状（代码库、基础设施、流程文档）进行分析。`;
+
+    if (options.copy !== false) {
+      copyToClipboard(prompt);
+      console.log(`\n✅ ${std.name} 合规证据提示词已复制到剪贴板\n`);
+    } else {
+      console.log(prompt);
+    }
   });
 
 program.parse(process.argv);

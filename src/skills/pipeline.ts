@@ -73,6 +73,53 @@ export const PIPELINES: PipelineDefinition[] = [
       'implementation',
     ],
   },
+  {
+    id: 'spec-workflow',
+    name: 'Spec 驱动开发工作流',
+    description: '基于 OpenSpec 的规范驱动开发流程：变更提案 → 方案设计 → 任务拆解 → 执行实现 → 意图审查',
+    skillIds: [
+      'spec-proposal',
+      'solution-design',
+      'task-breakdown',
+      'implementation',
+      'spec-review',
+    ],
+  },
+  {
+    id: 'bugfix-workflow',
+    name: 'Bug 修复工作流',
+    description: '规范化 Bug 修复流程：故障排查 → 变更提案 → 执行实现 → 单元测试 → 意图审查',
+    skillIds: [
+      'debug',
+      'spec-proposal',
+      'implementation',
+      'unit-testing',
+      'spec-review',
+    ],
+  },
+  {
+    id: 'security-audit-workflow',
+    name: '安全审计工作流',
+    description: '端到端安全审计：威胁建模 → 安全审查 → 变更提案 → 执行实现 → 意图审查',
+    skillIds: [
+      'threat-model',
+      'security-review',
+      'spec-proposal',
+      'implementation',
+      'spec-review',
+    ],
+  },
+  {
+    id: 'open-source-release',
+    name: '开源发布工作流',
+    description: '开源项目规范发布：技术调研 → 代码审查 → 单元测试 → 部署上线',
+    skillIds: [
+      'tech-research',
+      'code-review',
+      'unit-testing',
+      'deployment',
+    ],
+  },
 ];
 
 /**

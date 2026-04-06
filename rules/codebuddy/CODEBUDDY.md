@@ -1,6 +1,6 @@
-# Ethan v1.8.0
+# Ethan v1.12.0
 
-Ethan - Your AI Workflow Assistant | Generated: 2026-03-31T16:55:43.257Z
+Ethan - Your AI Workflow Assistant | Generated: 2026-04-06T16:19:27.840Z
 
 ## 重要：Skill 激活规则
 
@@ -3732,3 +3732,3148 @@ Ethan - Your AI Workflow Assistant | Generated: 2026-03-31T16:55:43.257Z
 - TypeScript 的类型系统让很多模式更安全，善用 interface + generic
 - 函数式替代方案通常比类更简洁：Strategy → 高阶函数，Observer → EventEmitter
 - 重构引入模式时，必须有测试覆盖，见 refactoring Skill
+
+---
+
+### 25. Spec Proposal
+
+**触发词**：spec proposal / openspec proposal / 生成提案 / 变更提案
+
+**目标**：遵循 OpenSpec 规范，在编码前生成完整变更提案包（proposal + design + tasks + spec delta）
+
+**步骤**：
+
+1. **扫描现有 Spec 上下文**
+   查阅 openspec/specs/ 目录，了解已有规范：
+   
+   - 列出所有 capability 目录及其 spec.md 摘要
+   - 识别本次变更涉及的 capability（可能跨多个）
+   - 了解现有需求（Requirements）和场景（Scenarios）边界
+   
+   **如无 openspec 目录**：询问用户需要创建哪些 capability 的 spec，用 `ethan spec init [capability]` 初始化。
+   
+   **输出**：涉及的 spec 文件列表 + 关键现有需求摘要
+
+2. **生成 proposal.md（变更提案）**
+   生成 openspec/changes/[change-id]/proposal.md：
+   
+   ```markdown
+   # Change Proposal: [变更标题]
+   
+   > Change ID: [yyyymmdd-xxxx]
+   
+   ## 变更描述
+   [1-3 句话说明这个变更要做什么]
+   
+   ## 动机与背景
+   [为什么需要这个变更，解决什么业务问题]
+   
+   ## 影响范围
+   - 涉及的 Capability：[列表]
+   - 影响的用户角色：[列表]
+   - 影响的现有功能：[列表]
+   
+   ## 非功能性考量
+   - 性能影响：[说明或无]
+   - 安全考量：[说明或无]
+   - 向后兼容性：[说明]
+   ```
+
+3. **生成 design.md（技术方案）**
+   生成 openspec/changes/[change-id]/design.md：
+   
+   ```markdown
+   # Technical Design: [变更标题]
+   
+   ## 架构决策
+   [关键架构选择及原因，如技术选型、模式选择]
+   
+   ## 接口变更
+   [新增/修改的 API 端点、组件 Props、函数签名]
+   
+   ## 数据模型变更
+   [新增/修改的数据库表、数据结构]
+   
+   ## 实现方案
+   [核心实现思路，关键算法或流程]
+   
+   ## 风险与缓解措施
+   [技术风险点 → 对应缓解策略]
+   ```
+
+4. **生成 tasks.md（实现任务）**
+   生成 openspec/changes/[change-id]/tasks.md，按阶段拆分原子任务：
+   
+   ```markdown
+   # Implementation Tasks: [变更标题]
+   
+   ## Phase 1: 基础准备
+   - [ ] Task 1.1: [任务描述] | 估算：S/M/L
+   
+   ## Phase 2: 核心实现
+   - [ ] Task 2.1: [任务描述] | 估算：S/M/L
+   
+   ## Phase 3: 测试与验收
+   - [ ] Task 3.1: 编写单元测试，覆盖所有场景 AC
+   - [ ] Task 3.2: Spec Review — 验证代码与 spec delta 对齐
+   
+   ## 总估算
+   S: [n] | M: [n] | L: [n]
+   ```
+   
+   每个任务应足够原子，可独立完成和验证。
+
+5. **生成 Spec Delta（需求变更）**
+   为每个涉及的 capability 生成需求变更文件（openspec/changes/[id]/specs/[capability].md）：
+   
+   ```markdown
+   # Spec Delta: [capability]
+   
+   > 变更描述：[本次变更对此 capability 的影响]
+   
+   ## 新增需求
+   
+   ### REQ-XXX: [新需求名称]
+   [需求描述]
+   
+   ## 修改需求
+   
+   **变更前：**
+   [原需求内容]
+   
+   **变更后：**
+   [新需求内容]
+   
+   ## 新增场景
+   
+   GIVEN [前置条件]
+   WHEN [用户操作]
+   THEN [预期结果]
+   ```
+   
+   **原则**：Spec delta 只记录"变化"，不重复现有 spec 的未变更内容。
+
+**输出格式**：OpenSpec 变更提案包（保存到 openspec/changes/[change-id]/）：
+- proposal.md（变更提案）
+- design.md（技术方案）
+- tasks.md（分阶段任务）
+- specs/[capability].md（spec delta，每个涉及的 capability 一个文件）
+
+**注意事项**：
+- 提案应在编写任何代码之前生成，让团队先对变更意图达成共识
+- Spec delta 只记录"变化"，不重复现有 spec 内容
+- tasks.md 的每个任务应足够原子，可独立完成和验证
+- 如项目尚无 openspec 目录，先运行 ethan spec init [capability] 初始化
+
+---
+
+### 26. Spec Review（意图审查）
+
+**触发词**：spec review / intent review / 意图审查 / openspec review
+
+**目标**：基于 OpenSpec，对比 spec delta 与代码实现，执行意图级 Review（而非逐行代码审查）
+
+**步骤**：
+
+1. **加载 Spec 上下文**
+   读取本次变更相关的 OpenSpec 文档：
+   
+   1. 定位 openspec/changes/[change-id]/ 目录（取最新的或由用户指定）
+   2. 读取 proposal.md（了解变更目标和意图）
+   3. 读取 specs/[capability].md（逐个 spec delta）
+   4. 读取代码 diff（git diff HEAD 或 PR diff）
+   
+   **目标**：建立"期望变更"（spec delta）和"实际变更"（代码）的对照关系。
+   
+   如无 change proposal，说明本次改动未经过 spec 规范流程，建议先运行 `ethan spec proposal`。
+
+2. **意图对齐检查**
+   逐条检查每个 spec delta 条目是否在代码中得到正确实现：
+   
+   **对齐矩阵模板**
+   
+   | Spec 需求/场景 | 对应代码位置 | 对齐状态 | 说明 |
+   |--------------|------------|---------|------|
+   | REQ-XXX: [需求名] | [文件:行号] | ✅ | 完全实现 |
+   | Scenario: [场景名] | [文件:行号] | ⚠️ | 边界条件缺失 |
+   | REQ-YYY: [需求名] | — | ❌ | 未找到实现 |
+   | [代码功能] | [文件:行号] | 🔄 | 超出 spec 范围 |
+   
+   **状态说明**
+   - ✅ 完全实现：代码与 spec 意图一致，GIVEN/WHEN/THEN 均覆盖
+   - ⚠️ 部分实现：核心逻辑存在但细节缺失（如缺少异常处理）
+   - ❌ 未实现：spec 要求的功能在代码中找不到
+   - 🔄 超范围：代码实现了 spec 未定义的内容
+
+3. **偏差识别与分级**
+   识别三类关键偏差：
+   
+   **🔴 意图偏差（Critical）—— 必须修复才能合并**
+   代码实现与 spec 意图相反或严重不符，例如：
+   - 场景要求"3次失败后锁定账号"，实际实现了"无限重试"
+   - 权限检查逻辑与 GIVEN/WHEN/THEN 定义的场景不匹配
+   - 数据模型与 spec delta 中定义的结构不一致
+   
+   **🟡 遗漏需求（Warning）—— 强烈建议补充**
+   spec 中定义的场景或需求在代码中未体现：
+   - 异常流程未处理（spec 中有 THEN [错误情况] 但代码未实现）
+   - 边界条件未覆盖（如空值、超长输入、并发）
+   - 非功能性需求未落实（如性能、安全要求）
+   
+   **💡 超范围实现（Info）—— 确认并按需更新 spec**
+   代码实现了 spec 没有定义的功能：
+   - 可能是合理的技术实现细节（不需要更新 spec）
+   - 也可能是功能范围蔓延（需补充 spec delta 或回退）
+
+4. **输出 Spec Review 报告**
+   生成结构化的意图审查报告：
+   
+   ```markdown
+   # Spec Review Report
+   
+   ## 变更提案摘要
+   - Change ID: [id]
+   - 变更目标：[proposal.md 核心摘要]
+   - 涉及 Capability：[列表]
+   
+   ## 意图对齐矩阵
+   [对照表格]
+   
+   ## 关键发现
+   
+   ### 🔴 意图偏差（[n] 项）
+   1. **[偏差描述]**
+      - Spec 要求：[spec 原文]
+      - 实际实现：[代码位置] [实际行为]
+      - 建议：[修复方向]
+   
+   ### 🟡 遗漏需求（[n] 项）
+   [列表]
+   
+   ### 💡 超范围实现（[n] 项）
+   [列表]
+   
+   ## 审查结论
+   - [ ] 意图完全对齐，可以合并
+   - [ ] 需要修复意图偏差后重新审查
+   - [ ] 需要更新 spec（超范围实现合理）
+   ```
+
+**输出格式**：Spec Review 报告：意图对齐矩阵 + 三级偏差列表（🔴意图偏差 / 🟡遗漏需求 / 💡超范围）+ 审查结论
+
+**注意事项**：
+- Spec Review 不替代 Code Review，两者互补：Spec Review 审意图，Code Review 审实现质量
+- 如果没有对应的 spec delta，说明该改动未经过规范的 spec 流程，需补充
+- 超范围实现不一定是问题，但必须显式确认并按需更新 spec
+- GIVEN/WHEN/THEN 场景是最好的对齐锚点，每个场景都应在代码中有对应的实现
+
+---
+
+### 27. 技术债追踪
+
+**触发词**：技术债 / tech debt / technical debt / 技术债追踪
+
+**目标**：识别、量化、排序技术债，生成偿还路线图与预防机制
+
+**步骤**：
+
+1. **技术债识别与分类**
+   扫描代码库，从以下维度识别技术债：
+   
+   **四大技术债类型**
+   
+   | 类型 | 检测手段 | 典型表现 |
+   |------|---------|---------|
+   | **代码债** | TODO/FIXME/HACK 注释统计 | 注释标记超过 50 个/千行 |
+   | **设计债** | 圈复杂度 > 10，类长度 > 500 行 | 上帝类、面条代码、深层继承 |
+   | **测试债** | 覆盖率 < 60%，测试缺失模块 | 核心模块无测试，回归靠手工 |
+   | **依赖债** | 过时依赖、已弃用 API 调用 | 主版本落后 2+ 个版本 |
+   
+   **识别命令参考**
+   ```bash
+   # 统计 TODO/FIXME
+   grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.ts" | wc -l
+   
+   # 查找超长文件
+   find src -name "*.ts" | xargs wc -l | sort -rn | head -20
+   
+   # 重复代码检测（需安装 jscpd）
+   npx jscpd src/ --min-lines 5 --reporters json
+   ```
+   
+   **输出**：技术债清单（分类 + 位置 + 初步评估）
+
+2. **债务量化评估**
+   用"影响度 × 修复成本"矩阵评估每项技术债的优先级：
+   
+   **评分维度**
+   
+   | 维度 | 1分（低） | 3分（中） | 5分（高） |
+   |------|---------|---------|---------|
+   | **业务影响** | 边缘功能 | 常用功能 | 核心链路 |
+   | **出错频率** | 极少触发 | 偶尔出现 | 频繁发生 |
+   | **修复成本** | < 0.5天 | 0.5~2天 | > 2天 |
+   | **扩散风险** | 独立模块 | 少量依赖 | 多处依赖 |
+   
+   **优先级 = 影响度（业务影响 × 出错频率） ÷ 修复成本**
+   
+   **T恤 Size 对照**
+   - 🔴 **Critical（>8分）**：阻碍新功能开发，必须本 Sprint 处理
+   - 🟠 **High（5-8分）**：影响团队效率，下个 Sprint 安排
+   - 🟡 **Medium（3-5分）**：纳入季度技术改进计划
+   - 🟢 **Low（<3分）**：有时间再处理，记录即可
+   
+   **输出**：技术债优先级矩阵（标注 T恤 Size）
+
+3. **偿还路线图**
+   按"高影响、低成本"优先原则，制定可落地的偿还计划：
+   
+   **Sprint 规划原则**
+   - 每个 Sprint 分配 **15-20% 时间**用于技术债偿还（债务预算）
+   - Critical 债务：独立 Story，本 Sprint 必须完成
+   - High 债务：与新功能并行，2 个 Sprint 内完成
+   - Medium 债务：季度 Hackathon 集中处理
+   
+   **路线图模板**
+   ```
+   Sprint N（当前）
+     🔴 [Critical] 拆分 UserService 上帝类 → 3个子服务    2天
+     🔴 [Critical] 修复登录模块 XXX 标记的并发 Bug         1天
+   
+   Sprint N+1
+     🟠 [High] 提升 Payment 模块测试覆盖率至 80%          2天
+     🟠 [High] 替换废弃的 axios v0.21 → v1.x              1天
+   
+   Q+1 季度计划
+     🟡 [Medium] 重构订单模块（圈复杂度>15的5个函数）      5天
+     🟡 [Medium] 清理 87 个 TODO 注释并创建对应 Issue     3天
+   ```
+   
+   **输出**：按 Sprint 排期的技术债偿还路线图
+
+4. **预防机制**
+   建立长效机制，让技术债不再悄悄累积：
+   
+   **自动化门禁（CI/CD 集成）**
+   ```yaml
+   # .github/workflows/debt-check.yml
+   - name: 技术债扫描
+     run: |
+       # TODO 数量检查
+       TODO_COUNT=$(grep -rn "TODO\|FIXME" src/ | wc -l)
+       if [ $TODO_COUNT -gt $TODO_THRESHOLD ]; then
+         echo "❌ TODO 数量超过阈值: $TODO_COUNT > $TODO_THRESHOLD"
+         exit 1
+       fi
+       # 圈复杂度检查（使用 complexity-report 或 ESLint）
+       npx eslint src/ --rule '{"complexity": ["error", 10]}'
+   ```
+   
+   **团队规范**
+   - **Boy Scout 原则**：离开时让代码比你来时更干净（每次 PR 消灭 1 个技术债）
+   - **TODO 转 Issue**：所有 TODO 必须关联 GitHub Issue，不得孤立存在
+   - **债务预算制度**：每个 Sprint 强制预留 15% 时间偿还债务
+   - **月度债务评审**：每月 Review 技术债清单，更新优先级
+   
+   **技术债仪表盘指标**
+   - TODO/FIXME 总数趋势（目标：每月下降 10%）
+   - 平均圈复杂度（目标：< 8）
+   - 测试覆盖率（目标：> 80%）
+   - 依赖过时率（目标：0 个 Critical 漏洞）
+   
+   **输出**：CI 门禁配置 + 团队规范文档 + 仪表盘指标定义
+
+**输出格式**：技术债地图（分级清单）+ 优先级矩阵（影响×成本）+ Sprint 偿还路线图 + CI 门禁配置 + 预防规范
+
+**注意事项**：
+- 技术债不是"坏代码"，是在特定时间压力下做出的有意识权衡，关键是要记录并计划偿还
+- 建议在项目初期就建立债务预算制度（15-20% Sprint 时间），而不是等到债务失控再处理
+- 优先处理"高影响低成本"的债务，避免在低价值债务上耗费资源
+- 技术债清单应纳入项目文档，让所有成员可见，避免只有架构师知道
+
+---
+
+### 28. API Mock 服务
+
+**触发词**：api mock / mock service / mock 服务 / 接口 mock
+
+**目标**：根据接口定义生成 MSW/JSON Server Mock 配置，支持动态数据与边界场景模拟
+
+**步骤**：
+
+1. **接口分析与 Mock 范围确定**
+   分析需要 Mock 的接口，建立清单：
+   
+   **接口信息收集**
+   - OpenAPI/Swagger 文档路径（如 `api/swagger.json`）
+   - 手工接口描述（方法、路径、请求/响应结构）
+   - 需要模拟的特殊场景（401/403/500/超时/慢响应）
+   
+   **Mock 范围分类**
+   ```
+   📋 待 Mock 接口清单
+   ├── 认证接口
+   │   ├── POST /api/auth/login        ← 成功 / 密码错误 / 账号锁定
+   │   └── POST /api/auth/refresh      ← 成功 / token 过期
+   ├── 用户接口
+   │   ├── GET  /api/users             ← 列表 / 空列表 / 分页
+   │   └── GET  /api/users/:id         ← 成功 / 404
+   └── 业务接口
+       ├── POST /api/orders            ← 成功 / 库存不足 / 支付失败
+       └── GET  /api/orders?status=... ← 各状态过滤
+   ```
+   
+   **输出**：接口 Mock 清单（含边界场景枚举）
+
+2. **Mock 方案选型**
+   根据项目特点选择最合适的 Mock 方案：
+   
+   **选型矩阵**
+   
+   | 方案 | 适用场景 | 优点 | 缺点 |
+   |------|---------|------|------|
+   | **MSW（推荐）** | React/Vue 前端项目 | 拦截真实网络请求，零侵入，支持 Jest/Vitest | 需要 Service Worker |
+   | **JSON Server** | REST API 快速原型 | 零代码，自动 CRUD | 功能有限，不支持复杂逻辑 |
+   | **Mirage.js** | Ember/复杂 SPA | 内置数据库，关系模型支持 | 包较大，配置复杂 |
+   | **Nock** | Node.js 单元测试 | 精确控制 HTTP 请求 | 仅限 Node 环境 |
+   
+   **推荐组合**：
+   - 开发阶段：**MSW**（浏览器端拦截）
+   - 单元测试：**MSW + @mswjs/data**（内存数据库）
+   - 快速原型：**JSON Server**（5分钟启动）
+   
+   **输出**：选型决策 + 安装命令
+
+3. **MSW handlers 生成**
+   生成 MSW（Mock Service Worker）拦截处理器：
+   
+   **安装**
+   ```bash
+   npm install msw --save-dev
+   npx msw init public/ --save
+   ```
+   
+   **handlers.ts 模板**
+   ```typescript
+   // src/mocks/handlers.ts
+   import { http, HttpResponse, delay } from 'msw';
+   import { faker } from '@faker-js/faker';
+   
+   export const handlers = [
+     // ─── 认证接口 ──────────────────────────────────────
+     http.post('/api/auth/login', async ({ request }) => {
+       const { email, password } = await request.json() as any;
+   
+       // 模拟特殊场景
+       if (password === 'wrong') {
+         return HttpResponse.json(
+           { code: 401, message: '密码错误' },
+           { status: 401 }
+         );
+       }
+       if (email === 'locked@test.com') {
+         return HttpResponse.json(
+           { code: 423, message: '账号已锁定，请联系管理员' },
+           { status: 423 }
+         );
+       }
+   
+       // 正常响应
+       return HttpResponse.json({
+         token: faker.string.uuid(),
+         user: { id: faker.string.uuid(), email, name: faker.person.fullName() },
+       });
+     }),
+   
+     // ─── 用户列表（分页）──────────────────────────────
+     http.get('/api/users', ({ request }) => {
+       const url = new URL(request.url);
+       const page = Number(url.searchParams.get('page') ?? 1);
+       const pageSize = Number(url.searchParams.get('pageSize') ?? 10);
+   
+       const total = 87;
+       const items = Array.from({ length: Math.min(pageSize, total - (page - 1) * pageSize) }, () => ({
+         id: faker.string.uuid(),
+         name: faker.person.fullName(),
+         email: faker.internet.email(),
+         createdAt: faker.date.past().toISOString(),
+       }));
+   
+       return HttpResponse.json({ items, total, page, pageSize });
+     }),
+   
+     // ─── 慢响应模拟 ────────────────────────────────────
+     http.get('/api/slow-endpoint', async () => {
+       await delay(3000); // 模拟 3 秒延迟
+       return HttpResponse.json({ data: 'slow response' });
+     }),
+   
+     // ─── 网络错误模拟 ──────────────────────────────────
+     http.get('/api/network-error', () => {
+       return HttpResponse.error(); // 模拟网络断开
+     }),
+   ];
+   ```
+   
+   **browser.ts（浏览器初始化）**
+   ```typescript
+   // src/mocks/browser.ts
+   import { setupWorker } from 'msw/browser';
+   import { handlers } from './handlers';
+   export const worker = setupWorker(...handlers);
+   ```
+   
+   **server.ts（Node.js/测试环境）**
+   ```typescript
+   // src/mocks/server.ts
+   import { setupServer } from 'msw/node';
+   import { handlers } from './handlers';
+   export const server = setupServer(...handlers);
+   ```
+   
+   **输出**：完整 handlers.ts + browser.ts + server.ts
+
+4. **JSON Server 配置**
+   生成 JSON Server 快速 REST Mock 配置：
+   
+   **安装与启动**
+   ```bash
+   npm install json-server --save-dev
+   # 启动：json-server --watch db.json --port 3001 --routes routes.json
+   ```
+   
+   **db.json（数据库）**
+   ```json
+   {
+     "users": [
+       { "id": "1", "name": "张三", "email": "zhang@test.com", "role": "admin" },
+       { "id": "2", "name": "李四", "email": "li@test.com", "role": "user" }
+     ],
+     "orders": [
+       { "id": "101", "userId": "1", "status": "pending", "amount": 299.00, "createdAt": "2024-01-15" },
+       { "id": "102", "userId": "2", "status": "completed", "amount": 599.00, "createdAt": "2024-01-16" }
+     ],
+     "products": [
+       { "id": "P001", "name": "商品A", "price": 99.00, "stock": 100 }
+     ]
+   }
+   ```
+   
+   **routes.json（路由重写）**
+   ```json
+   {
+     "/api/*": "/$1",
+     "/api/v1/*": "/$1",
+     "/api/users/:id/orders": "/orders?userId=:id"
+   }
+   ```
+   
+   **package.json 脚本**
+   ```json
+   {
+     "scripts": {
+       "mock": "json-server --watch src/mocks/db.json --port 3001 --routes src/mocks/routes.json",
+       "dev:mock": "concurrently \"npm run mock\" \"npm run dev\""
+     }
+   }
+   ```
+   
+   **输出**：db.json + routes.json + npm 脚本
+
+5. **动态数据与边界场景策略**
+   用 faker.js 生成真实感数据，覆盖各类边界场景：
+   
+   **faker.js 常用生成器速查**
+   ```typescript
+   import { faker } from '@faker-js/faker/locale/zh_CN'; // 中文数据
+   
+   // 个人信息
+   faker.person.fullName()          // 王小明
+   faker.internet.email()           // user@example.com
+   faker.phone.number()             // 138-1234-5678
+   faker.date.birthdate()           // 生日
+   
+   // 地址
+   faker.location.city()            // 上海
+   faker.location.streetAddress()   // 延安路 123 号
+   
+   // 业务数据
+   faker.string.uuid()              // UUID
+   faker.number.int({ min:1, max:100 })  // 随机整数
+   faker.helpers.arrayElement(['pending', 'active', 'closed'])  // 随机枚举
+   faker.helpers.multiple(() => faker.person.fullName(), { count: 10 })  // 批量生成
+   ```
+   
+   **边界场景 Checklist**
+   - [ ] 空列表（返回 `{ items: [], total: 0 }`）
+   - [ ] 单条数据（边界分页）
+   - [ ] 超长字符串（名称 > 100 字符）
+   - [ ] 特殊字符（`<script>`、SQL 注入字符串）
+   - [ ] 极大数字（金额 = 999999999.99）
+   - [ ] 时区边界（UTC+8 vs UTC）
+   - [ ] 并发响应竞态（两个请求同时返回）
+   - [ ] 401 token 过期 → 自动刷新
+   - [ ] 503 服务不可用 → 降级 UI
+   
+   **测试集成（Vitest）**
+   ```typescript
+   // setupTests.ts
+   import { beforeAll, afterEach, afterAll } from 'vitest';
+   import { server } from './mocks/server';
+   
+   beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+   afterEach(() => server.resetHandlers()); // 每个测试后重置
+   afterAll(() => server.close());
+   ```
+   
+   **输出**：faker 数据工厂函数 + 边界场景 handlers + 测试集成配置
+
+**输出格式**：Mock 方案选型报告 + MSW handlers.ts + JSON Server db.json/routes.json + faker 数据工厂 + 边界场景 Checklist + 测试集成配置
+
+**注意事项**：
+- MSW 是目前最推荐的前端 Mock 方案，可在浏览器和 Node.js 两种环境无缝切换
+- Mock 数据应尽量真实（使用 faker.js），避免 "test"/"demo" 等无意义数据干扰开发体验
+- 边界场景的 Mock 与正常流程同等重要，建议用命名 handler（override）覆写特定测试场景
+- 生产环境应通过环境变量完全关闭 Mock，避免意外拦截真实请求
+
+---
+
+### 29. 数据迁移助手
+
+**触发词**：数据迁移 / data migration / schema migration / db migration
+
+**目标**：评估迁移风险，生成 UP/DOWN 双向脚本，制定零停机迁移与回滚方案
+
+**步骤**：
+
+1. **迁移评估**
+   在编写任何脚本之前，先全面评估迁移的范围和风险：
+   
+   **评估清单**
+   
+   | 维度 | 问题 | 影响 |
+   |------|------|------|
+   | **数据量** | 涉及多少行/多少 GB？ | 决定迁移时长和窗口 |
+   | **Schema 变更** | 新增/修改/删除了哪些列？ | 影响向后兼容性 |
+   | **外键约束** | 是否有级联影响？ | 需要临时禁用约束 |
+   | **业务流量** | 高峰期 QPS 是多少？ | 影响迁移策略选择 |
+   | **停机容忍** | 是否接受停机？接受多长？ | 决定是否需要零停机方案 |
+   | **数据一致性** | 允许最终一致性还是强一致？ | 影响双写策略 |
+   
+   **Schema 变更对比**
+   ```sql
+   -- 变更前
+   CREATE TABLE users (
+     id BIGINT PRIMARY KEY,
+     username VARCHAR(50),
+     created_at TIMESTAMP
+   );
+   
+   -- 变更后（新增 email 列，重命名 username → name）
+   CREATE TABLE users (
+     id BIGINT PRIMARY KEY,
+     name VARCHAR(100),         -- 原 username，扩大长度
+     email VARCHAR(255),        -- 新增，NOT NULL 需要默认值
+     created_at TIMESTAMP,
+     updated_at TIMESTAMP       -- 新增审计列
+   );
+   ```
+   
+   **停机时间估算**
+   ```
+   数据行数: 5,000,000
+   迁移速度: ~10,000 行/秒（受磁盘 IO 限制）
+   估算时长: 5,000,000 ÷ 10,000 = 500 秒 ≈ 8.3 分钟
+   建议窗口: 低峰期（凌晨 2:00-4:00）
+   ```
+   
+   **输出**：迁移评估报告（范围 + 风险 + 时长估算 + 策略选择）
+
+2. **迁移脚本生成（UP/DOWN）**
+   生成可逆的双向迁移脚本：
+   
+   **Knex.js 迁移模板（Node.js）**
+   ```typescript
+   // migrations/20240115_add_email_rename_username.ts
+   import { Knex } from 'knex';
+   
+   export async function up(knex: Knex): Promise<void> {
+     await knex.schema.alterTable('users', (table) => {
+       // 1. 新增列（先加，允许 NULL，稍后回填）
+       table.string('name', 100).nullable();
+       table.string('email', 255).nullable();
+       table.timestamp('updated_at').nullable();
+     });
+   
+     // 2. 数据回填（分批处理，避免锁表）
+     const BATCH_SIZE = 1000;
+     let offset = 0;
+     while (true) {
+       const rows = await knex('users')
+         .select('id', 'username')
+         .limit(BATCH_SIZE)
+         .offset(offset);
+       if (rows.length === 0) break;
+   
+       await knex('users')
+         .whereIn('id', rows.map((r) => r.id))
+         .update((row: any) => ({ name: row.username }));
+   
+       offset += BATCH_SIZE;
+     }
+   
+     // 3. 添加约束
+     await knex.schema.alterTable('users', (table) => {
+       table.string('name', 100).notNullable().alter();
+       table.dropColumn('username'); // 危险操作！确认数据回填完成后执行
+     });
+   }
+   
+   export async function down(knex: Knex): Promise<void> {
+     // 回滚：恢复 username 列
+     await knex.schema.alterTable('users', (table) => {
+       table.string('username', 50).nullable();
+       table.dropColumn('name');
+       table.dropColumn('email');
+       table.dropColumn('updated_at');
+     });
+   
+     // 回填 username（从备份表恢复）
+     await knex.raw('UPDATE users u JOIN users_backup b ON u.id = b.id SET u.username = b.username');
+   }
+   ```
+   
+   **Flyway SQL 迁移模板**
+   ```sql
+   -- V20240115__add_email_rename_username.sql
+   BEGIN;
+   
+   -- 阶段1：新增列
+   ALTER TABLE users ADD COLUMN name VARCHAR(100);
+   ALTER TABLE users ADD COLUMN email VARCHAR(255);
+   ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+   
+   -- 阶段2：数据回填
+   UPDATE users SET name = username WHERE name IS NULL;
+   
+   -- 阶段3：添加约束（回填完成后）
+   ALTER TABLE users ALTER COLUMN name SET NOT NULL;
+   CREATE INDEX CONCURRENTLY idx_users_email ON users(email);
+   
+   COMMIT;
+   ```
+   
+   **输出**：可执行的 UP/DOWN 迁移脚本
+
+3. **数据验证策略**
+   迁移前后必须验证数据完整性：
+   
+   **三阶段验证**
+   
+   **① 迁移前基线（Baseline）**
+   ```sql
+   -- 记录迁移前状态
+   CREATE TABLE migration_baseline AS
+   SELECT
+     COUNT(*) as total_rows,
+     COUNT(DISTINCT id) as unique_ids,
+     SUM(CASE WHEN email IS NOT NULL THEN 1 ELSE 0 END) as non_null_email,
+     MD5(STRING_AGG(id::text, ',' ORDER BY id)) as row_checksum
+   FROM users;
+   ```
+   
+   **② 迁移后验证（Post-Migration）**
+   ```sql
+   -- 行数对比
+   SELECT
+     (SELECT COUNT(*) FROM users) as after_count,
+     (SELECT total_rows FROM migration_baseline) as before_count,
+     (SELECT COUNT(*) FROM users) - (SELECT total_rows FROM migration_baseline) as diff;
+   
+   -- 关键字段空值检查
+   SELECT COUNT(*) as null_names FROM users WHERE name IS NULL;
+   SELECT COUNT(*) as null_emails FROM users WHERE email IS NULL;
+   
+   -- 数据一致性抽样（对比10%数据）
+   SELECT u.id, u.name, b.username
+   FROM users u
+   JOIN users_backup b ON u.id = b.id
+   WHERE u.name != b.username
+   LIMIT 100;
+   ```
+   
+   **③ 业务验证（Smoke Test）**
+   ```bash
+   # 验证核心业务接口
+   curl -X POST /api/auth/login -d '{"email":"test@example.com","password":"xxx"}'
+   curl -X GET /api/users/1
+   curl -X POST /api/orders -d '{"userId":1,"items":[...]}'
+   ```
+   
+   **验证通过标准**
+   - [ ] 行数差异为 0（或符合预期的新增/删除）
+   - [ ] 关键字段 NULL 率为 0
+   - [ ] 数据抽样一致性 100%
+   - [ ] Smoke Test 全部通过
+   - [ ] 数据库慢查询无异常增加
+   
+   **输出**：验证脚本套件 + 通过标准 Checklist
+
+4. **回滚方案**
+   制定多层次回滚机制，确保任何阶段都可以安全撤退：
+   
+   **三级回滚策略**
+   
+   **Level 1：脚本级回滚（最快，< 5 分钟）**
+   ```bash
+   # 直接执行 DOWN 脚本
+   npx knex migrate:down
+   # 或
+   flyway undo
+   ```
+   适用条件：迁移后立即发现问题，数据量小
+   
+   **Level 2：备份恢复（中速，5-30 分钟）**
+   ```bash
+   # 迁移前创建备份（必须！）
+   pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME   --table=users   -f backup_users_$(date +%Y%m%d_%H%M%S).sql
+   
+   # 恢复
+   psql -h $DB_HOST -U $DB_USER -d $DB_NAME < backup_users_20240115_020000.sql
+   ```
+   
+   **Level 3：蓝绿数据库（最可靠，但成本高）**
+   ```
+   Green DB（新）→ 迁移成功 → 流量切到 Green
+   Blue DB（旧）→ 保留 72 小时 → 确认无问题后关闭
+   ```
+   
+   **回滚决策树**
+   ```
+   迁移执行中...
+   ├── 数据验证失败？
+   │   └── YES → 立即执行 Level 1 回滚（DOWN 脚本）
+   ├── 业务 Smoke Test 失败？
+   │   └── YES → Level 1 回滚 → 分析根因
+   └── 迁移后 24 小时内发现数据异常？
+       └── YES → Level 2 回滚（备份恢复）→ 通知用户
+   ```
+   
+   **输出**：多级回滚方案 + 回滚决策树 + 备份命令
+
+5. **零停机迁移四步法**
+   对于无法停机的生产系统，使用"扩列→双写→切流→清旧"四步法：
+   
+   **背景**：将 `username` 列重命名为 `name`，同时新增 `email` 列
+   
+   **Step 1：扩列（向后兼容）**
+   ```sql
+   -- 新增 name 和 email 列，保留 username（双列共存）
+   ALTER TABLE users ADD COLUMN name VARCHAR(100);
+   ALTER TABLE users ADD COLUMN email VARCHAR(255);
+   -- 应用代码：只读 username，不写 name（暂不变更代码）
+   ```
+   
+   **Step 2：双写 + 数据回填**
+   ```typescript
+   // 应用代码更新：同时写入 username 和 name
+   await db.users.update({
+     where: { id },
+     data: {
+       username: newName, // 旧列
+       name: newName,     // 新列（同步写入）
+       email: email,
+     },
+   });
+   
+   // 异步回填历史数据（后台任务，不影响主流程）
+   async function backfillNames() {
+     let cursor = 0;
+     while (true) {
+       const rows = await db.users.findMany({
+         where: { name: null },
+         take: 1000,
+       });
+       if (rows.length === 0) break;
+       await db.users.updateMany({
+         where: { id: { in: rows.map(r => r.id) } },
+         data: rows.map(r => ({ name: r.username })),
+       });
+     }
+   }
+   ```
+   
+   **Step 3：切流（读取切换到新列）**
+   ```typescript
+   // 确认回填完成后，切换读取源
+   // 应用代码：读 name，写 name（不再写 username）
+   const user = await db.users.findUnique({
+     select: { id: true, name: true, email: true }, // 不再 select username
+   });
+   ```
+   
+   **Step 4：清旧（移除废弃列）**
+   ```sql
+   -- 确认应用代码已完全切换（观察 1-2 周）
+   ALTER TABLE users DROP COLUMN username;
+   -- 观察指标：慢查询、错误日志中是否有 username 相关错误
+   ```
+   
+   **关键时间线**
+   ```
+   Day 0: Step 1（扩列）→ 部署新版本（双写）
+   Day 1: Step 2（确认双写正常，后台回填完成）
+   Day 3: Step 3（切换读取到新列）→ 部署
+   Day 14: Step 4（确认无问题，删除旧列）
+   ```
+   
+   **输出**：零停机迁移四步代码示例 + 时间线 + 监控指标
+
+**输出格式**：迁移评估报告 + UP/DOWN 迁移脚本 + 数据验证 SQL 套件 + 多级回滚方案 + 零停机迁移四步代码示例
+
+**注意事项**：
+- 数据迁移前必须备份，无论多紧急。备份是回滚的最后防线
+- 分批处理大表（BATCH_SIZE = 1000-5000），避免长事务和表锁
+- 生产迁移应先在测试环境全流程演练，记录实际耗时
+- 零停机迁移每个步骤之间至少观察 24 小时，确认监控指标正常再进行下一步
+- DROP COLUMN 是不可逆操作，在确认切换完成前绝对不要执行
+
+---
+
+### 30. LLM 功能设计助手
+
+**触发词**：llm feature / ai feature / rag / llm 功能
+
+**目标**：设计 RAG/Agent/生成类 LLM 功能，输出 Prompt 模板、评估框架与降级方案
+
+**步骤**：
+
+1. **LLM 功能定位与场景分类**
+   明确 LLM 功能的类型和边界，选择合适的架构模式：
+   
+   **五大 LLM 场景类型**
+   
+   | 场景 | 描述 | 典型案例 | 推荐架构 |
+   |------|------|---------|---------|
+   | **RAG（检索增强生成）** | 基于私有知识库回答 | 内部文档问答、客服 | 向量检索 + LLM |
+   | **Agent（自主决策）** | 多步骤工具调用 | 代码 Agent、任务自动化 | LLM + Function Calling |
+   | **生成** | 创作/摘要/翻译 | 文案生成、会议纪要 | 直接调用 + 结构化输出 |
+   | **分类** | 意图/情感/标签 | 工单分类、评论分析 | Fine-tune 或 Few-shot |
+   | **提取** | 信息抽取/NER | 合同关键信息、表单填充 | Structured Output + JSON Schema |
+   
+   **功能定位问卷**
+   ```
+   1. 用户问题的答案在哪里？
+      - 模型已知知识 → 直接生成
+      - 私有文档/数据库 → RAG 架构
+      - 需要实时操作 → Agent 架构
+   
+   2. 需要多步推理吗？
+      - 是 → Agent（工具调用链）
+      - 否 → 单次 Prompt
+   
+   3. 输出格式是否严格？
+      - 是 → JSON Mode / Structured Output
+      - 否 → 自然语言生成
+   
+   4. 延迟要求？
+      - < 500ms → 小模型 + 缓存
+      - < 3s → 标准调用
+      - 可接受流式 → 流式输出
+   ```
+   
+   **输出**：LLM 功能定位文档（场景类型 + 架构选型建议）
+
+2. **RAG 架构设计**
+   为知识库问答类功能设计高质量 RAG 架构：
+   
+   **RAG 核心组件**
+   ```
+   文档摄入管道：
+   Raw Docs → Chunking → Embedding → Vector Store
+                   ↓
+              Metadata 过滤层（时间/来源/权限）
+   
+   查询管道：
+   User Query → Query 改写/扩展 → 向量检索 → Rerank → LLM 生成
+   ```
+   
+   **Chunking 策略选型**
+   ```typescript
+   // 固定大小（适合均匀文本）
+   const CHUNK_SIZE = 512;    // tokens
+   const CHUNK_OVERLAP = 50;  // 上下文保留
+   
+   // 语义分块（适合结构化文档，推荐）
+   // 按段落/标题边界切分
+   function semanticChunk(text: string): string[] {
+     return text.split(/
+   #{1,3}s/);  // Markdown 标题分块
+   }
+   
+   // 递归分块（LangChain RecursiveCharacterTextSplitter）
+   // 优先按段落 → 句子 → 词语拆分
+   ```
+   
+   **向量库选型矩阵**
+   | 方案 | 适用规模 | 托管 | 特性 |
+   |------|---------|------|------|
+   | **Pinecone** | 100万+ | 云托管 | 生产级，自动扩容 |
+   | **Weaviate** | 中大型 | 自托管/云 | 混合搜索，GraphQL |
+   | **Chroma** | 开发/小型 | 本地 | 零配置，适合 PoC |
+   | **pgvector** | 中型 | PostgreSQL | 复用现有 DB |
+   
+   **Rerank 优化**
+   ```typescript
+   // 两阶段检索：向量粗召回 → 精排重排序
+   const candidates = await vectorStore.search(query, { topK: 20 });
+   const reranked = await rerankModel.rank(query, candidates, { topN: 5 });
+   // 推荐：Cohere Rerank / BGE-Reranker
+   ```
+   
+   **输出**：RAG 架构图 + Chunking 策略 + 向量库选型建议
+
+3. **Prompt 工程规范**
+   制定高质量 Prompt 的设计规范：
+   
+   **System Prompt 黄金结构**
+   ```
+   [角色定义] 你是 {产品名} 的 {角色}，专注于 {领域}。
+   [能力边界] 你可以 {能力列表}。你不能/不应该 {限制列表}。
+   [输出格式] 请按照以下格式回复：{格式规范}
+   [行为准则] {特定规则，如：始终用中文回复/引用来源}
+   ```
+   
+   **System Prompt 模板**
+   ```typescript
+   const SYSTEM_PROMPT = `
+   你是 Acme Corp 的智能客服助手，专注于解答产品使用和技术支持问题。
+   
+   ## 能力
+   - 查询订单状态、退换货政策、产品规格
+   - 引导用户完成常见操作流程
+   - 基于知识库提供准确答案
+   
+   ## 限制
+   - 不讨论竞争对手产品
+   - 不提供具体价格承诺（引导至销售团队）
+   - 不确定时明确说明，不猜测
+   
+   ## 输出规范
+   - 语言：与用户保持一致（中/英文）
+   - 长度：简洁清晰，避免超过 200 字
+   - 引用：若基于文档回答，在末尾标注 [来源：{文档名}]
+   `.trim();
+   ```
+   
+   **Few-shot 示例设计**
+   ```typescript
+   const FEW_SHOT_EXAMPLES = [
+     {
+       role: 'user',
+       content: '我的订单 #12345 什么时候发货？'
+     },
+     {
+       role: 'assistant',
+       content: '您好！根据订单信息，#12345 已于昨天完成备货，预计今日发出，3-5个工作日送达。[来源：订单管理文档]'
+     }
+   ];
+   ```
+   
+   **关键参数建议**
+   ```typescript
+   // 不同场景的推荐参数
+   const PARAMS = {
+     factual_qa:    { temperature: 0.1, max_tokens: 500 },   // 事实问答，低随机性
+     creative:      { temperature: 0.8, max_tokens: 2000 },  // 创意生成
+     classification:{ temperature: 0,   max_tokens: 50 },    // 分类，确定性输出
+     code_gen:      { temperature: 0.2, max_tokens: 4000 },  // 代码生成
+   };
+   ```
+   
+   **Token 预算管理**
+   ```
+   System Prompt:   ~500 tokens  （固定）
+   RAG Context:     ~2000 tokens （动态，按相关度截断）
+   Conversation:    ~1000 tokens （保留最近 N 轮）
+   User Query:      ~200 tokens  （预留）
+   Output:          ~1000 tokens （max_tokens 控制）
+   总计:            ~4700 tokens  < 8K context window
+   ```
+   
+   **输出**：System Prompt 模板 + Few-shot 示例 + 参数配置建议
+
+4. **LLM 评估方案**
+   建立自动化 + 人工评估体系，持续监控 LLM 功能质量：
+   
+   **三层评估框架**
+   
+   **① 自动化 Evals（CI/CD 集成）**
+   ```typescript
+   // 评估维度
+   interface EvalResult {
+     accuracy: number;      // 答案正确率（对比 Golden Set）
+     faithfulness: number;  // 回答与上下文一致性（RAG 专用）
+     relevance: number;     // 答案与问题相关度
+     latency_p95: number;   // P95 响应时间（ms）
+     cost_per_query: number; // 平均 token 成本（$）
+   }
+   
+   // 自动评估示例（LLM-as-Judge）
+   async function evalWithLLM(question: string, answer: string, context: string) {
+     const judgePrompt = `
+       问题：${question}
+       检索上下文：${context}
+       模型回答：${answer}
+   
+       请评估回答的准确性（0-1）和忠实度（0-1），返回 JSON：
+       {"accuracy": 0.x, "faithfulness": 0.x, "reason": "..."}
+     `;
+     return await llm.json(judgePrompt);
+   }
+   ```
+   
+   **② Golden Set 维护**
+   ```json
+   // evals/golden-set.json
+   [
+     {
+       "id": "Q001",
+       "question": "退货政策是什么？",
+       "expected_keywords": ["30天", "unopened", "退款"],
+       "expected_source": "return-policy.md",
+       "difficulty": "easy"
+     }
+   ]
+   ```
+   
+   **③ 人工评分（A/B 测试）**
+   ```
+   评分维度（1-5分）：
+   - Helpful（有帮助）: 回答解决了用户问题
+   - Accurate（准确）: 信息与事实一致
+   - Safe（安全）: 无有害/不当内容
+   - Concise（简洁）: 无冗余信息
+   ```
+   
+   **评估指标基准**
+   | 指标 | 可接受 | 良好 | 优秀 |
+   |------|--------|------|------|
+   | 准确率 | > 70% | > 85% | > 95% |
+   | 忠实度 | > 75% | > 90% | > 97% |
+   | P95 延迟 | < 5s | < 3s | < 1.5s |
+   | 幻觉率 | < 15% | < 5% | < 2% |
+   
+   **输出**：评估脚本 + Golden Set 模板 + A/B 测试方案
+
+5. **降级与安全策略**
+   为 LLM 功能设计完善的降级和安全机制：
+   
+   **五大风险与对策**
+   
+   **① 幻觉控制**
+   ```typescript
+   // RAG 置信度检查：若无相关文档，拒绝回答
+   const MIN_SIMILARITY = 0.75;
+   const docs = await vectorStore.search(query, { topK: 3 });
+   if (docs[0].score < MIN_SIMILARITY) {
+     return { answer: '抱歉，我没有找到相关信息，请联系人工客服。', sources: [] };
+   }
+   ```
+   
+   **② Fallback 降级链**
+   ```typescript
+   async function robustLLMCall(prompt: string) {
+     try {
+       // 主模型（高质量）
+       return await gpt4o.complete(prompt, { timeout: 5000 });
+     } catch (primaryError) {
+       try {
+         // 降级到备用模型（更快更便宜）
+         return await gpt4oMini.complete(prompt, { timeout: 3000 });
+       } catch (fallbackError) {
+         // 最终降级：静态规则/人工兜底
+         return { answer: FALLBACK_MESSAGES[detectIntent(prompt)], fallback: true };
+       }
+     }
+   }
+   ```
+   
+   **③ 内容过滤**
+   ```typescript
+   // 输入/输出双向过滤
+   const BLOCKED_PATTERNS = [/如何.*伤害/, /制作.*武器/];
+   function isSafe(text: string): boolean {
+     return !BLOCKED_PATTERNS.some(p => p.test(text));
+   }
+   // 推荐：使用 OpenAI Moderation API / Azure Content Safety
+   ```
+   
+   **④ 成本限制**
+   ```typescript
+   // 每用户每日 Token 限额
+   const DAILY_TOKEN_LIMIT = 50000;
+   // 请求频率限制
+   const RATE_LIMIT = { requests: 10, window: '1m' };
+   // 输出截断
+   const MAX_OUTPUT_TOKENS = 1000;
+   ```
+   
+   **⑤ 可观测性**
+   ```typescript
+   // 每次 LLM 调用必须记录
+   logger.info('llm_call', {
+     model, prompt_tokens, completion_tokens, latency_ms,
+     user_id, session_id, feature_flag,
+     is_fallback, safety_triggered,
+   });
+   ```
+   
+   **输出**：降级策略代码模板 + 内容安全配置 + 成本控制方案 + 可观测性埋点
+
+**输出格式**：LLM 功能定位文档 + RAG 架构图 + System Prompt 模板 + 评估框架（Golden Set + 自动 Evals）+ 降级与安全策略代码
+
+**注意事项**：
+- 先从小模型（GPT-4o mini/Claude Haiku）开始验证，确认方案可行再升级到大模型降低成本
+- RAG 的质量 80% 取决于 Chunking 策略和 Embedding 质量，而非 LLM 本身
+- Golden Set 至少需要 100 条覆盖核心场景的问答对，建立前先做 10 条快速验证
+- 幻觉是 RAG 的最大风险，必须设置相似度阈值，宁可说"不知道"也不要胡编
+- 生产环境必须监控 Token 消耗和每次调用成本，防止费用失控
+
+---
+
+### 31. 威胁建模
+
+**触发词**：威胁建模 / threat model / threat modeling / stride
+
+**目标**：运用 STRIDE 方法识别系统安全威胁，构建攻击树，制定缓解措施与残余风险评估
+
+**步骤**：
+
+1. **系统边界定义**
+   明确系统的信任边界、数据流和外部实体：
+   
+   **系统分解步骤**
+   
+   1. **识别外部实体**（系统外部的人/系统）
+      - 终端用户（匿名用户、注册用户、管理员）
+      - 外部系统（第三方 API、支付网关、邮件服务）
+      - 内部其他服务（微服务间调用）
+   
+   2. **绘制数据流图（DFD Level 0）**
+   ```
+   [用户浏览器] ──HTTPS──> [Web 服务器] ──内网──> [应用服务器]
+                                                       │
+                                                 [数据库服务器]
+                                                       │
+                                                 [缓存 Redis]
+   
+   信任边界（虚线）：
+   - 边界1：Internet / DMZ（用户浏览器 ↔ Web 服务器）
+   - 边界2：DMZ / 内网（Web 服务器 ↔ 应用服务器）
+   - 边界3：内网 / 数据层（应用服务器 ↔ DB/Cache）
+   ```
+   
+   3. **数据资产分类**
+   ```
+   🔴 高度敏感：用户密码、信用卡信息、身份证号
+   🟠 敏感：     邮箱、手机号、订单信息、行为数据
+   🟡 普通：     商品信息、公开内容、系统配置
+   ```
+   
+   4. **威胁面列举**
+      - 对外 API 端点数量：___
+      - 需要认证的接口：___
+      - 数据库直连点：___
+      - 第三方 SDK 集成：___
+   
+   **输出**：DFD 图 + 信任边界标注 + 数据资产清单
+
+2. **STRIDE 威胁识别**
+   用 STRIDE 框架对每个数据流逐一检查六类威胁：
+   
+   **STRIDE 威胁矩阵**
+   
+   | 威胁类型 | 缩写含义 | 核心问题 | 安全属性 |
+   |---------|---------|---------|---------|
+   | **Spoofing（仿冒）** | 攻击者伪装成合法用户/系统 | 系统如何验证身份？ | 认证 |
+   | **Tampering（篡改）** | 恶意修改数据或代码 | 数据完整性如何保证？ | 完整性 |
+   | **Repudiation（否认）** | 用户否认执行过某操作 | 是否有可信的操作记录？ | 不可否认性 |
+   | **Information Disclosure（信息泄露）** | 敏感数据暴露给未授权方 | 数据在传输/存储中是否加密？ | 机密性 |
+   | **Denial of Service（拒绝服务）** | 使系统无法响应合法请求 | 系统能承受多大压力？ | 可用性 |
+   | **Elevation of Privilege（权限提升）** | 获得超出授权的权限 | 权限检查是否严格？ | 授权 |
+   
+   **针对登录接口的 STRIDE 分析示例**
+   
+   ```
+   接口：POST /api/auth/login（外部 → 应用服务器）
+   
+   S - 仿冒：
+     威胁：攻击者暴力破解或凭据填充（Credential Stuffing）
+     影响：高（账号被盗）
+   
+   T - 篡改：
+     威胁：中间人攻击修改请求（非 HTTPS 场景）
+     影响：高（凭据被劫持）
+   
+   R - 否认：
+     威胁：用户否认登录操作（无日志）
+     影响：中（无法审计）
+   
+   I - 信息泄露：
+     威胁：错误信息泄露"用户不存在"vs"密码错误"
+     影响：中（可枚举用户名）
+   
+   D - 拒绝服务：
+     威胁：大量登录请求耗尽服务器资源
+     影响：高（服务不可用）
+   
+   E - 权限提升：
+     威胁：JWT 签名算法混淆（HS256 → None）
+     影响：严重（绕过认证）
+   ```
+   
+   **输出**：STRIDE 威胁识别矩阵（每个数据流 × 6 类威胁）
+
+3. **攻击树构建**
+   为高风险威胁构建攻击树，量化攻击路径：
+   
+   **攻击树符号**
+   ```
+   目标（攻击根节点）
+   ├── AND: 所有子节点都需满足
+   └── OR: 任意子节点满足即可（默认）
+   ```
+   
+   **示例：攻击者获取用户数据攻击树**
+   ```
+   [目标] 获取用户敏感数据
+   ├── OR
+   │   ├── [路径1] 突破 Web 层
+   │   │   ├── SQL 注入（概率: 中，影响: 严重）
+   │   │   │   └── 防御：参数化查询 ✓
+   │   │   └── XSS 窃取 Token（概率: 中，影响: 高）
+   │   │       └── 防御：CSP + HttpOnly Cookie ✓
+   │   ├── [路径2] 绕过认证
+   │   │   ├── 暴力破解（概率: 高，影响: 高）
+   │   │   │   └── 防御：Rate Limit + CAPTCHA ✓
+   │   │   └── Token 伪造（概率: 低，影响: 严重）
+   │   │       └── 防御：强签名算法（RS256）✓
+   │   └── [路径3] 内部威胁
+   │       └── 数据库直接访问（概率: 低，影响: 严重）
+   │           └── 防御：最小权限 + 审计日志 ✓
+   ```
+   
+   **风险评分（DREAD 模型）**
+   ```
+   Damage（损害）:        1-10
+   Reproducibility（复现）: 1-10
+   Exploitability（利用难度）: 1-10
+   Affected Users（影响用户）: 1-10
+   Discoverability（发现难度）: 1-10
+   
+   总分 = (D+R+E+A+D) / 5
+   8-10：严重  6-7.9：高  4-5.9：中  < 4：低
+   ```
+   
+   **输出**：攻击树图 + DREAD 风险评分表
+
+4. **安全控制措施**
+   为每个已识别威胁制定具体的缓解控制措施：
+   
+   **STRIDE → 控制措施对照表**
+   
+   | 威胁 | 控制措施 | 实现示例 |
+   |------|---------|---------|
+   | **仿冒** | 多因素认证、OAuth 2.0 | `TOTP + SMS OTP` |
+   | **篡改** | HTTPS 全程加密、数字签名 | `TLS 1.3 + HMAC 请求签名` |
+   | **否认** | 不可篡改审计日志 | `Append-only Log + 时间戳签名` |
+   | **信息泄露** | 最小权限、数据脱敏、加密 | `AES-256 静态加密 + 字段脱敏` |
+   | **DoS** | 限流、WAF、自动扩容 | `Rate Limit 10 req/s/IP + CDN` |
+   | **权限提升** | RBAC、输入验证 | `JWT RS256 + 接口级鉴权` |
+   
+   **优先级实现路线图**
+   ```
+   P0（立即实现，影响上线）：
+     ✅ HTTPS 强制（HSTS）
+     ✅ SQL 参数化查询
+     ✅ 密码 bcrypt 哈希（cost factor ≥ 12）
+     ✅ JWT 算法锁定（禁用 none/HS256→RS256）
+   
+   P1（首个 Sprint 内）：
+     🔲 API 限流（100 req/min/user）
+     🔲 账号锁定（5次失败锁定15分钟）
+     🔲 安全响应头（CSP/X-Frame-Options/HSTS）
+     🔲 审计日志（登录/权限变更/数据访问）
+   
+   P2（次个 Sprint 内）：
+     🔲 多因素认证（MFA）
+     🔲 字段级数据脱敏（API 响应）
+     🔲 依赖漏洞扫描（npm audit / Snyk）
+     🔲 渗透测试（OWASP Top 10 覆盖）
+   ```
+   
+   **输出**：安全控制措施清单 + 实现优先级路线图
+
+5. **残余风险评估**
+   评估实施控制措施后的剩余风险，制定接受/处置策略：
+   
+   **四种风险处置方式**
+   - **接受（Accept）**：风险可接受，记录并监控
+   - **降低（Mitigate）**：实施控制措施降低概率/影响
+   - **转移（Transfer）**：购买保险或外包给第三方（如 Cloudflare DDoS 防护）
+   - **规避（Avoid）**：不实现该功能/移除风险点
+   
+   **残余风险登记册模板**
+   ```
+   | ID | 威胁描述 | 原始风险 | 控制措施 | 残余风险 | 处置策略 | 责任人 | 复查日期 |
+   |----|---------|---------|---------|---------|---------|--------|---------|
+   | T001 | 暴力破解密码 | 高(8) | Rate Limit + CAPTCHA | 低(2) | 接受 | @security | 2024-Q2 |
+   | T002 | SQL注入 | 严重(9) | 参数化查询 | 极低(1) | 接受 | @backend | 2024-Q2 |
+   | T003 | DDoS攻击 | 高(7) | Cloudflare | 低(3) | 转移 | @infra | 2024-Q2 |
+   | T004 | 0-day漏洞 | 未知 | WAF + 快速响应 | 中(5) | 监控 | @security | 月度 |
+   ```
+   
+   **安全评审 Checklist**
+   - [ ] 所有 P0 控制措施已实现并测试
+   - [ ] 威胁模型已经过安全团队评审
+   - [ ] 高风险威胁已获得业务方正式接受签字
+   - [ ] 残余风险已录入风险登记册
+   - [ ] 设定下次威胁模型复审日期（建议每季度或重大变更后）
+   
+   **输出**：残余风险登记册 + 风险接受声明 + 复审计划
+
+**输出格式**：威胁模型文档（DFD + 信任边界）+ STRIDE 威胁矩阵 + 攻击树图 + 安全控制措施路线图 + 残余风险登记册
+
+**注意事项**：
+- 威胁建模应在设计阶段进行，而非开发完成后——越早发现安全问题修复成本越低
+- STRIDE 不是一次性工作，每次重大功能变更（新 API、新数据流）都应更新威胁模型
+- 攻击树帮助量化优先级，但不要追求完美——覆盖 OWASP Top 10 对大多数产品已足够
+- 内部人员威胁（离职员工、权限滥用）往往被忽视，建议在威胁建模中专门分析
+- 威胁建模输出文档应纳入安全合规证据库（SOC2/ISO27001 审计常见要求）
+
+---
+
+### 32. 绿色编码实践
+
+**触发词**：绿色编码 / green code / green software / carbon footprint
+
+**目标**：识别代码能耗热点，优化算法复杂度与云资源效率，估算并降低软件碳排放
+
+**步骤**：
+
+1. **能耗热点识别**
+   扫描代码库，定位高能耗模式：
+   
+   **六大能耗反模式**
+   
+   | 反模式 | 表现 | 能耗级别 |
+   |--------|------|---------|
+   | **无效轮询** | `while(true) { check(); sleep(100) }` | 🔴 极高 |
+   | **CPU 密集循环** | 嵌套循环处理大数据集 | 🔴 极高 |
+   | **内存泄漏** | 对象无法被 GC 回收 | 🟠 高 |
+   | **冗余网络请求** | 重复请求相同资源 | 🟠 高 |
+   | **过度序列化** | 频繁 JSON.stringify 大对象 | 🟡 中 |
+   | **阻塞 I/O** | 同步文件读写阻塞主线程 | 🟡 中 |
+   
+   **识别工具命令**
+   ```bash
+   # Node.js — CPU Profile
+   node --prof app.js
+   node --prof-process isolate-*.log > profile.txt
+   
+   # 内存快照（Node.js）
+   node --heap-prof app.js
+   
+   # 前端 — Chrome DevTools
+   # Performance 面板 → Record → 分析 Long Tasks（>50ms）
+   
+   # Python — cProfile
+   python -m cProfile -o output.prof app.py
+   python -m pstats output.prof  # 查看热点函数
+   ```
+   
+   **无效轮询重构**
+   ```typescript
+   // ❌ 能耗高：每 100ms 轮询
+   while (true) {
+     const status = await checkJobStatus(jobId);
+     if (status === 'done') break;
+     await sleep(100);
+   }
+   
+   // ✅ 绿色：指数退避 + 最大间隔
+   async function pollWithBackoff(jobId: string) {
+     let delay = 500;
+     const MAX_DELAY = 30000;
+     while (true) {
+       const status = await checkJobStatus(jobId);
+       if (status === 'done') return;
+       await sleep(Math.min(delay, MAX_DELAY));
+       delay *= 1.5;
+     }
+   }
+   
+   // ✅ 更绿色：WebSocket / SSE（服务端推送，零轮询）
+   const ws = new WebSocket('/api/jobs/status');
+   ws.onmessage = (e) => handleUpdate(JSON.parse(e.data));
+   ```
+   
+   **输出**：能耗热点清单（位置 + 类型 + 估算影响）
+
+2. **算法复杂度优化**
+   用低复杂度算法替换高能耗实现：
+   
+   **复杂度对碳排放的影响（1M 数据量对比）**
+   ```
+   O(n²)  → 10^12 操作 → 约 100W CPU 秒  🔴
+   O(n log n) → 2×10^7 操作 → 约 20ms     🟢
+   O(n)   → 10^6 操作  → 约 1ms          🟢
+   O(1)   → 1 操作     → 即时            🟢
+   ```
+   
+   **常见优化模式**
+   
+   **① 嵌套循环 → 哈希查找**
+   ```typescript
+   // ❌ O(n²) — 大数据量极度消耗 CPU
+   function findMatches(users: User[], orders: Order[]) {
+     return orders.filter(order =>
+       users.some(user => user.id === order.userId) // O(n) per order
+     );
+   }
+   
+   // ✅ O(n) — 预建索引
+   function findMatchesOptimized(users: User[], orders: Order[]) {
+     const userMap = new Map(users.map(u => [u.id, u]));  // 一次性 O(n)
+     return orders.filter(order => userMap.has(order.userId)); // O(1) per order
+   }
+   ```
+   
+   **② 重复计算 → 缓存/记忆化**
+   ```typescript
+   // ❌ 每次调用重新计算
+   function expensiveCalc(n: number) { /* O(2^n) */ }
+   
+   // ✅ 记忆化缓存
+   const memo = new Map<number, number>();
+   function cachedCalc(n: number): number {
+     if (memo.has(n)) return memo.get(n)!;
+     const result = expensiveCalc(n);
+     memo.set(n, result);
+     return result;
+   }
+   ```
+   
+   **③ 大列表操作 → 流式处理**
+   ```typescript
+   // ❌ 全量加载到内存
+   const allRecords = await db.findAll(); // 可能 100MB
+   processAll(allRecords);
+   
+   // ✅ 流式分批处理
+   const BATCH = 1000;
+   for await (const batch of db.findInBatches(BATCH)) {
+     await processBatch(batch);
+   }
+   ```
+   
+   **输出**：算法优化建议 + 重构前后复杂度对比
+
+3. **云资源效率优化**
+   减少云资源浪费，降低运行能耗：
+   
+   **云资源三大浪费来源**
+   ```
+   1. Over-provisioning（过度配置）：实际 CPU 利用率 < 20%，却购买了大型实例
+   2. 僵尸资源：停止的 EC2、未挂载的 EBS 卷、空闲的 NAT 网关
+   3. 低效架构：长时间运行的大实例 vs. Serverless 按需执行
+   ```
+   
+   **Right-sizing 实践**
+   ```bash
+   # AWS — 查看 CPU 利用率趋势（CloudWatch）
+   aws cloudwatch get-metric-statistics   --metric-name CPUUtilization   --dimensions Name=InstanceId,Value=i-xxxx   --start-time 2024-01-01T00:00:00   --end-time 2024-01-31T00:00:00   --period 86400 --statistics Average
+   
+   # 建议：平均 CPU < 20% → 降低一档实例类型
+   # m5.xlarge (4 vCPU) → m5.large (2 vCPU) = 节省 50% 成本和能耗
+   ```
+   
+   **自动伸缩配置（节能关键）**
+   ```yaml
+   # Kubernetes HPA — 按 CPU 自动伸缩
+   apiVersion: autoscaling/v2
+   kind: HorizontalPodAutoscaler
+   metadata:
+     name: api-server
+   spec:
+     minReplicas: 1   # 低峰期缩减到 1 个副本
+     maxReplicas: 10
+     metrics:
+     - type: Resource
+       resource:
+         name: cpu
+         target:
+           type: Utilization
+           averageUtilization: 60
+   ```
+   
+   **Serverless 适用场景**
+   ```
+   适合 Serverless（事件驱动，闲时零消耗）：
+   ✅ 图片处理、文件转换
+   ✅ 定时任务、数据同步
+   ✅ Webhook 处理器
+   
+   不适合 Serverless（冷启动延迟不可接受）：
+   ❌ 实时游戏服务器
+   ❌ 高频低延迟 API（< 100ms SLA）
+   ```
+   
+   **输出**：云资源优化建议（Right-sizing + 自动伸缩 + 架构选型）
+
+4. **前端绿色实践**
+   减少前端资源消耗，降低设备端能耗：
+   
+   **前端能耗五大优化**
+   
+   **① JavaScript Bundle 瘦身**
+   ```bash
+   # 分析 Bundle 大小
+   npx webpack-bundle-analyzer stats.json
+   npx vite-bundle-visualizer
+   
+   # 目标：首屏 JS < 150KB (gzipped)
+   ```
+   
+   ```typescript
+   // ✅ Tree-shaking（只导入用到的函数）
+   import { debounce } from 'lodash-es';  // 不要 import _ from 'lodash'
+   
+   // ✅ 动态导入（按需加载非关键模块）
+   const HeavyChart = lazy(() => import('./HeavyChart'));
+   
+   // ✅ 外部化大型库（CDN 缓存复用）
+   // vite.config.ts
+   build: { rollupOptions: { external: ['react', 'react-dom'] } }
+   ```
+   
+   **② 图片优化**
+   ```html
+   <!-- ✅ 现代格式 + 响应式 -->
+   <picture>
+     <source srcset="hero.avif" type="image/avif">
+     <source srcset="hero.webp" type="image/webp">
+     <img src="hero.jpg" width="800" height="600"
+          loading="lazy" decoding="async" alt="...">
+   </picture>
+   <!-- WebP 比 JPEG 小 30%，AVIF 比 JPEG 小 50% -->
+   ```
+   
+   **③ CSS 精简**
+   ```bash
+   # PurgeCSS — 移除未使用的 CSS
+   npx purgecss --css dist/*.css --content dist/*.html dist/*.js --output dist/
+   ```
+   
+   **④ 减少不必要的动画**
+   ```css
+   /* 尊重用户的省电模式偏好 */
+   @media (prefers-reduced-motion: reduce) {
+     *, *::before, *::after {
+       animation-duration: 0.01ms !important;
+       transition-duration: 0.01ms !important;
+     }
+   }
+   ```
+   
+   **⑤ 高效 DOM 操作**
+   ```typescript
+   // ❌ 频繁触发 Reflow
+   items.forEach(item => {
+     item.style.width = container.offsetWidth + 'px'; // 每次读写触发 Reflow
+   });
+   
+   // ✅ 批量读后批量写
+   const width = container.offsetWidth; // 一次读取
+   items.forEach(item => { item.style.width = width + 'px'; }); // 批量写
+   ```
+   
+   **输出**：前端绿色实践清单 + Bundle 分析建议
+
+5. **碳排放估算**
+   用 SCI（Software Carbon Intensity）公式量化软件碳排放：
+   
+   **SCI 公式**
+   ```
+   SCI = (E × I) + M
+   
+   E = 软件消耗的电能（kWh）
+   I = 电网碳强度（gCO₂eq/kWh）— 取决于服务器所在地区
+   M = 硬件制造碳排放（均摊到使用寿命）
+   ```
+   
+   **各地区电网碳强度参考**
+   ```
+   地区          碳强度 (gCO₂eq/kWh)
+   ─────────────────────────────────
+   西欧 / Nordic   ~150-300  （可再生能源占比高）
+   us-east-1       ~350-400
+   ap-northeast-1  ~450-500  （日本，主要火电）
+   cn-north-1      ~550-600  （中国，煤电为主）
+   AWS GovCloud    ~200      （承诺使用清洁能源）
+   ```
+   
+   **API 服务碳排放估算示例**
+   ```
+   假设：
+   - API 服务器：4 vCPU，平均 40% 利用率
+   - TDP（热设计功耗）：100W（4 vCPU 服务器）
+   - 实际功耗：100W × 40% × PUE(1.2) = 48W
+   - 每月运行：48W × 730h = 35 kWh
+   - 碳排放（us-east-1，380 gCO₂/kWh）：
+     35 × 380 = 13,300 gCO₂ = 13.3 kg CO₂/月
+   
+   优化后（CPU 利用率从 40% 优化到 20% 后缩容）：
+     12W × 730h × 380 / 1000 = 3.3 kg CO₂/月
+     节省：10 kg CO₂/月（减少 75%）
+   ```
+   
+   **绿色目标设定**
+   ```
+   当前基准: ___ gCO₂/1000 API 请求
+   目标（3个月）: 降低 30%
+   目标（1年）: 迁移到低碳区域（or 可再生能源数据中心）
+   ```
+   
+   **Carbon.txt 声明**（向用户公示绿色承诺）
+   ```
+   # /carbon.txt
+   We are committed to reducing our software's carbon footprint.
+   Hosting: AWS us-west-2 (powered by renewable energy)
+   Current SCI: 15g CO₂eq per 1000 requests
+   Target: < 10g CO₂eq per 1000 requests by 2025
+   ```
+   
+   **输出**：碳排放基准报告 + SCI 计算表 + 减碳路线图
+
+**输出格式**：能耗热点报告 + 算法优化建议 + 云资源 Right-sizing 方案 + 前端绿色实践 Checklist + 碳排放估算（SCI）
+
+**注意事项**：
+- 绿色编码和性能优化高度重合——节能的代码往往也是更快的代码，两者并不冲突
+- 将服务器迁移到使用可再生能源的区域（如 AWS us-west-2 Oregon）是降低碳排放最立竿见影的方式
+- 前端优化对碳排放影响巨大：每减少 1KB JS，每百万用户每年可节省约 0.5 kg CO₂
+- SCI 指标建议纳入团队 KPI，每季度度量，与其他工程指标（性能/可用性）并列追踪
+- 使用 AWS Customer Carbon Footprint Tool 或 Google Cloud Carbon Footprint 获取真实数据
+
+---
+
+### 33. 服务目录管理
+
+**触发词**：服务目录 / service catalog / service registry / backstage
+
+**目标**：建立标准化服务目录，生成 Backstage 兼容的 catalog-info.yaml，可视化服务依赖与健康评分
+
+**步骤**：
+
+1. **服务元数据采集**
+   系统化收集每个服务的关键元数据：
+   
+   **服务元数据清单**
+   
+   ```yaml
+   # 必填字段
+   name:          服务唯一标识（小写 + 连字符）
+   display_name:  人类可读名称
+   owner:         团队/个人（GitHub Team 或 email）
+   tech_stack:    主要技术栈（Node.js/Go/Java 等）
+   type:          服务类型（service/library/website/pipeline）
+   
+   # 运维信息
+   tier:          重要性等级（tier-1/tier-2/tier-3）
+   sla:           可用性目标（99.9%/99.95%/99.99%）
+   on_call:       值班联系方式（PagerDuty/Slack channel）
+   runbook:       运维手册 URL
+   
+   # 依赖关系
+   dependencies:  依赖的其他服务列表
+   consumers:     消费本服务的上游列表
+   databases:     使用的数据库（类型 + 库名）
+   external_apis: 调用的外部 API（如 Stripe/SendGrid）
+   
+   # 文档与质量
+   docs:          文档链接（Confluence/Notion）
+   api_spec:      OpenAPI/AsyncAPI 规范文件路径
+   test_coverage: 当前测试覆盖率
+   deployment_frequency: 发布频率（daily/weekly/monthly）
+   ```
+   
+   **批量采集脚本**
+   ```bash
+   #!/bin/bash
+   # 扫描所有服务目录，检查是否有 catalog-info.yaml
+   for dir in services/*/; do
+     if [ ! -f "$dir/catalog-info.yaml" ]; then
+       echo "❌ Missing: $dir/catalog-info.yaml"
+     else
+       echo "✅ Found:   $dir/catalog-info.yaml"
+     fi
+   done
+   ```
+   
+   **输出**：服务元数据采集表（所有服务 + 完整度评分）
+
+2. **生成 catalog-info.yaml**
+   生成 Backstage/内部开发者平台兼容的服务定义文件：
+   
+   **完整 catalog-info.yaml 模板**
+   ```yaml
+   # services/order-service/catalog-info.yaml
+   apiVersion: backstage.io/v1alpha1
+   kind: Component
+   metadata:
+     name: order-service
+     title: 订单服务
+     description: 处理订单创建、支付和履约的核心服务
+     tags:
+       - nodejs
+       - postgresql
+       - kafka
+       - tier-1
+     annotations:
+       # GitHub 集成
+       github.com/project-slug: myorg/order-service
+       # 监控集成
+       prometheus.io/alert: 'order-service-alerts'
+       grafana.com/dashboard: 'https://grafana.internal/d/orders'
+       # 文档
+       backstage.io/techdocs-ref: dir:.
+       # PagerDuty
+       pagerduty.com/service-id: P123456
+     links:
+       - url: https://runbook.internal/order-service
+         title: Runbook
+         icon: book
+       - url: https://grafana.internal/d/orders
+         title: Dashboard
+         icon: dashboard
+   
+   spec:
+     type: service
+     lifecycle: production        # experimental | production | deprecated
+     owner: group:backend-team
+     system: ecommerce-platform
+   
+     # 依赖声明
+     dependsOn:
+       - component:user-service
+       - component:inventory-service
+       - resource:orders-postgres
+       - resource:payment-kafka-topic
+   
+     # 对外提供的 API
+     providesApis:
+       - order-api-v2
+   ```
+   
+   **API 定义（关联）**
+   ```yaml
+   # order-api.yaml
+   apiVersion: backstage.io/v1alpha1
+   kind: API
+   metadata:
+     name: order-api-v2
+     description: 订单服务 REST API v2
+   spec:
+     type: openapi
+     lifecycle: production
+     owner: group:backend-team
+     definition:
+       $text: ./openapi/order-api-v2.yaml
+   ```
+   
+   **Resource 定义（数据库/队列）**
+   ```yaml
+   apiVersion: backstage.io/v1alpha1
+   kind: Resource
+   metadata:
+     name: orders-postgres
+     description: 订单主数据库（PostgreSQL 14）
+   spec:
+     type: database
+     owner: group:dba-team
+     system: ecommerce-platform
+   ```
+   
+   **输出**：catalog-info.yaml + API 定义文件 + Resource 定义文件
+
+3. **服务依赖关系图**
+   可视化服务间的上下游依赖关系：
+   
+   **Mermaid 依赖图生成**
+   ```typescript
+   // scripts/gen-dependency-graph.ts
+   function generateMermaid(services: Service[]): string {
+     const lines = ['graph LR'];
+   
+     for (const service of services) {
+       for (const dep of service.dependencies) {
+         lines.push(`  ${service.name} --> ${dep}`);
+       }
+     }
+   
+     return lines.join('\n');
+   }
+   
+   // 输出示例：
+   // graph LR
+   //   order-service --> user-service
+   //   order-service --> inventory-service
+   //   order-service --> payment-service
+   //   api-gateway --> order-service
+   //   api-gateway --> user-service
+   ```
+   
+   **关键依赖分析**
+   ```
+   依赖分析报告
+   ════════════
+   
+   高扇入服务（被依赖最多，故障影响最广）：
+     user-service        被 8 个服务依赖  ⚠️ 单点风险
+     auth-service        被 12 个服务依赖 🔴 关键路径
+   
+   高扇出服务（依赖最多，级联失败风险）：
+     order-service       依赖 6 个服务    ⚠️ 需熔断保护
+     report-service      依赖 9 个服务    🔴 脆弱性高
+   
+   循环依赖检测：
+     ✅ 未发现循环依赖
+   
+   孤立服务（无依赖/无被依赖）：
+     legacy-batch-job    ⚠️ 是否可下线？
+   ```
+   
+   **依赖健康度 Checklist**
+   - [ ] 高扇入服务（>5个依赖）配备了熔断器（Circuit Breaker）
+   - [ ] 高扇出服务对所有依赖设置了超时（Timeout）
+   - [ ] 关键路径服务有冗余/多活部署
+   - [ ] 无循环依赖
+   
+   **输出**：服务依赖关系图（Mermaid/DOT）+ 风险分析报告
+
+4. **服务健康评分**
+   建立多维度服务健康评分体系，量化技术质量：
+   
+   **服务健康评分卡（满分 100）**
+   
+   ```
+   维度              权重   评分标准
+   ─────────────────────────────────────────
+   📄 文档完整性      20分
+     catalog-info.yaml    5分  （存在且完整）
+     README.md            5分  （含部署、接口说明）
+     API 规范             5分  （OpenAPI/AsyncAPI）
+     Runbook              5分  （含常见故障处理）
+   
+   🧪 测试质量        25分
+     单元测试覆盖率 >80%  15分
+     集成测试存在         10分
+   
+   🚀 部署规范        25分
+     CI/CD 流水线完整     10分
+     容器化（Dockerfile） 5分
+     健康检查接口         5分
+     优雅关闭实现         5分
+   
+   📊 可观测性        20分
+     Metrics 暴露         8分  （/metrics endpoint）
+     结构化日志           7分  （JSON 格式 + trace ID）
+     告警规则配置         5分
+   
+   🔒 安全合规        10分
+     依赖漏洞扫描通过     5分  （npm audit/Snyk 0 High）
+     密钥未硬编码         5分
+   ```
+   
+   **评分等级**
+   - 🟢 **优秀（90-100）**：可作为黄金路径参考
+   - 🟡 **良好（70-89）**：有改进空间，下季度计划
+   - 🟠 **待改进（50-69）**：需要专项提升
+   - 🔴 **高风险（< 50）**：必须立即改进
+   
+   **批量评分脚本示例**
+   ```bash
+   #!/bin/bash
+   # 检查服务健康评分关键项
+   check_service() {
+     local dir=$1
+     local score=0
+   
+     [ -f "$dir/catalog-info.yaml" ] && score=$((score+5))
+     [ -f "$dir/README.md" ] && score=$((score+5))
+     [ -f "$dir/Dockerfile" ] && score=$((score+5))
+     [ -f "$dir/.github/workflows/ci.yml" ] && score=$((score+10))
+   
+     echo "$dir: $score / 25 (快速检查)"
+   }
+   
+   for dir in services/*/; do check_service "$dir"; done
+   ```
+   
+   **输出**：服务健康评分卡 + 改进优先级清单
+
+5. **服务生命周期管理**
+   建立服务从孵化到下线的标准生命周期流程：
+   
+   **四阶段生命周期**
+   ```
+   孵化（Experimental）→ 成熟（Production）→ 维护（Maintenance）→ 下线（Deprecated）
+   ```
+   
+   **各阶段定义与要求**
+   
+   | 阶段 | lifecycle 值 | 要求 | 颜色标记 |
+   |------|-------------|------|---------|
+   | 孵化 | experimental | 开发中，不可用于生产 | 🟡 |
+   | 成熟 | production | 满足健康评分 ≥ 80 | 🟢 |
+   | 维护 | maintenance | 仅修复 Bug，不加新功能 | 🟠 |
+   | 下线 | deprecated | 已有替代服务，设定截止日 | 🔴 |
+   
+   **服务下线流程**
+   ```
+   Day 0:  更新 lifecycle: deprecated，添加 deprecation notice
+           通知所有已知消费者（来自 catalog 的 consumers 列表）
+   
+   Day 30: 确认所有消费者已迁移
+           关闭新注册/新依赖
+   
+   Day 60: 停止接受新请求（返回 410 Gone）
+           保留 Read-only 访问用于历史数据查询
+   
+   Day 90: 完全下线，数据归档
+           从 catalog 中标记 archived: true
+   ```
+   
+   **服务晋升 Checklist（Experimental → Production）**
+   - [ ] 服务健康评分 ≥ 80
+   - [ ] 通过 Load Test（目标 TPS 的 150% 压力）
+   - [ ] 完成安全扫描（0 个 High/Critical 漏洞）
+   - [ ] Runbook 已编写并通过演练
+   - [ ] 监控告警已配置并验证（OnCall 团队确认）
+   - [ ] 至少经过 2 周 Canary 发布观察
+   
+   **输出**：服务生命周期文档 + 下线流程 + 晋升 Checklist
+
+**输出格式**：catalog-info.yaml 文件 + 服务依赖关系图（Mermaid）+ 服务健康评分卡 + 生命周期管理规范
+
+**注意事项**：
+- 服务目录的价值在于"被发现"——确保 catalog-info.yaml 提交到代码库并与 Backstage/IDP 自动同步
+- 从高 Tier（Tier-1 核心服务）开始建立目录，而非试图一次性覆盖所有服务
+- 服务健康评分应作为季度技术评审的固定议题，驱动持续改进
+- 依赖关系图定期更新至关重要——过时的依赖图比没有图更危险
+- Backstage 是目前最成熟的开源 IDP，推荐中大型团队直接采用；小团队可用 catalog-info.yaml 文件 + 简单脚本代替
+
+---
+
+### 34. 移动端专项审查
+
+**触发词**：移动端审查 / mobile review / ios review / android review
+
+**目标**：审查移动端应用的平台合规、性能基准、离线同步、无障碍与崩溃防护
+
+**步骤**：
+
+1. **平台合规审查**
+   检查 iOS 和 Android 的合规要求，确保顺利通过审核：
+   
+   **iOS App Store 合规 Checklist**
+   ```
+   □ 隐私权限声明
+     - Info.plist 中每个权限 Key 必须有 Usage Description
+     - NSCameraUsageDescription: "用于拍摄商品照片"
+     - NSLocationWhenInUseUsageDescription: "用于查找附近服务"
+     - NSPhotoLibraryUsageDescription: "用于选择头像图片"
+   
+   □ App Tracking Transparency (ATT)
+     - iOS 14+ 追踪用户需要弹窗授权
+     - NSUserTrackingUsageDescription 必须填写
+   
+   □ 隐私清单 (Privacy Manifest, iOS 17+)
+     - PrivacyInfo.xcprivacy 文件
+     - 声明使用的 Required Reason API（UserDefaults/File timestamp 等）
+   
+   □ 网络安全配置
+     - 所有网络请求使用 HTTPS（ATS 默认开启）
+     - 自定义 Exception 需要合理理由
+   
+   □ 支付合规
+     - 数字商品/虚拟货币必须使用 In-App Purchase
+     - 不得引导用户到外部网站购买
+   ```
+   
+   **Android Google Play 合规 Checklist**
+   ```
+   □ 权限最小化
+     - 仅申请功能必需的权限
+     - targetSdkVersion ≥ 33（Play Store 要求）
+     - 危险权限在使用前实时申请（非安装时）
+   
+   □ 数据安全表（Data Safety Section）
+     - 明确声明收集的数据类型
+     - 说明是否与第三方共享
+   
+   □ 广告 ID（GAID）
+     - Android 12+ 需要 AD_ID 权限
+     - 儿童类应用禁止使用广告 ID
+   
+   □ 64位支持
+     - 所有 native library 提供 arm64-v8a 版本
+   ```
+   
+   **输出**：平台合规检查报告（iOS + Android，通过/未通过标注）
+
+2. **性能专项审查**
+   评估移动端应用的关键性能指标：
+   
+   **性能基准标准**
+   
+   | 指标 | 优秀 | 可接受 | 需优化 |
+   |------|------|--------|--------|
+   | **冷启动时间** | < 1.5s | < 2.5s | > 2.5s |
+   | **热启动时间** | < 0.5s | < 1.0s | > 1.0s |
+   | **帧率（FPS）** | 60fps | 55fps | < 50fps |
+   | **首屏渲染** | < 1.0s | < 2.0s | > 2.0s |
+   | **内存占用（前台）** | < 150MB | < 250MB | > 250MB |
+   | **安装包大小** | < 30MB | < 60MB | > 60MB |
+   | **电池消耗** | < 5%/h | < 10%/h | > 10%/h |
+   
+   **启动性能优化**
+   ```swift
+   // iOS — 减少 AppDelegate 启动时工作
+   @main class AppDelegate: UIResponder, UIApplicationDelegate {
+     func application(_ application: UIApplication,
+       didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+   
+       // ❌ 避免在启动时进行：
+       // - 同步网络请求
+       // - 大量数据库初始化
+       // - 复杂计算
+   
+       // ✅ 启动时只做：
+       setupCrashReporting()  // 轻量
+       configureDependencyInjection()  // 必须
+   
+       // ✅ 延迟到首屏渲染后
+       DispatchQueue.main.async {
+         self.setupAnalytics()
+         self.prefetchData()
+       }
+       return true
+     }
+   }
+   ```
+   
+   ```kotlin
+   // Android — 使用 App Startup 库延迟初始化
+   class MyInitializer : Initializer<Unit> {
+     override fun create(context: Context) {
+       // 只初始化核心功能
+     }
+     override fun dependencies() = emptyList<Class<out Initializer<*>>>()
+   }
+   ```
+   
+   **包大小优化**
+   ```
+   iOS:
+     - 使用 Asset Catalog 而非散落图片
+     - On-Demand Resources 下载非核心资源
+     - App Thinning（Bitcode + Slicing）
+   
+   Android:
+     - App Bundle (.aab) 替代 APK（减少 20-40%）
+     - R8/ProGuard 代码压缩
+     - WebP 替换 PNG/JPEG
+     - 动态功能模块（Dynamic Feature Modules）
+   ```
+   
+   **输出**：性能基准报告 + 优化建议清单
+
+3. **离线与数据同步**
+   设计可靠的离线能力和数据同步策略：
+   
+   **离线架构模式**
+   
+   **① Cache-First（适合内容类 App）**
+   ```typescript
+   // React Native — 先读本地缓存，后台刷新
+   async function getArticles(): Promise<Article[]> {
+     const cached = await AsyncStorage.getItem('articles');
+   
+     // 立即返回缓存（用户不等待）
+     if (cached) {
+       const data = JSON.parse(cached);
+       // 后台静默刷新
+       fetchAndCache().catch(console.error);
+       return data;
+     }
+   
+     // 无缓存时等待网络
+     return fetchAndCache();
+   }
+   ```
+   
+   **② Optimistic Update（适合操作类 App）**
+   ```typescript
+   // 先更新本地，后台同步到服务器
+   async function toggleLike(postId: string) {
+     // 立即更新 UI（乐观更新）
+     dispatch({ type: 'TOGGLE_LIKE', postId });
+   
+     try {
+       await api.post(`/posts/${postId}/like`);
+     } catch (error) {
+       // 失败时回滚
+       dispatch({ type: 'REVERT_LIKE', postId });
+       showToast('操作失败，已恢复');
+     }
+   }
+   ```
+   
+   **冲突解决策略**
+   ```
+   策略                  适用场景
+   ─────────────────────────────────
+   Last-Write-Wins       一般设置、非关键数据
+   Server-Wins           金融数据、库存数量
+   Client-Wins           用户个人偏好
+   Merge（合并）          文档协作（CRDT）
+   Ask User（提示用户）   重要数据冲突
+   ```
+   
+   **网络状态监听**
+   ```typescript
+   import NetInfo from '@react-native-community/netinfo';
+   
+   NetInfo.addEventListener(state => {
+     if (state.isConnected && hasPendingSync()) {
+       syncPendingOperations();  // 联网后自动同步
+     }
+   });
+   
+   // 队列离线操作
+   async function queueOperation(op: Operation) {
+     await OfflineQueue.push(op);
+     if (await NetInfo.fetch().then(s => s.isConnected)) {
+       await flushQueue();
+     }
+   }
+   ```
+   
+   **输出**：离线架构方案 + 冲突解决策略 + 代码模板
+
+4. **无障碍审查**
+   确保应用对视障、听障、行动不便用户友好：
+   
+   **无障碍审查 Checklist**
+   
+   **① 屏幕阅读器（VoiceOver/TalkBack）**
+   ```swift
+   // iOS — 所有交互元素必须有 accessibilityLabel
+   imageView.accessibilityLabel = "用户头像"
+   imageView.accessibilityHint = "双击查看个人资料"
+   
+   // 自定义控件
+   button.isAccessibilityElement = true
+   button.accessibilityTraits = .button
+   button.accessibilityLabel = "发布文章"
+   
+   // ❌ 避免：仅用图标表示功能，无文字描述
+   // ✅ 正确：图标 + accessibilityLabel
+   ```
+   
+   ```kotlin
+   // Android
+   imageButton.contentDescription = "发布文章"
+   // 装饰性图片应设置 importantForAccessibility = no
+   decorativeImage.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+   ```
+   
+   **② 触控目标大小**
+   ```
+   最小触控目标：
+   - iOS: 44pt × 44pt（Apple HIG 标准）
+   - Android: 48dp × 48dp（Material Design 标准）
+   
+   检查方法：
+   - iOS Accessibility Inspector: Xcode → Open Developer Tool
+   - Android: 开发者选项 → 显示触控区域
+   ```
+   
+   **③ 色彩对比度**
+   ```
+   WCAG 2.1 标准：
+   - 正文文字（<18pt）：对比度 ≥ 4.5:1
+   - 大文字（≥18pt）：对比度 ≥ 3:1
+   - 用户界面组件：对比度 ≥ 3:1
+   
+   工具：
+   - Colour Contrast Analyser（桌面工具）
+   - axe DevTools（Web）
+   - Xcode Accessibility Inspector（iOS）
+   ```
+   
+   **④ 动态字体支持**
+   ```swift
+   // iOS — 支持系统字体大小调整
+   label.font = UIFont.preferredFont(forTextStyle: .body)
+   label.adjustsFontForContentSizeCategory = true
+   ```
+   
+   **⑤ 减弱动态效果**
+   ```swift
+   // 尊重"减弱动态效果"设置
+   if UIAccessibility.isReduceMotionEnabled {
+     // 使用简单的淡入淡出替代复杂动画
+     UIView.animate(withDuration: 0.1) { view.alpha = 1 }
+   } else {
+     // 完整动画
+     performFullAnimation()
+   }
+   ```
+   
+   **输出**：无障碍审查报告（VoiceOver/TalkBack + 色彩 + 触控 + 字体）
+
+5. **崩溃与 ANR 防护**
+   防止主线程阻塞、内存泄漏和崩溃：
+   
+   **崩溃防护 Checklist**
+   
+   **① 主线程保护（ANR / 卡顿）**
+   ```kotlin
+   // Android — 严格模式检测主线程 I/O（开发阶段）
+   if (BuildConfig.DEBUG) {
+     StrictMode.setThreadPolicy(
+       StrictMode.ThreadPolicy.Builder()
+         .detectDiskReads()
+         .detectDiskWrites()
+         .detectNetwork()
+         .penaltyLog()
+         .build()
+     )
+   }
+   ```
+   
+   ```swift
+   // iOS — 所有耗时操作移到后台线程
+   // ❌ 在主线程执行网络请求（卡 UI）
+   let data = try! Data(contentsOf: url)  // 同步，阻塞主线程
+   
+   // ✅ 后台执行，主线程更新 UI
+   Task {
+     let data = await fetchData(url: url)  // 异步
+     await MainActor.run {
+       updateUI(data)  // 回主线程
+     }
+   }
+   ```
+   
+   **② 内存泄漏防护**
+   ```swift
+   // iOS — 使用 weak/unowned 避免循环引用
+   class ViewController: UIViewController {
+     var closure: (() -> Void)?
+   
+     func setup() {
+       // ❌ 强引用循环
+       closure = { self.doSomething() }
+   
+       // ✅ weak 引用
+       closure = { [weak self] in self?.doSomething() }
+     }
+   }
+   
+   // 使用 Instruments 的 Leaks 模板检测
+   // Xcode → Product → Profile → Leaks
+   ```
+   
+   **③ 崩溃上报集成**
+   ```typescript
+   // React Native — 集成 Sentry
+   import * as Sentry from '@sentry/react-native';
+   
+   Sentry.init({
+     dsn: 'https://xxx@sentry.io/xxx',
+     tracesSampleRate: 0.2,
+     beforeSend: (event) => {
+       // 过滤敏感信息
+       delete event.user?.email;
+       return event;
+     },
+   });
+   
+   // 自定义崩溃上下文
+   Sentry.setContext('order', { orderId, userId });
+   ```
+   
+   **④ 崩溃率基准**
+   ```
+   指标          目标值     警戒线
+   ──────────────────────────────
+   崩溃率         < 0.1%    > 0.5%
+   ANR 率         < 0.05%   > 0.2%
+   内存 OOM 率    < 0.01%   > 0.1%
+   ```
+   
+   **输出**：崩溃防护代码模板 + ANR 检测配置 + 崩溃率监控方案
+
+**输出格式**：平台合规报告（iOS + Android）+ 性能基准报告 + 离线架构方案 + 无障碍审查报告 + 崩溃防护 Checklist
+
+**注意事项**：
+- App Store 审核可能因隐私声明不完整被拒——提交前必须逐项核对 Info.plist 权限说明
+- 移动端性能优化应以真机测试为准，模拟器结果不具代表性（特别是低端 Android 设备）
+- 无障碍功能不仅是道德责任，在部分国家/地区（如美国 ADA、欧盟 EAA）也是法律要求
+- 崩溃率超过 0.5% 会被 Google Play 标记为"问题应用"，影响商店排名
+- 包大小每增加 10MB 约导致 Android 安装转化率下降 1-2%，务必定期监控
+
+---
+
+### 35. 数据管道设计
+
+**触发词**：数据管道 / data pipeline / etl / elt
+
+**目标**：设计 Batch/Streaming 数据管道，制定数据质量规则、容错策略与血缘追踪方案
+
+**步骤**：
+
+1. **架构选型**
+   根据数据特征和业务需求选择合适的管道架构：
+   
+   **四大架构模式决策矩阵**
+   
+   | 架构 | 延迟 | 复杂度 | 适用场景 | 代表工具 |
+   |------|------|--------|---------|---------|
+   | **Batch（批处理）** | 小时~天 | 低 | 日报、数据仓库 ETL、离线训练 | Airflow + Spark |
+   | **Streaming（流处理）** | 秒~毫秒 | 高 | 实时监控、欺诈检测、事件驱动 | Kafka + Flink |
+   | **Lambda（λ）** | 两套 | 极高 | 需要批量精确性+流式时效性 | Kafka + Spark + Hive |
+   | **Kappa（κ）** | 秒 | 中 | 一切皆流，重播历史数据 | Kafka + Flink |
+   
+   **决策树**
+   ```
+   数据新鲜度要求 < 1分钟？
+   ├── YES → Streaming（Kafka + Flink）
+   └── NO
+       └── 需要精确的历史重算？
+           ├── YES + 实时结果 → Lambda 架构
+           ├── YES + 可接受重播 → Kappa 架构
+           └── NO → Batch（Airflow + Spark/dbt）
+   ```
+   
+   **Source → Transform → Sink 数据流图**
+   ```
+   数据源（Sources）:
+     MySQL / PostgreSQL（CDC）
+     Kafka Topics
+     REST API / Webhook
+     文件系统（S3/GCS）
+            │
+            ▼
+   变换层（Transform）:
+     数据清洗（去重/标准化/脱敏）
+     业务逻辑计算
+     聚合/Join
+            │
+            ▼
+   目标层（Sinks）:
+     数据仓库（BigQuery/Snowflake/Redshift）
+     数据湖（S3/GCS Parquet）
+     搜索引擎（Elasticsearch）
+     特征存储（Feature Store）
+   ```
+   
+   **技术栈推荐**
+   ```
+   小团队/初创：
+     Airflow + dbt + BigQuery（低运维成本）
+   
+   中大型团队：
+     Kafka + Flink + Iceberg + Trino（高吞吐实时）
+   
+   全托管方案：
+     Fivetran（Ingestion）+ dbt Cloud（Transform）+ Snowflake（Warehouse）
+   ```
+   
+   **输出**：架构选型报告 + 数据流图
+
+2. **数据质量规则**
+   定义并实施数据质量检查规则：
+   
+   **数据质量四维度**
+   
+   | 维度 | 定义 | 检查方式 | 阈值示例 |
+   |------|------|---------|---------|
+   | **完整性** | 必填字段不为空 | NULL 率检查 | < 0.1% |
+   | **准确性** | 值在合理范围内 | 范围/格式校验 | 异常值率 < 1% |
+   | **一致性** | 跨系统数据一致 | 对账/交叉校验 | 差异率 < 0.01% |
+   | **及时性** | 数据按时到达 | 延迟监控 | 最大延迟 < 2h |
+   
+   **dbt 数据质量测试（推荐）**
+   ```yaml
+   # models/orders.yml
+   version: 2
+   models:
+     - name: orders
+       columns:
+         - name: order_id
+           tests:
+             - not_null
+             - unique
+         - name: user_id
+           tests:
+             - not_null
+             - relationships:
+                 to: ref('users')
+                 field: id
+         - name: status
+           tests:
+             - accepted_values:
+                 values: ['pending', 'paid', 'shipped', 'completed', 'cancelled']
+         - name: amount
+           tests:
+             - not_null
+             - dbt_expectations.expect_column_values_to_be_between:
+                 min_value: 0
+                 max_value: 1000000
+   ```
+   
+   **Great Expectations 数据期望（Python）**
+   ```python
+   import great_expectations as gx
+   
+   context = gx.get_context()
+   suite = context.add_expectation_suite("orders_suite")
+   
+   # 定义数据期望
+   suite.add_expectation(
+       gx.expectations.ExpectColumnValuesToNotBeNull(column="order_id")
+   )
+   suite.add_expectation(
+       gx.expectations.ExpectColumnValuesToBeBetween(
+           column="amount", min_value=0, max_value=1_000_000
+       )
+   )
+   suite.add_expectation(
+       gx.expectations.ExpectTableRowCountToBeBetween(
+           min_value=1000,  # 每日订单不少于1000
+           max_value=1_000_000
+       )
+   )
+   
+   # 运行验证
+   result = context.run_checkpoint("daily_orders_checkpoint")
+   if not result.success:
+       raise DataQualityError("数据质量检查未通过！")
+   ```
+   
+   **数据质量告警**
+   ```yaml
+   # 数据质量 SLA
+   - NULL 率超过 1%：🔴 阻断管道，Slack 告警
+   - 行数下降 > 20%（对比昨日）：🟠 告警，人工核查
+   - P99 延迟 > 2 小时：🟡 警告，关注
+   ```
+   
+   **输出**：数据质量规则文档 + dbt/GE 测试配置
+
+3. **管道设计与代码模板**
+   生成可复用的管道代码模板：
+   
+   **Airflow DAG 模板（Batch）**
+   ```python
+   # dags/daily_orders_etl.py
+   from airflow import DAG
+   from airflow.operators.python import PythonOperator
+   from airflow.providers.postgres.hooks.postgres import PostgresHook
+   from datetime import datetime, timedelta
+   
+   default_args = {
+       'owner': 'data-team',
+       'retries': 3,
+       'retry_delay': timedelta(minutes=5),
+       'on_failure_callback': alert_slack,
+   }
+   
+   with DAG(
+       'daily_orders_etl',
+       default_args=default_args,
+       schedule_interval='0 2 * * *',  # 每日凌晨2点
+       start_date=datetime(2024, 1, 1),
+       catchup=False,  # 不回填历史
+       tags=['orders', 'daily'],
+   ) as dag:
+   
+       extract = PythonOperator(task_id='extract', python_callable=extract_orders)
+       validate = PythonOperator(task_id='validate', python_callable=run_quality_checks)
+       transform = PythonOperator(task_id='transform', python_callable=transform_orders)
+       load = PythonOperator(task_id='load', python_callable=load_to_warehouse)
+       notify = PythonOperator(task_id='notify', python_callable=send_completion_report)
+   
+       extract >> validate >> transform >> load >> notify
+   ```
+   
+   **Kafka + Flink 流处理模板**
+   ```python
+   # Flink Python API
+   from pyflink.datastream import StreamExecutionEnvironment
+   from pyflink.datastream.connectors.kafka import KafkaSource, KafkaSink
+   
+   env = StreamExecutionEnvironment.get_execution_environment()
+   env.set_parallelism(4)
+   
+   # Source
+   kafka_source = KafkaSource.builder()     .set_bootstrap_servers("kafka:9092")     .set_topics("orders")     .set_group_id("flink-order-processor")     .set_value_only_deserializer(JsonRowDeserializationSchema())     .build()
+   
+   stream = env.from_source(kafka_source, WatermarkStrategy.no_watermarks(), "Kafka Source")
+   
+   # Transform（滚动窗口：每分钟统计）
+   result = stream     .key_by(lambda x: x['region'])     .window(TumblingEventTimeWindows.of(Time.minutes(1)))     .aggregate(OrderAggregateFunction())
+   
+   # Sink
+   result.sink_to(KafkaSink.builder()
+       .set_bootstrap_servers("kafka:9092")
+       .set_record_serializer(JsonRowSerializationSchema())
+       .build())
+   
+   env.execute("Order Stream Processing")
+   ```
+   
+   **输出**：Airflow DAG 模板 + Flink/Spark 流处理模板
+
+4. **容错与重试策略**
+   确保管道在故障时可靠恢复：
+   
+   **核心容错原则**
+   
+   **① 幂等性设计（最重要）**
+   ```python
+   def load_orders_idempotent(batch_date: str, orders: list):
+       """幂等加载：同一批次多次执行结果相同"""
+       # 使用 INSERT ... ON CONFLICT DO NOTHING
+       # 或 MERGE（UPSERT）语义
+       pg_hook.run("""
+           INSERT INTO orders_dw (order_id, batch_date, amount, status)
+           VALUES %s
+           ON CONFLICT (order_id) DO UPDATE SET
+             amount = EXCLUDED.amount,
+             status = EXCLUDED.status,
+             updated_at = NOW()
+       """, [(o['id'], batch_date, o['amount'], o['status']) for o in orders])
+   ```
+   
+   **② 死信队列（DLQ）**
+   ```python
+   # Kafka — 处理失败消息路由到 DLQ
+   def process_message(msg):
+       try:
+           transform_and_load(msg)
+       except Exception as e:
+           # 路由到死信队列，保留原始消息 + 错误信息
+           dlq_producer.send('orders-dlq', {
+               'original_message': msg,
+               'error': str(e),
+               'failed_at': datetime.utcnow().isoformat(),
+               'retry_count': msg.get('retry_count', 0) + 1
+           })
+           logger.error(f"Message sent to DLQ: {e}")
+   ```
+   
+   **③ 断点续传（Checkpoint）**
+   ```python
+   def process_large_dataset():
+       checkpoint_file = '.etl_checkpoint'
+       last_id = load_checkpoint(checkpoint_file)
+   
+       for batch in fetch_in_batches(after_id=last_id, batch_size=1000):
+           process_batch(batch)
+           save_checkpoint(checkpoint_file, batch[-1]['id'])  # 每批保存进度
+   ```
+   
+   **④ 指数退避重试**
+   ```python
+   import tenacity
+   
+   @tenacity.retry(
+       wait=tenacity.wait_exponential(multiplier=1, min=4, max=60),
+       stop=tenacity.stop_after_attempt(5),
+       retry=tenacity.retry_if_exception_type(TransientError),
+       before_sleep=tenacity.before_sleep_log(logger, logging.WARNING)
+   )
+   def call_external_api(data):
+       return requests.post(API_URL, json=data, timeout=30)
+   ```
+   
+   **输出**：容错策略文档 + 幂等加载模板 + DLQ 配置
+
+5. **数据血缘与可观测性**
+   建立数据血缘追踪和管道监控体系：
+   
+   **数据血缘（Data Lineage）**
+   ```python
+   # OpenLineage 标准（Marquez/Atlan/DataHub 支持）
+   from openlineage.client import OpenLineageClient
+   from openlineage.client.run import RunEvent, Job, Run, Dataset
+   
+   client = OpenLineageClient.from_environment()
+   
+   # 记录数据流转关系
+   client.emit(RunEvent(
+       eventType="COMPLETE",
+       job=Job(namespace="etl", name="daily_orders_transform"),
+       run=Run(runId=str(uuid4())),
+       inputs=[Dataset(namespace="postgres", name="raw_orders")],
+       outputs=[Dataset(namespace="bigquery", name="orders_dw.fact_orders")]
+   ))
+   ```
+   
+   **管道健康仪表盘指标**
+   ```
+   关键指标（Grafana 面板）：
+   ─────────────────────────────
+   延迟指标：
+     - 数据新鲜度（最新记录时间戳）
+     - Pipeline P95 执行时长
+     - Kafka Consumer Lag
+   
+   质量指标：
+     - 每日 NULL 率趋势
+     - 行数异常检测（±30% 告警）
+     - 数据质量测试通过率
+   
+   运维指标：
+     - 管道成功率（目标 > 99%）
+     - 重试次数分布
+     - DLQ 消息积压
+   ```
+   
+   **Airflow SLA 监控**
+   ```python
+   with DAG(
+       'daily_orders_etl',
+       sla_miss_callback=sla_miss_alert,  # SLA 超时回调
+       ...
+   ) as dag:
+       load_task = PythonOperator(
+           task_id='load',
+           python_callable=load_to_warehouse,
+           sla=timedelta(hours=4),  # 必须在4小时内完成
+       )
+   ```
+   
+   **数据目录集成**
+   ```yaml
+   # dbt docs（自动生成）
+   # 运行后访问：dbt docs serve
+   # 包含：模型血缘图、列描述、测试结果
+   
+   # 推荐工具
+   生产级：DataHub, Atlan, Alation
+   开源轻量：Marquez, OpenMetadata
+   dbt 生态：dbt docs + Elementary
+   ```
+   
+   **输出**：数据血缘配置 + 监控仪表盘指标定义 + 数据目录方案
+
+**输出格式**：架构选型文档 + 数据流图 + 质量规则配置（dbt/GE）+ 管道代码模板 + 容错策略 + 血缘追踪方案
+
+**注意事项**：
+- 幂等性是数据管道的第一原则——任何任务必须可以安全重试而不产生重复数据
+- 从 Batch 开始，在有真实需求时再迁移到 Streaming，避免过早的复杂度
+- 数据质量检查应与管道强耦合（而非事后补救），质量不达标应阻断下游加载
+- 死信队列不是垃圾桶——DLQ 中的消息代表业务异常，必须定期审查和处理
+- dbt + Airflow + BigQuery 是目前最常见的现代数据栈，对大多数团队足够用
+
+---
+
+### 36. ML 实验管理
+
+**触发词**：ml experiment / mlops / model training / 模型训练
+
+**目标**：规范 ML 实验设计、追踪配置（MLflow/W&B）、数据版本控制、Model Card 生成与部署监控
+
+**步骤**：
+
+1. **实验设计**
+   在开始训练前明确实验目标和控制变量：
+   
+   **假设驱动实验设计**
+   ```markdown
+   ## 实验设计文档
+   
+   ### 研究问题
+   我们假设：[变量 X] 会导致 [指标 Y] 提升 [Z%]，
+   因为 [理论依据或先验知识]。
+   
+   ### 实验配置
+   - 控制组（Baseline）：[现有模型/方法描述]
+   - 实验组：[变更内容描述]
+   - 控制变量：[保持不变的因素：数据集/超参/随机种子]
+   
+   ### 评估指标
+   - 主要指标：AUC-ROC（因为关注排序，不关注具体阈值）
+   - 次要指标：Precision@K, Recall@K
+   - 业务指标：CTR 提升（线上 A/B 验证）
+   
+   ### 成功标准
+   - 主要指标提升 ≥ 2%（统计显著性 p < 0.05）
+   - 推理延迟不增加超过 20%
+   - 训练成本不超过 $50
+   ```
+   
+   **实验矩阵（超参搜索）**
+   ```python
+   # 使用 Optuna 自动超参优化
+   import optuna
+   
+   def objective(trial):
+       params = {
+           'learning_rate': trial.suggest_float('lr', 1e-5, 1e-1, log=True),
+           'batch_size': trial.suggest_categorical('batch_size', [16, 32, 64, 128]),
+           'dropout': trial.suggest_float('dropout', 0.1, 0.5),
+           'hidden_dim': trial.suggest_int('hidden_dim', 64, 512, step=64),
+       }
+       model = train_model(**params)
+       return evaluate(model)['auc']
+   
+   study = optuna.create_study(direction='maximize')
+   study.optimize(objective, n_trials=50, timeout=3600)
+   print(f"Best params: {study.best_params}")
+   ```
+   
+   **最小可行实验（MVE）原则**
+   ```
+   先用 10% 数据快速验证假设（10min 训练）
+   → 有提升信号 → 扩展到全量数据
+   → 无提升信号 → 调整假设重新实验
+   ```
+   
+   **输出**：实验设计文档 + 评估指标定义 + 超参搜索配置
+
+2. **实验追踪配置**
+   配置 MLflow 或 W&B 实现实验全自动追踪：
+   
+   **MLflow 完整配置**
+   ```python
+   import mlflow
+   import mlflow.pytorch
+   
+   # 配置追踪服务器
+   mlflow.set_tracking_uri("http://mlflow-server:5000")
+   mlflow.set_experiment("recommendation-model-v2")
+   
+   with mlflow.start_run(run_name="bert-finetune-lr1e-4") as run:
+       # 记录所有超参
+       mlflow.log_params({
+           "model_name": "bert-base-chinese",
+           "learning_rate": 1e-4,
+           "batch_size": 32,
+           "epochs": 10,
+           "optimizer": "AdamW",
+           "warmup_steps": 500,
+       })
+   
+       # 记录数据集信息
+       mlflow.log_param("train_samples", len(train_dataset))
+       mlflow.log_param("data_version", "v2024-01-15")
+   
+       for epoch in range(config.epochs):
+           train_loss = train_epoch(model, train_loader)
+           val_metrics = evaluate(model, val_loader)
+   
+           # 实时记录指标
+           mlflow.log_metrics({
+               "train_loss": train_loss,
+               "val_loss": val_metrics['loss'],
+               "val_auc": val_metrics['auc'],
+               "val_f1": val_metrics['f1'],
+           }, step=epoch)
+   
+       # 注册最终模型
+       mlflow.pytorch.log_model(
+           model,
+           "model",
+           registered_model_name="recommendation-model",
+           pip_requirements=["torch==2.1.0", "transformers==4.35.0"],
+       )
+   
+       # 记录评估报告
+       mlflow.log_artifact("reports/confusion_matrix.png")
+       mlflow.log_artifact("reports/feature_importance.html")
+   
+   print(f"Run ID: {run.info.run_id}")
+   ```
+   
+   **W&B 配置（更丰富的可视化）**
+   ```python
+   import wandb
+   
+   wandb.init(
+       project="recommendation-v2",
+       name="bert-finetune-lr1e-4",
+       config={
+           "learning_rate": 1e-4,
+           "architecture": "bert-base",
+           "dataset": "user-clicks-v2",
+       },
+       tags=["bert", "production-candidate"],
+   )
+   
+   # 自动记录梯度和权重（PyTorch）
+   wandb.watch(model, log='all', log_freq=100)
+   
+   # 训练循环中
+   wandb.log({"train_loss": loss, "val_auc": auc}, step=epoch)
+   
+   # 完成时
+   wandb.finish()
+   ```
+   
+   **输出**：MLflow/W&B 实验追踪配置 + 训练脚本模板
+
+3. **数据版本控制**
+   使用 DVC 管理数据集和特征工程的版本：
+   
+   **DVC 初始化与数据版本管理**
+   ```bash
+   # 初始化 DVC（与 Git 协同）
+   git init && dvc init
+   
+   # 添加数据集到 DVC 管理
+   dvc add data/train.parquet
+   dvc add data/test.parquet
+   git add data/.gitignore data/train.parquet.dvc data/test.parquet.dvc
+   git commit -m "Add training data v1"
+   
+   # 配置远程存储（S3/GCS/Azure）
+   dvc remote add -d myremote s3://my-ml-bucket/dvc-store
+   dvc push  # 上传数据到远程
+   
+   # 切换到不同数据版本
+   git checkout v1.0-data-tag
+   dvc pull  # 下载对应版本数据
+   ```
+   
+   **特征工程管道（可复现）**
+   ```python
+   # dvc.yaml — 定义可复现的管道
+   stages:
+     prepare_data:
+       cmd: python src/prepare.py --input data/raw --output data/prepared
+       deps:
+         - src/prepare.py
+         - data/raw
+       outs:
+         - data/prepared
+   
+     feature_engineering:
+       cmd: python src/features.py --input data/prepared --output data/features
+       deps:
+         - src/features.py
+         - data/prepared
+         - params.yaml          # 特征工程超参
+       outs:
+         - data/features
+       metrics:
+         - reports/feature_stats.json
+   
+     train:
+       cmd: python src/train.py
+       deps:
+         - src/train.py
+         - data/features
+       outs:
+         - models/model.pkl
+       metrics:
+         - reports/metrics.json
+   ```
+   
+   ```bash
+   # 运行完整管道（只重新执行有变化的阶段）
+   dvc repro
+   
+   # 对比不同版本的指标
+   dvc metrics diff v1.0 v2.0
+   # ┌──────────────┬───────┬───────┬────────┐
+   # │ Metric       │ HEAD  │ v1.0  │ Change │
+   # ├──────────────┼───────┼───────┼────────┤
+   # │ val_auc      │ 0.847 │ 0.831 │ +0.016 │
+   # └──────────────┴───────┴───────┴────────┘
+   ```
+   
+   **输出**：DVC 配置 + 特征管道 dvc.yaml + 版本对比命令
+
+4. **Model Card 生成**
+   为每个发布的模型生成标准化的 Model Card：
+   
+   **Model Card 模板**
+   ```markdown
+   # Model Card: 推荐模型 v2.1.0
+   
+   ## 模型概述
+   - **模型类型**：双塔召回模型（BERT + 协同过滤）
+   - **任务**：电商商品推荐
+   - **训练日期**：2024-01-20
+   - **版本**：v2.1.0
+   - **MLflow Run ID**：abc123def456
+   
+   ## 预期用途
+   ### 主要用途
+   为已登录用户生成个性化商品推荐，覆盖首页、详情页猜你喜欢。
+   
+   ### 不适合的用途
+   - 冷启动用户（注册 < 7 天）→ 使用热门推荐替代
+   - 价格敏感决策（不提供价格预测）
+   
+   ## 训练数据
+   - **数据集**：user-click-events v2024-01
+   - **训练样本**：5,200,000 条用户点击行为
+   - **时间范围**：2023-07-01 ～ 2023-12-31
+   - **数据版本**：DVC tag `data-v2024-01`
+   
+   ## 性能指标
+   | 指标 | 离线值 | 在线 A/B（1周） |
+   |------|--------|---------------|
+   | Recall@20 | 0.847 | 0.821 |
+   | NDCG@20 | 0.623 | 0.598 |
+   | CTR | — | +4.2%（vs 旧模型）|
+   | Latency P99 | 45ms | 52ms |
+   
+   ## 偏差与公平性
+   - 对新品（上架 < 30 天）存在曝光不足偏差 → 已通过 Explore 策略缓解
+   - 价格区间分布分析：低价商品点击率被高估（训练集偏差）→ 已加权修正
+   
+   ## 限制
+   - 模型不包含实时库存信息，需上层过滤下架商品
+   - 不支持多语言商品（仅中文描述）
+   
+   ## 负责任的 AI 声明
+   - 不使用性别/年龄等受保护属性作为特征
+   - 符合公司隐私政策，用户行为数据已脱敏处理
+   ```
+   
+   **自动生成脚本**
+   ```python
+   def generate_model_card(run_id: str, ab_results: dict) -> str:
+       """从 MLflow run 自动生成 Model Card"""
+       run = mlflow.get_run(run_id)
+       params = run.data.params
+       metrics = run.data.metrics
+   
+       return MODEL_CARD_TEMPLATE.format(
+           version=params.get('model_version'),
+           train_date=run.info.start_time,
+           recall_at_20=metrics.get('val_recall_at_20'),
+           ctr_lift=ab_results.get('ctr_lift'),
+           run_id=run_id,
+       )
+   ```
+   
+   **输出**：Model Card 文档 + 自动生成脚本
+
+5. **部署与监控**
+   模型上线、A/B 测试和生产监控完整方案：
+   
+   **模型注册与晋升流程**
+   ```python
+   # MLflow 模型注册与阶段管理
+   from mlflow.tracking import MlflowClient
+   
+   client = MlflowClient()
+   
+   # 注册模型
+   model_uri = f"runs:/{run_id}/model"
+   mv = client.create_model_version(
+       name="recommendation-model",
+       source=model_uri,
+       run_id=run_id,
+   )
+   
+   # 模型阶段：None → Staging → Production
+   # 先晋升到 Staging（测试）
+   client.transition_model_version_stage(
+       name="recommendation-model",
+       version=mv.version,
+       stage="Staging",
+   )
+   
+   # 验证通过后晋升到 Production
+   client.transition_model_version_stage(
+       name="recommendation-model",
+       version=mv.version,
+       stage="Production",
+       archive_existing_versions=True,  # 归档旧版本
+   )
+   ```
+   
+   **A/B 测试配置**
+   ```python
+   # 按用户哈希分流
+   def get_model_for_user(user_id: str) -> str:
+       hash_val = int(hashlib.md5(user_id.encode()).hexdigest(), 16) % 100
+       if hash_val < 10:  # 10% 流量
+           return "recommendation-model:v2.1.0"
+       else:
+           return "recommendation-model:v2.0.0"
+   
+   # 记录 A/B 分组（用于统计分析）
+   mlflow.log_param("ab_group", "control" if version == "v2.0.0" else "treatment")
+   ```
+   
+   **数据漂移监控（Evidently）**
+   ```python
+   from evidently.report import Report
+   from evidently.metric_preset import DataDriftPreset, ModelPerformancePreset
+   
+   # 对比训练数据分布 vs 生产数据分布
+   report = Report(metrics=[
+       DataDriftPreset(),           # 特征分布漂移
+       ModelPerformancePreset(),    # 模型性能漂移
+   ])
+   
+   report.run(reference_data=train_df, current_data=production_df_last_7d)
+   report.save_html("reports/drift_report.html")
+   
+   # 自动回滚条件
+   drift_detected = report.as_dict()['metrics'][0]['result']['dataset_drift']
+   if drift_detected:
+       alert_and_rollback(reason="Feature distribution drift detected")
+   ```
+   
+   **生产监控仪表盘**
+   ```
+   关键指标（每日监控）：
+   ─────────────────────────────────
+   模型性能：
+     在线 CTR（实验 vs 对照）
+     推荐命中率（Recall@K）
+   
+   数据漂移：
+     用户特征分布变化（PSI > 0.2 告警）
+     商品特征新增/消失比率
+   
+   运维指标：
+     推理延迟 P99（< 100ms）
+     模型服务错误率（< 0.1%）
+     预测请求量（异常波动告警）
+   ```
+   
+   **输出**：模型注册流程 + A/B 测试配置 + 漂移监控脚本 + 自动回滚方案
+
+**输出格式**：实验设计文档 + MLflow/W&B 追踪配置 + DVC 数据管道 + Model Card + 部署 A/B 测试方案 + 漂移监控配置
+
+**注意事项**：
+- 实验追踪不是可选项——没有追踪记录的实验结果无法复现，也无法与团队分享
+- 每个 MLflow/W&B Run 必须记录数据版本，否则6个月后无法知道用了哪份训练数据
+- Model Card 对外部合作和监管合规至关重要，建议与模型一起版本化管理
+- 数据漂移监控比模型指标监控更重要——漂移发生在指标下降之前
+- 优先用 MLflow（开源自托管）降低工具成本；大团队再考虑 W&B 或 Vertex AI 等商业方案
