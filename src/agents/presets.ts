@@ -1,6 +1,6 @@
 /**
  * 内置 Agent 预设定义
- * 5 个标准 Agent，覆盖全部 36 个 Skill
+ * 8 个标准 Agent：5 个通用 + 3 个专业化（QA / Security / Data）
  */
 
 import type { AgentDefinition } from './types';
@@ -85,6 +85,47 @@ export const BUILT_IN_AGENTS: AgentDefinition[] = [
       'tech-research',
       'debug',
       'service-catalog',
+    ],
+  },
+  // ── 专业化 Agent（可按需在 Pipeline 中独立使用）──────────────────────────
+  {
+    id: 'qa',
+    name: 'QA Agent',
+    nameEn: 'qa-agent',
+    emoji: '🧪',
+    role: '负责质量保障：单元测试、代码审查、Spec 审查与移动端合规',
+    skillIds: [
+      'unit-testing',
+      'code-review',
+      'spec-review',
+      'mobile-review',
+      'security-review',
+    ],
+  },
+  {
+    id: 'security',
+    name: 'Security Agent',
+    nameEn: 'security-agent',
+    emoji: '🔐',
+    role: '负责安全专项：威胁建模、安全审查与安全变更提案',
+    skillIds: [
+      'threat-model',
+      'security-review',
+      'spec-proposal',
+    ],
+  },
+  {
+    id: 'data',
+    name: 'Data Agent',
+    nameEn: 'data-agent',
+    emoji: '📈',
+    role: '负责数据工程：数据管道、ML 实验、数据库优化与可观测性',
+    skillIds: [
+      'data-pipeline',
+      'ml-experiment',
+      'database-optimize',
+      'observability',
+      'llm-feature',
     ],
   },
 ];

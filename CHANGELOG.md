@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0] - 2026-04-09
+
+### Added
+
+- **3 个新内置专业化 Agent**（内置 Agent 5 → 8）：
+  - `qa` 🧪 — 质量保障（unit-testing / code-review / spec-review / mobile-review / security-review）
+  - `security` 🔐 — 安全专项（threat-model / security-review / spec-proposal）
+  - `data` 📈 — 数据工程（data-pipeline / ml-experiment / database-optimize / observability / llm-feature）
+
+- **4 种 Agent 协作模式**（`--mode`，新增 3 种）：
+  - `sequential`（默认，原逻辑）
+  - `parallel` — 各 Agent 并行输出各自维度分析，最后汇总整合
+  - `review-loop` — Coder 实现 → Reviewer 审查 → Coder 修改（最多 2 轮）
+  - `consensus` — 多 Agent 独立提案，最后共识整合最优解
+
+- **新 CLI 命令 `ethan agent new [agentId]`**：
+  - 交互式创建自定义 Agent，生成 `.ethan/agents/<id>.yaml`
+  - 显示 36 个 Skill ID 列表供选择，校验合法性
+  - 自动创建 `.ethan/agents/` 目录
+
+- **新 MCP 工具 2 个**（28 → 30）：
+  - `ethan_agent_list` — 列出所有可用 Agent（内置 + 自定义）
+  - `ethan_agent_show` — 查看指定 Agent 详细配置
+
+- **`ethan agent run` 新增 `--mode` 选项**：
+  - `--mode sequential|parallel|review-loop|consensus`
+
+### Changed
+
+- `ethan_agent_orchestrate` MCP 工具新增 `mode` 参数（sequential/parallel/review-loop/consensus）
+- MCP Server 工具总数：28 → **30**
+- 内置 Agent 总数：5 → **8**
+
+---
+
 ## [1.13.0] - 2026-04-08
 
 ### Added

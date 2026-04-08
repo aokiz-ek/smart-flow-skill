@@ -318,7 +318,7 @@ export async function startMcpServer(): Promise<void> {
 
   const agentOrchestrateTool: Tool = {
     name: 'ethan_agent_orchestrate',
-    description: '生成 Multi-Agent 编排 Prompt：将 Pipeline 步骤分配给不同角色的 Agent（Architect / Code / Review / DevOps / PM），每个 Agent 按职责执行对应步骤，通过 Handoff 摘要协作传递上下文。比 autopilot 更具角色分工感，适合复杂多阶段任务。',
+    description: '生成 Multi-Agent 编排 Prompt：将 Pipeline 步骤分配给不同角色的 Agent（Architect / Code / Review / DevOps / PM 等），每个 Agent 按职责执行对应步骤，通过 Handoff 摘要协作传递上下文。支持 4 种协作模式：sequential（顺序）/ parallel（并行）/ review-loop（迭代审查）/ consensus（共识决策）。',
     inputSchema: {
       type: 'object',
       properties: {
@@ -330,6 +330,12 @@ export async function startMcpServer(): Promise<void> {
         context: {
           type: 'string',
           description: '任务背景描述（如"实现用户登录功能，支持 JWT 认证"）',
+        },
+        mode: {
+          type: 'string',
+          enum: ['sequential', 'parallel', 'review-loop', 'consensus'],
+          description: '协作模式：sequential（顺序，默认）/ parallel（并行分析）/ review-loop（实现→审查→修改）/ consensus（独立提案→共识整合）',
+          default: 'sequential',
         },
         lang: {
           type: 'string',
@@ -348,6 +354,39 @@ export async function startMcpServer(): Promise<void> {
         },
       },
       required: ['pipelineId', 'context'],
+    },
+  };
+
+  const agentListTool: Tool = {
+    name: 'ethan_agent_list',
+    description: '列出所有可用 Agent（8 个内置：Architect/Coder/Reviewer/DevOps/PM/QA/Security/Data + 用户自定义）及其职责和 Skill 分配。用于了解当前项目可用的 Agent 阵容。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        cwd: {
+          type: 'string',
+          description: '项目目录路径（默认为当前目录，用于加载自定义 Agent）',
+        },
+      },
+    },
+  };
+
+  const agentShowTool: Tool = {
+    name: 'ethan_agent_show',
+    description: '查看指定 Agent 的详细配置，包含 id、名称、职责描述和负责的 Skill ID 列表。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agentId: {
+          type: 'string',
+          description: 'Agent ID，如 architect / coder / reviewer / devops / pm / qa / security / data 或自定义 Agent ID',
+        },
+        cwd: {
+          type: 'string',
+          description: '项目目录路径（默认为当前目录）',
+        },
+      },
+      required: ['agentId'],
     },
   };
 
@@ -525,6 +564,8 @@ export async function startMcpServer(): Promise<void> {
         gitReviewTool,
         autopilotTool,
         agentOrchestrateTool,
+        agentListTool,
+        agentShowTool,
         contextSnapshotTool,
         specProposalTool,
         specReviewTool,
@@ -936,8 +977,64 @@ export async function startMcpServer(): Promise<void> {
         context,
         lang: isEn ? 'en' : 'zh',
         snapshot: snapshotBlock,
+        mode: ((args?.mode as string) || 'sequential') as 'sequential' | 'parallel' | 'review-loop' | 'consensus',
       });
       return { content: [{ type: 'text', text: prompt }] };
+    }
+
+    // ── ethan_agent_list ───────────────────────────────────────────────────
+    if (name === 'ethan_agent_list') {
+      const cwd = (args?.cwd as string) || process.cwd();
+      const { getActiveAgents } = await import('../agents/index');
+      const agents = getActiveAgents(cwd);
+
+      const lines = [`# 🤖 可用 Agent 列表（共 ${agents.length} 个）\n`];
+      for (const agent of agents) {
+        lines.push(`## ${agent.emoji} ${agent.name}  [\`${agent.id}\`]`);
+        lines.push(`**职责**：${agent.role}`);
+        lines.push(`**Skills**（${agent.skillIds.length} 个）：\`${agent.skillIds.join('`, `')}\``);
+        lines.push('');
+      }
+      lines.push('---');
+      lines.push('*自定义 Agent 可放置在 `.ethan/agents/*.yaml` 目录，同 ID 覆盖内置 Agent。*');
+      return { content: [{ type: 'text', text: lines.join('\n') }] };
+    }
+
+    // ── ethan_agent_show ───────────────────────────────────────────────────
+    if (name === 'ethan_agent_show') {
+      const agentId = ((args?.agentId as string) || '').trim();
+      const cwd = (args?.cwd as string) || process.cwd();
+
+      if (!agentId) {
+        return { content: [{ type: 'text', text: '❌ agentId 不能为空。' }], isError: true };
+      }
+
+      const { getActiveAgents } = await import('../agents/index');
+      const agents = getActiveAgents(cwd);
+      const agent = agents.find((a) => a.id === agentId);
+
+      if (!agent) {
+        const ids = agents.map((a) => a.id).join(' | ');
+        return {
+          content: [{ type: 'text', text: `❌ 未找到 Agent: ${agentId}\n\n可用 ID：${ids}` }],
+          isError: true,
+        };
+      }
+
+      const lines = [
+        `# ${agent.emoji} ${agent.name}`,
+        '',
+        `| 字段 | 值 |`,
+        `|------|---|`,
+        `| ID | \`${agent.id}\` |`,
+        `| 英文名 | ${agent.nameEn} |`,
+        `| 职责 | ${agent.role} |`,
+        `| Skills 数量 | ${agent.skillIds.length} 个 |`,
+        '',
+        `## Skills 列表`,
+        ...agent.skillIds.map((id, i) => `${i + 1}. \`${id}\``),
+      ];
+      return { content: [{ type: 'text', text: lines.join('\n') }] };
     }
 
     // ── ethan_context_snapshot ─────────────────────────────────────────────
@@ -1325,7 +1422,7 @@ export async function startMcpServer(): Promise<void> {
 
   // MCP server 运行时不输出到 stdout（会破坏协议）
   process.stderr.write(
-    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_agent_orchestrate + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance, ${PIPELINES.length} pipelines)\n`
+    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_agent_orchestrate + ethan_agent_list + ethan_agent_show + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance, ${PIPELINES.length} pipelines)\n`
   );
 }
 

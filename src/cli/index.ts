@@ -5290,11 +5290,13 @@ agentCmd
   .description('生成 Multi-Agent 编排 Prompt，粘贴到 AI 编辑器执行')
   .option('-c, --context <context>', '任务背景描述（如"实现用户登录功能"）', '')
   .option('--lang <lang>', '输出语言：zh（默认）或 en', '')
+  .option('--mode <mode>', '协作模式：sequential（默认）/ parallel / review-loop / consensus', 'sequential')
   .option('--with-context', '自动采集项目上下文注入到提示词')
   .option('--no-copy', '不复制到剪贴板，直接打印到终端')
   .action(async (pipelineId: string | undefined, options: {
     context: string;
     lang: string;
+    mode: string;
     withContext?: boolean;
     copy: boolean;
   }) => {
@@ -5306,6 +5308,7 @@ agentCmd
     const lang = ((options.lang || config.lang || 'zh') as 'zh' | 'en');
     const isEn = lang === 'en';
     const agents = getActiveAgents(process.cwd());
+    const mode = (options.mode || 'sequential') as 'sequential' | 'parallel' | 'review-loop' | 'consensus';
 
     // 采集项目上下文快照
     let snapshotBlock: string | undefined;
@@ -5379,15 +5382,22 @@ agentCmd
     }
 
     const { pipeline, skills } = resolved;
+    const modeLabels: Record<string, string> = {
+      sequential: isEn ? 'Sequential' : '顺序执行',
+      parallel: isEn ? 'Parallel' : '并行分析',
+      'review-loop': isEn ? 'Review-Loop' : '迭代审查',
+      consensus: isEn ? 'Consensus' : '共识决策',
+    };
     const prompt = buildMultiAgentPrompt(pipeline, skills, agents, {
       context,
       lang,
       snapshot: snapshotBlock,
+      mode,
     });
 
     console.log(isEn
-      ? `\n🤖 Multi-Agent prompt generated: ${pipeline.name} (${skills.length} steps, ${agents.length} agents)`
-      : `\n🤖 Multi-Agent 编排 Prompt 已生成：${pipeline.name}（${skills.length} 步，${agents.length} 个 Agent）`);
+      ? `\n🤖 Multi-Agent prompt generated: ${pipeline.name} (${skills.length} steps, ${agents.length} agents, mode: ${modeLabels[mode] ?? mode})`
+      : `\n🤖 Multi-Agent 编排 Prompt 已生成：${pipeline.name}（${skills.length} 步，${agents.length} 个 Agent，模式：${modeLabels[mode] ?? mode}）`);
     console.log('─'.repeat(60));
 
     if (options.copy !== false) {
@@ -5407,6 +5417,118 @@ agentCmd
       : '\n💡 每个 Agent 负责执行分配给自己的步骤，通过 Handoff 摘要将产出传递给下一个 Agent。\n');
 
     trackUsageWithStreak(`agent-run-${pipeline.id}`);
+  });
+
+agentCmd
+  .command('new [agentId]')
+  .description('交互式创建自定义 Agent，生成 .ethan/agents/<id>.yaml')
+  .action(async (agentIdArg?: string) => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const readline = await import('readline');
+    const { getActiveAgents } = await import('../agents/index');
+
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string): Promise<string> =>
+      new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+
+    console.log('\n🤖 创建自定义 Agent\n');
+    console.log('─'.repeat(50));
+
+    // 1. Agent ID
+    let agentId = agentIdArg || '';
+    if (!agentId) {
+      agentId = await ask('Agent ID（唯一标识符，如 frontend-expert）：\n> ');
+    }
+    if (!agentId || !/^[a-z0-9-]+$/.test(agentId)) {
+      console.error('\n❌ Agent ID 只能包含小写字母、数字和连字符\n');
+      rl.close();
+      process.exit(1);
+    }
+
+    // 检查是否已存在同名 Agent
+    const existingAgents = getActiveAgents(process.cwd());
+    if (existingAgents.find((a) => a.id === agentId)) {
+      const overwrite = await ask(`⚠️  Agent "${agentId}" 已存在。覆盖？(y/N)：\n> `);
+      if (overwrite.toLowerCase() !== 'y') {
+        console.log('\n已取消。\n');
+        rl.close();
+        return;
+      }
+    }
+
+    // 2. 中文名称
+    const name = await ask('Agent 名称（中文，如 "前端专家 Agent"）：\n> ') || `${agentId} Agent`;
+
+    // 3. 英文名称
+    const nameEn = await ask(`英文名称（如 "${agentId}-agent"，默认 ${agentId}-agent）：\n> `) || `${agentId}-agent`;
+
+    // 4. Emoji
+    const emoji = await ask('角色 Emoji（默认 🤖）：\n> ') || '🤖';
+
+    // 5. 职责描述
+    const role = await ask('角色职责描述（一句话）：\n> ') || `负责 ${agentId} 相关任务`;
+
+    // 6. Skills 选择
+    const allSkills = await getActiveSkills();
+    console.log('\n可用 Skill ID 列表（共 ' + allSkills.length + ' 个）：');
+    const skillCols = Math.ceil(allSkills.length / 3);
+    for (let i = 0; i < skillCols; i++) {
+      const row = [0, 1, 2].map((col) => {
+        const skill = allSkills[i + col * skillCols];
+        return skill ? `  ${String(i + col * skillCols + 1).padStart(2, ' ')}. ${skill.id.padEnd(28, ' ')}` : '';
+      }).join('');
+      console.log(row);
+    }
+    const skillInput = await ask('\n输入 Skill ID（逗号分隔，或序号）：\n> ');
+    const skillIds: string[] = skillInput.split(',').map((s: string) => s.trim()).filter(Boolean).map((s: string) => {
+      const num = parseInt(s, 10);
+      if (!isNaN(num) && num >= 1 && num <= allSkills.length) return allSkills[num - 1].id;
+      return s;
+    });
+
+    // 校验 skillIds
+    const validIds = new Set(allSkills.map((s) => s.id));
+    const invalid = skillIds.filter((id) => !validIds.has(id));
+    if (invalid.length > 0) {
+      console.error(`\n❌ 无效的 Skill ID：${invalid.join(', ')}\n`);
+      rl.close();
+      process.exit(1);
+    }
+    if (skillIds.length === 0) {
+      console.error('\n❌ 至少需要指定一个 Skill ID\n');
+      rl.close();
+      process.exit(1);
+    }
+
+    rl.close();
+
+    // 生成 YAML 内容
+    const yaml = [
+      `# Ethan 自定义 Agent — ${name}`,
+      `id: ${agentId}`,
+      `name: ${name}`,
+      `nameEn: ${nameEn}`,
+      `emoji: ${emoji}`,
+      `role: ${role}`,
+      `skillIds:`,
+      ...skillIds.map((id) => `  - ${id}`),
+      '',
+    ].join('\n');
+
+    // 写入文件
+    const agentsDir = path.join(process.cwd(), '.ethan', 'agents');
+    if (!fs.existsSync(agentsDir)) {
+      fs.mkdirSync(agentsDir, { recursive: true });
+    }
+    const outPath = path.join(agentsDir, `${agentId}.yaml`);
+    fs.writeFileSync(outPath, yaml, 'utf-8');
+
+    console.log(`\n✅ 自定义 Agent 已创建：${outPath}`);
+    console.log('\n后续用法：');
+    console.log(`  ethan agent show ${agentId}          # 查看 Agent 详情`);
+    console.log(`  ethan agent run --context "任务"     # 在编排中使用此 Agent`);
+    console.log('');
   });
 
 program.parse(process.argv);

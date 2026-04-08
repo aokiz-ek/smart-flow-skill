@@ -18,6 +18,13 @@ export interface AgentDefinition {
   skillIds: string[];
 }
 
+/** Agent 协作模式 */
+export type AgentCollaborationMode =
+  | 'sequential'   // 默认：按步骤顺序 Agent 交替执行（原逻辑）
+  | 'parallel'     // 各 Agent 同时分析各自维度，最后汇总
+  | 'review-loop'  // coder 实现 → reviewer 审查 → coder 修改（最多 2 轮）
+  | 'consensus';   // 多 Agent 各自独立提案，最后共识整合
+
 export interface AgentOrchestrationOptions {
   /** 任务背景描述 */
   context: string;
@@ -27,4 +34,6 @@ export interface AgentOrchestrationOptions {
   withContext?: boolean;
   /** ProjectSnapshot 的格式化字符串（已渲染） */
   snapshot?: string;
+  /** Agent 协作模式，默认 sequential */
+  mode?: AgentCollaborationMode;
 }

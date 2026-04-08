@@ -552,6 +552,7 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
+| **v1.14.0** | 新增 3 个专业化 Agent（qa/security/data），内置 Agent 5 → 8；新增 4 种协作模式（`--mode sequential/parallel/review-loop/consensus`）；新增 `ethan agent new` 交互式创建自定义 Agent；新增 MCP 工具 `ethan_agent_list/show`，MCP 工具 28 → 30 |
 | **v1.13.0** | Multi-Agent 编排系统（`src/agents/`）；5 个内置角色 Agent（architect/coder/reviewer/devops/pm）；新增 `ethan agent list/show/run` CLI；新增 MCP 工具 `ethan_agent_orchestrate`；MCP 工具 27 → 28；新增宣传落地页 `docs/landing.html` |
 | **v1.12.0** | 新增 10 个 Skill（技术债/Mock服务/数据迁移/LLM设计/威胁建模/绿色编码/服务目录/移动审查/数据管道/ML实验）；Skills 26 → 36；新增 3 条 Pipeline（bugfix/security-audit/open-source-release）；新增 19 个分析 CLI 命令（diff/deps/dora/adr/mermaid/i18n/onboard/migrate/postmortem/decision-log/knowledge/oss/prompt-lib/scaffold/benchmark/sync/compliance 等）；MCP 工具 22 → 27 |
 | **v1.11.0** | 新增 2 个 Skill（Spec Proposal/Spec Review）；新增 OpenSpec 工具链（spec init/list/show/validate/proposal/review）；新增 spec-workflow Pipeline；MCP 新增 ethan_spec_proposal/review/validate 3 个工具 |
