@@ -17,7 +17,7 @@
 | **36 个 Skill** | 标准化工作流节点，覆盖需求→接口设计→安全→部署→PRD→Git→测试→系统设计→数据库→Docker→CI/CD→性能→重构→可观测性→设计模式→OpenSpec→技术债→Mock→数据迁移→LLM设计→威胁建模→绿色编码→服务目录→移动审查→数据管道→ML实验 |
 | **11 个平台** | Cursor / Copilot / Cline / Windsurf / Zed / JetBrains / Continue / Claude Code 等 |
 | **10 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量 / 完整周期 / 故障响应 / 新功能 / Spec规范 / Bug修复 / 安全审计 / 开源发布），有状态持久化推进 |
-| **27 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算、DORA 指标、PR 分析、故障复盘、脚手架、合规证据 |
+| **28 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算、DORA 指标、PR 分析、故障复盘、脚手架、合规证据 |
 | **60+ CLI 命令** | Git 集成、开发工具、记忆库、估算、分析工具（diff/deps/dora/mermaid/adr/i18n/migrate/onboard/compliance 等）、插件 OS 全覆盖 |
 | **Slash 命令生成** | `ethan slash` 一键为 Claude Code 生成 `/ethan-xxx` 原生命令，其他平台生成速查表 |
 | **自动升级** | 检测到新版本时自动后台 `npm install -g` 静默升级，重启终端即用新版 |
@@ -122,7 +122,7 @@ npx ethan-skill install --platform cursor --lang en
 }
 ```
 
-重启 AI 编辑器后，可使用全部 **27 个 MCP 工具**（详见下方 MCP 工具列表）。
+重启 AI 编辑器后，可使用全部 **28 个 MCP 工具**（详见下方 MCP 工具列表）。
 
 ### 方式三：全局安装
 
@@ -357,7 +357,7 @@ Ethan 每次启动都会静默检查 npm 最新版本（24h 缓存，不阻塞 C
 
 ---
 
-## 27 个 MCP 工具
+## 28 个 MCP 工具
 
 配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue 等）可直接调用：
 
@@ -481,7 +481,7 @@ ethan-skill/
 │   │   └── utils.ts       # getStagedDiff / getBranchDiff / truncateDiff 等
 │   ├── workflow/           # 有状态工作流引擎
 │   │   └── state.ts       # 会话持久化、Named Sessions、步骤推进
-│   ├── mcp/               # MCP Server（27 个工具）
+│   ├── mcp/               # MCP Server（28 个工具）
 │   │   └── server.ts
 │   ├── router/            # 触发词路由
 │   ├── templates/         # 各平台渲染模板（11 个 case，强制穷举）
@@ -552,6 +552,7 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
+| **v1.13.0** | Multi-Agent 编排系统（`src/agents/`）；5 个内置角色 Agent（architect/coder/reviewer/devops/pm）；新增 `ethan agent list/show/run` CLI；新增 MCP 工具 `ethan_agent_orchestrate`；MCP 工具 27 → 28；新增宣传落地页 `docs/landing.html` |
 | **v1.12.0** | 新增 10 个 Skill（技术债/Mock服务/数据迁移/LLM设计/威胁建模/绿色编码/服务目录/移动审查/数据管道/ML实验）；Skills 26 → 36；新增 3 条 Pipeline（bugfix/security-audit/open-source-release）；新增 19 个分析 CLI 命令（diff/deps/dora/adr/mermaid/i18n/onboard/migrate/postmortem/decision-log/knowledge/oss/prompt-lib/scaffold/benchmark/sync/compliance 等）；MCP 工具 22 → 27 |
 | **v1.11.0** | 新增 2 个 Skill（Spec Proposal/Spec Review）；新增 OpenSpec 工具链（spec init/list/show/validate/proposal/review）；新增 spec-workflow Pipeline；MCP 新增 ethan_spec_proposal/review/validate 3 个工具 |
 | **v1.10.3** | 修正 CodeBuddy slash 命令安装目录为 `.codebuddy/commands/`，生成 36 个独立命令文件（同 Claude Code 模式） |

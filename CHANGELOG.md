@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - 2026-04-08
+
+### Added
+
+- **Multi-Agent 编排系统**（全新模块 `src/agents/`）：
+  - 5 个内置角色 Agent：`architect`🏗️ / `coder`💻 / `reviewer`🔍 / `devops`🚀 / `pm`📊
+  - 覆盖全部 36 个 Skill 的角色分配矩阵
+  - 支持 `.ethan/agents/*.yaml|json` 自定义 Agent
+  - `src/agents/orchestrator.ts` 核心编排函数 `buildMultiAgentPrompt()`
+  - `src/loader/custom-agent-loader.ts` 自定义 Agent 加载器
+
+- **新 CLI 命令 `ethan agent`**（3 个子命令）：
+  - `ethan agent list` — 列出所有可用 Agent 及 Skill 分配
+  - `ethan agent show <agentId>` — 查看指定 Agent 的详细配置
+  - `ethan agent run [pipelineId]` — 生成 Multi-Agent 编排 Prompt（支持 `--context` / `--lang` / `--with-context` / `--no-copy`）
+
+- **新 MCP 工具 `ethan_agent_orchestrate`**：
+  - 通过 Claude Desktop 触发 Multi-Agent 编排
+  - 参数：`pipelineId`（必填）、`context`（必填）、`lang`、`withContext`、`cwd`
+  - 支持角色分工感的多阶段复杂任务协作
+
+- **宣传落地页 `docs/landing.html`**（全新设计）：
+  - 极简暗黑 + 霓虹风格，参考 superconscious.app
+  - 8 大 Section：Hero / Stats / Before-After 对比 / 用户画像 / Features / Workflow Demo / Skills Marquee / 架构图 / 未来路线 / Install CTA
+  - 鼠标 Spotlight / Blob 视差 / 终端打字动画 / Scroll Reveal / 数字计数动画
+  - 完全响应式（375px / 768px / 1280px+）
+
+### Changed
+
+- MCP Server 工具总数：27 → **28**（新增 `ethan_agent_orchestrate`）
+- CLI 命令总数新增 3 个 `agent` 子命令
+
+### Tests
+
+- 新增 `src/agents/orchestrator.test.ts`，Multi-Agent 编排模块测试覆盖
+
+---
+
 ## [1.12.0] - 2026-04-07
 
 ### Added

@@ -316,6 +316,41 @@ export async function startMcpServer(): Promise<void> {
     },
   };
 
+  const agentOrchestrateTool: Tool = {
+    name: 'ethan_agent_orchestrate',
+    description: '生成 Multi-Agent 编排 Prompt：将 Pipeline 步骤分配给不同角色的 Agent（Architect / Code / Review / DevOps / PM），每个 Agent 按职责执行对应步骤，通过 Handoff 摘要协作传递上下文。比 autopilot 更具角色分工感，适合复杂多阶段任务。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: {
+          type: 'string',
+          enum: PIPELINES.map((p) => p.id),
+          description: `Pipeline ID。可选值：${PIPELINES.map((p) => `${p.id}（${p.name}）`).join('、')}`,
+        },
+        context: {
+          type: 'string',
+          description: '任务背景描述（如"实现用户登录功能，支持 JWT 认证"）',
+        },
+        lang: {
+          type: 'string',
+          enum: ['zh', 'en'],
+          description: '输出语言：zh（默认）或 en',
+          default: 'zh',
+        },
+        withContext: {
+          type: 'boolean',
+          description: '是否采集并注入项目上下文快照',
+          default: false,
+        },
+        cwd: {
+          type: 'string',
+          description: '项目目录路径（默认为当前目录）',
+        },
+      },
+      required: ['pipelineId', 'context'],
+    },
+  };
+
   const contextSnapshotTool: Tool = {
     name: 'ethan_context_snapshot',
     description: '采集当前项目的上下文快照，包含技术栈、编程语言、框架、近期 git 提交记录、变更文件列表和目录树。可用于为 Auto-Pilot 或工作流步骤提供项目背景信息。',
@@ -489,6 +524,7 @@ export async function startMcpServer(): Promise<void> {
         gitCommitTool,
         gitReviewTool,
         autopilotTool,
+        agentOrchestrateTool,
         contextSnapshotTool,
         specProposalTool,
         specReviewTool,
@@ -858,6 +894,49 @@ export async function startMcpServer(): Promise<void> {
       }
 
       const prompt = buildAutopilotPrompt(resolved.pipeline, resolved.skills, { context, isEn, snapshot });
+      return { content: [{ type: 'text', text: prompt }] };
+    }
+
+    // ── ethan_agent_orchestrate ────────────────────────────────────────────
+    if (name === 'ethan_agent_orchestrate') {
+      const pipelineId = ((args?.pipelineId as string) || '').trim();
+      const context = ((args?.context as string) || '').trim();
+      const isEn = (args?.lang as string) === 'en';
+      const withContext = (args?.withContext as boolean) || false;
+      const cwd = (args?.cwd as string) || process.cwd();
+
+      if (!pipelineId) {
+        const list = PIPELINES.map((p) => `- \`${p.id}\`：${p.name}`).join('\n');
+        return { content: [{ type: 'text', text: `❌ pipelineId 不能为空。\n\n**可用 Pipeline：**\n${list}` }], isError: true };
+      }
+      if (!context) {
+        return { content: [{ type: 'text', text: '❌ context 不能为空。请描述任务背景。' }], isError: true };
+      }
+
+      const resolved = resolvePipeline(pipelineId);
+      if (!resolved) {
+        return { content: [{ type: 'text', text: `❌ 未找到 Pipeline: ${pipelineId}\n可用值：${PIPELINES.map((p) => p.id).join(', ')}` }], isError: true };
+      }
+
+      const { getActiveAgents, buildMultiAgentPrompt } = await import('../agents/index');
+      const agents = getActiveAgents(cwd);
+
+      let snapshotBlock: string | undefined;
+      if (withContext) {
+        const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache, formatSnapshotForPrompt } = await import('../context/builder');
+        let snap = loadCachedSnapshot(cwd);
+        if (!snap) {
+          snap = buildProjectSnapshot(cwd);
+          saveSnapshotCache(snap, cwd);
+        }
+        snapshotBlock = formatSnapshotForPrompt(snap, isEn);
+      }
+
+      const prompt = buildMultiAgentPrompt(resolved.pipeline, resolved.skills, agents, {
+        context,
+        lang: isEn ? 'en' : 'zh',
+        snapshot: snapshotBlock,
+      });
       return { content: [{ type: 'text', text: prompt }] };
     }
 
@@ -1246,7 +1325,7 @@ export async function startMcpServer(): Promise<void> {
 
   // MCP server 运行时不输出到 stdout（会破坏协议）
   process.stderr.write(
-    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance, ${PIPELINES.length} pipelines)\n`
+    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_agent_orchestrate + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance, ${PIPELINES.length} pipelines)\n`
   );
 }
 

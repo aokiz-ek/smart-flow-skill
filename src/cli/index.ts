@@ -5238,4 +5238,175 @@ program
     }
   });
 
+// ─── agent 命令 ─────────────────────────────────────────────────────────────
+
+const agentCmd = program
+  .command('agent')
+  .description('Multi-Agent 编排：将 Pipeline 步骤分配给不同 Agent 协作执行');
+
+agentCmd
+  .command('list')
+  .description('列出所有可用 Agent 及其 Skill 分配')
+  .action(async () => {
+    const { getActiveAgents } = await import('../agents/index');
+    const agents = getActiveAgents(process.cwd());
+
+    console.log('\n🤖 可用 Agent 列表\n');
+    console.log('─'.repeat(70));
+    for (const agent of agents) {
+      console.log(`\n${agent.emoji}  ${agent.name}  [${agent.id}]`);
+      console.log(`   职责：${agent.role}`);
+      console.log(`   Skills（${agent.skillIds.length}）：${agent.skillIds.join(', ')}`);
+    }
+    console.log('\n─'.repeat(70));
+    console.log(`\n共 ${agents.length} 个 Agent。自定义 Agent 放在 .ethan/agents/ 目录。\n`);
+  });
+
+agentCmd
+  .command('show <agentId>')
+  .description('查看指定 Agent 的详细配置')
+  .action(async (agentId: string) => {
+    const { getActiveAgents } = await import('../agents/index');
+    const agents = getActiveAgents(process.cwd());
+    const agent = agents.find((a) => a.id === agentId);
+
+    if (!agent) {
+      console.error(`\n❌ 未找到 Agent: ${agentId}\n`);
+      console.error(`可用 ID：${agents.map((a) => a.id).join(' | ')}\n`);
+      process.exit(1);
+    }
+
+    console.log(`\n${agent.emoji}  ${agent.name}  [${agent.id}]`);
+    console.log('─'.repeat(50));
+    console.log(`英文名：${agent.nameEn}`);
+    console.log(`职责：${agent.role}`);
+    console.log(`\nSkills（${agent.skillIds.length} 个）：`);
+    agent.skillIds.forEach((id) => console.log(`  - ${id}`));
+    console.log('');
+  });
+
+agentCmd
+  .command('run [pipelineId]')
+  .description('生成 Multi-Agent 编排 Prompt，粘贴到 AI 编辑器执行')
+  .option('-c, --context <context>', '任务背景描述（如"实现用户登录功能"）', '')
+  .option('--lang <lang>', '输出语言：zh（默认）或 en', '')
+  .option('--with-context', '自动采集项目上下文注入到提示词')
+  .option('--no-copy', '不复制到剪贴板，直接打印到终端')
+  .action(async (pipelineId: string | undefined, options: {
+    context: string;
+    lang: string;
+    withContext?: boolean;
+    copy: boolean;
+  }) => {
+    const { resolvePipeline, PIPELINES } = await import('../skills/pipeline');
+    const { getActiveAgents, buildMultiAgentPrompt } = await import('../agents/index');
+    const { buildProjectSnapshot, loadCachedSnapshot, saveSnapshotCache, formatSnapshotForPrompt } = await import('../context/builder');
+
+    const config = readConfig(process.cwd());
+    const lang = ((options.lang || config.lang || 'zh') as 'zh' | 'en');
+    const isEn = lang === 'en';
+    const agents = getActiveAgents(process.cwd());
+
+    // 采集项目上下文快照
+    let snapshotBlock: string | undefined;
+    if (options.withContext) {
+      const cached = loadCachedSnapshot(process.cwd());
+      if (cached) {
+        snapshotBlock = formatSnapshotForPrompt(cached, isEn);
+      } else {
+        console.log(isEn ? '🔍 Collecting project context...' : '🔍 正在采集项目上下文...');
+        const snap = buildProjectSnapshot(process.cwd());
+        saveSnapshotCache(snap, process.cwd());
+        snapshotBlock = formatSnapshotForPrompt(snap, isEn);
+      }
+    } else {
+      const cached = loadCachedSnapshot(process.cwd());
+      if (cached) snapshotBlock = formatSnapshotForPrompt(cached, isEn);
+    }
+
+    // 获取任务上下文
+    let context = (options.context || '').trim();
+    if (!context) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const ask = (q: string): Promise<string> =>
+        new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+      context = await ask(isEn
+        ? 'Describe your task context:\n> '
+        : '请描述任务背景（例如：实现用户登录功能）：\n> ');
+      rl.close();
+      if (!context) {
+        console.error(isEn ? '\n❌ Context cannot be empty\n' : '\n❌ 任务背景不能为空\n');
+        process.exit(1);
+      }
+    }
+
+    // 确定目标 Pipeline
+    let id = pipelineId;
+    if (!id) {
+      const customPipelines = loadCustomPipelines(process.cwd());
+      const allPipelines = [
+        ...PIPELINES,
+        ...customPipelines.map((p) => ({ id: p.id, name: p.name, description: p.description, skillIds: p.skillIds })),
+      ];
+
+      const readline = await import('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const ask = (q: string): Promise<string> =>
+        new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+
+      console.log(isEn ? '\n🔄 Available Pipelines\n' : '\n🔄 可用工作流 Pipeline\n');
+      console.log('─'.repeat(60));
+      allPipelines.forEach((p, i) => {
+        console.log(`  ${i + 1}. ${p.name}  [${p.id}]`);
+      });
+      console.log('');
+      const choice = await ask(isEn
+        ? `Select pipeline (1-${allPipelines.length} or ID):\n> `
+        : `选择 Pipeline（序号 1-${allPipelines.length} 或直接输入 ID）：\n> `);
+      rl.close();
+      const num = parseInt(choice, 10);
+      id = !isNaN(num) && num >= 1 && num <= allPipelines.length
+        ? allPipelines[num - 1].id
+        : choice;
+    }
+
+    const resolved = resolvePipeline(id);
+    if (!resolved) {
+      console.error(isEn ? `\n❌ Unknown pipeline: ${id}\n` : `\n❌ 未找到 Pipeline: ${id}\n`);
+      console.error(`Available: ${PIPELINES.map((p) => p.id).join(' | ')}`);
+      process.exit(1);
+    }
+
+    const { pipeline, skills } = resolved;
+    const prompt = buildMultiAgentPrompt(pipeline, skills, agents, {
+      context,
+      lang,
+      snapshot: snapshotBlock,
+    });
+
+    console.log(isEn
+      ? `\n🤖 Multi-Agent prompt generated: ${pipeline.name} (${skills.length} steps, ${agents.length} agents)`
+      : `\n🤖 Multi-Agent 编排 Prompt 已生成：${pipeline.name}（${skills.length} 步，${agents.length} 个 Agent）`);
+    console.log('─'.repeat(60));
+
+    if (options.copy !== false) {
+      if (copyToClipboard(prompt)) {
+        console.log(isEn
+          ? '\n✅ Multi-Agent prompt copied to clipboard! Paste into your AI editor.'
+          : '\n✅ Multi-Agent 编排 Prompt 已复制到剪贴板！粘贴到 AI 编辑器，多 Agent 将协作执行所有步骤。');
+      } else {
+        console.log('\n' + prompt + '\n');
+      }
+    } else {
+      console.log('\n' + prompt + '\n');
+    }
+
+    console.log(isEn
+      ? '\n💡 Each Agent will execute its assigned steps and hand off results to the next Agent.\n'
+      : '\n💡 每个 Agent 负责执行分配给自己的步骤，通过 Handoff 摘要将产出传递给下一个 Agent。\n');
+
+    trackUsageWithStreak(`agent-run-${pipeline.id}`);
+  });
+
 program.parse(process.argv);
