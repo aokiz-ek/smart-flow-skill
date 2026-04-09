@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ethan — AI-Native Engineering OS</title>
-<meta name="description" content="36 个标准化工作流 · 8 个专业 Agent · 4 种协作模式 · 30 个 MCP 工具。Ethan 是 AI 时代工程团队的操作系统。支持 Cursor、Copilot、Claude Code 等 11 个平台。">
+<title>Ethan — AI 驱动的工程工作流助手</title>
+<meta name="description" content="将 36 个标准化工作流内置于你的 AI 工具，一行命令提升 10 倍工程效率。支持 Cursor、Copilot、Cline、Claude Code 等 11 个平台。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -375,7 +375,7 @@ nav.scrolled {
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 60px;
 }
@@ -1640,340 +1640,11 @@ footer {
 }
 
 /* ═══════════════════════════════════════════
-   MARKET OPPORTUNITY SECTION
-═══════════════════════════════════════════ */
-#market {
-  padding: 100px 40px;
-  position: relative;
-}
-.market-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.market-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 40px;
-}
-.market-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 36px 28px;
-  text-align: center;
-  transition: border-color 0.3s, transform 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.market-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(157,108,255,0.06), transparent 70%);
-  pointer-events: none;
-}
-.market-card:hover {
-  border-color: rgba(157,108,255,0.3);
-  transform: translateY(-4px);
-}
-.market-stat {
-  font-size: 56px;
-  font-weight: 900;
-  letter-spacing: -3px;
-  line-height: 1;
-  margin-bottom: 12px;
-  background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: block;
-}
-.market-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-.market-card-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-.insight-box {
-  background: linear-gradient(135deg, rgba(79,158,255,0.06) 0%, rgba(157,108,255,0.06) 100%);
-  border: 1px solid rgba(157,108,255,0.3);
-  border-radius: var(--radius-lg);
-  padding: 40px 48px;
-  display: flex;
-  gap: 28px;
-  align-items: flex-start;
-  margin-bottom: 40px;
-  position: relative;
-  overflow: hidden;
-}
-.insight-box::before {
-  content: '';
-  position: absolute;
-  top: -50px; right: -50px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(157,108,255,0.12), transparent 70%);
-  pointer-events: none;
-}
-.insight-icon {
-  font-size: 36px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 12px rgba(157,108,255,0.6));
-}
-.insight-content h3 {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  letter-spacing: -0.5px;
-}
-.insight-content p {
-  font-size: 15px;
-  color: var(--text-muted);
-  line-height: 1.75;
-  max-width: 680px;
-}
-.market-position-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-.market-position-card {
-  background: var(--bg-card2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  transition: border-color 0.3s;
-}
-.market-position-card:hover { border-color: var(--border-hover); }
-.mp-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.mp-content h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.mp-content p {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-/* ═══════════════════════════════════════════
-   MULTI-AGENT ORCHESTRATION SECTION
-═══════════════════════════════════════════ */
-#agents {
-  padding: 100px 40px;
-  position: relative;
-}
-#agents::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 50%; transform: translateX(-50%);
-  width: 800px; height: 400px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(157,108,255,0.08), transparent 70%);
-  pointer-events: none;
-}
-.agents-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-.modes-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 56px;
-}
-.mode-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.mode-card:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-3px);
-}
-.mode-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 2px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.mode-card:hover::after { opacity: 1; }
-.mode-card.mode-blue::after { background: linear-gradient(90deg, var(--neon-blue), transparent); }
-.mode-card.mode-purple::after { background: linear-gradient(90deg, var(--neon-purple), transparent); }
-.mode-card.mode-green::after { background: linear-gradient(90deg, var(--neon-green), transparent); }
-.mode-card.mode-orange::after { background: linear-gradient(90deg, var(--neon-orange), transparent); }
-.mode-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.mode-emoji {
-  font-size: 22px;
-}
-.mode-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-family: 'Fira Code', monospace;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 100px;
-  letter-spacing: 0.5px;
-}
-.mode-card.mode-blue .mode-badge { background: rgba(79,158,255,0.1); color: var(--neon-blue); border: 1px solid rgba(79,158,255,0.2); }
-.mode-card.mode-purple .mode-badge { background: rgba(157,108,255,0.1); color: var(--neon-purple); border: 1px solid rgba(157,108,255,0.2); }
-.mode-card.mode-green .mode-badge { background: rgba(0,245,160,0.1); color: var(--neon-green); border: 1px solid rgba(0,245,160,0.2); }
-.mode-card.mode-orange .mode-badge { background: rgba(255,140,66,0.1); color: var(--neon-orange); border: 1px solid rgba(255,140,66,0.2); }
-.mode-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-.mode-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.65;
-  margin-bottom: 16px;
-}
-.mode-flow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-  font-size: 11px;
-  font-family: 'Fira Code', monospace;
-  margin-bottom: 12px;
-}
-.mode-step {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 3px 8px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.mode-arrow { color: var(--text-dim); font-size: 10px; }
-.mode-use-case {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  line-height: 1.5;
-}
-.mode-use-case strong { color: rgba(240,240,255,0.5); }
-
-.agent-roster-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.agent-roster-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.agent-roster-subtitle {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.agent-roster {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-.agent-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 14px;
-  text-align: center;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.agent-card:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-3px);
-  background: var(--bg-card2);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-.agent-card.agent-new {
-  border-color: rgba(0,245,160,0.2);
-}
-.agent-card.agent-new::before {
-  content: 'NEW';
-  position: absolute;
-  top: 8px; right: 8px;
-  font-size: 8px;
-  font-family: 'Fira Code', monospace;
-  font-weight: 700;
-  color: var(--neon-green);
-  background: rgba(0,245,160,0.1);
-  border: 1px solid rgba(0,245,160,0.2);
-  padding: 2px 5px;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
-}
-.agent-emoji {
-  font-size: 30px;
-  display: block;
-  margin-bottom: 10px;
-  filter: drop-shadow(0 0 10px rgba(255,255,255,0.25));
-}
-.agent-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 3px;
-}
-.agent-id {
-  font-size: 10px;
-  font-family: 'Fira Code', monospace;
-  color: var(--neon-blue);
-  margin-bottom: 8px;
-  opacity: 0.8;
-}
-.agent-skills-list {
-  font-size: 10px;
-  color: var(--text-dim);
-  line-height: 1.5;
-}
-
-/* ═══════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .features-grid { grid-template-columns: repeat(2, 1fr); }
-  .stats-grid { grid-template-columns: repeat(3, 1fr); }
-  .market-grid { grid-template-columns: repeat(3, 1fr); }
-  .modes-grid { grid-template-columns: 1fr; }
-  .agent-roster { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .workflow-demo { grid-template-columns: 1fr; }
   .workflow-tabs { flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; }
   .workflow-tab.active::before { top: auto; bottom: 0; left: 20%; right: 20%; width: auto; height: 3px; border-radius: 3px 3px 0 0; }
@@ -1987,12 +1658,6 @@ footer {
   .hero-title { font-size: 40px; letter-spacing: -1.5px; }
   .features-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .market-grid { grid-template-columns: 1fr; }
-  .market-position-grid { grid-template-columns: 1fr; }
-  .modes-grid { grid-template-columns: 1fr; }
-  .agent-roster { grid-template-columns: repeat(2, 1fr); }
-  .insight-box { flex-direction: column; padding: 28px; }
-  #market, #agents { padding: 70px 20px; }
   #features, #workflow, #skills, #install, #architecture, #vision, #before-after, #for-who { padding: 70px 20px; }
   #stats { padding: 60px 20px 40px; }
   .install-steps { flex-direction: column; align-items: center; }
@@ -2034,13 +1699,13 @@ footer {
   <a href="#" class="nav-logo">
     <span class="nav-logo-icon">⚡</span>
     <span class="nav-logo-text">Ethan</span>
-    <span class="nav-badge">v1.14.0</span>
+    <span class="nav-badge">v1.12.0</span>
   </a>
 
   <ul class="nav-links">
-    <li><a href="#market">市场</a></li>
+    <li><a href="#for-who">适合谁</a></li>
     <li><a href="#features">Features</a></li>
-    <li><a href="#agents">Agents</a></li>
+    <li><a href="#workflow">Workflows</a></li>
     <li><a href="#skills">Skills</a></li>
     <li><a href="#architecture">架构</a></li>
     <li><a href="#vision">路线图</a></li>
@@ -2071,15 +1736,15 @@ footer {
     <div class="hero-copy">
       <div class="hero-badge reveal">
         <span>✦</span>
-        <span>36 Skills · 8 Agents · 30 MCP Tools · 11 Platforms</span>
+        <span>36 Skills · 10 Pipelines · 27 MCP Tools</span>
       </div>
       <h1 class="hero-title reveal reveal-delay-1">
-        <span class="gradient-text">AI-Native</span><br>
-        Engineering<br>OS
+        <span class="gradient-text">AI 驱动的</span><br>
+        工程工作流<br>助手
       </h1>
       <p class="hero-subtitle reveal reveal-delay-2">
-        36 Skills · 8 Agents · 4 Modes · 30 MCP Tools<br>
-        AI 时代工程团队的<strong style="color:var(--text-primary)">操作系统</strong>
+        将 36 个标准化工作流内置于你的 AI 工具，<br>
+        一行命令提升 10 倍工程效率。
       </p>
       <div class="hero-buttons reveal reveal-delay-3">
         <a href="#install" class="btn-primary">
@@ -2090,7 +1755,7 @@ footer {
         </a>
       </div>
       <p class="hero-note reveal reveal-delay-4">
-        支持 Cursor · Copilot · Cline · Claude Code 等 <strong>11 个平台</strong> · 与模型无关
+        支持 Cursor · Copilot · Cline · Claude Code 等 11 个平台
       </p>
     </div>
 
@@ -2124,18 +1789,10 @@ footer {
         <span class="stat-label">Pipelines 工作流</span>
       </div>
       <div class="stat-card reveal reveal-delay-2">
-        <span class="stat-number" style="background:linear-gradient(135deg,#00F5A0,#4F9EFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">8</span>
-        <span class="stat-label">Built-in Agents</span>
-      </div>
-      <div class="stat-card reveal">
-        <span class="stat-number" style="background:linear-gradient(135deg,#9D6CFF,#4F9EFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">30</span>
+        <span class="stat-number">27</span>
         <span class="stat-label">MCP Tools</span>
       </div>
-      <div class="stat-card reveal reveal-delay-1">
-        <span class="stat-number" style="background:linear-gradient(135deg,#FF8C42,#FF5F7E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">4</span>
-        <span class="stat-label">协作模式</span>
-      </div>
-      <div class="stat-card reveal reveal-delay-2">
+      <div class="stat-card reveal reveal-delay-3">
         <span class="stat-number">11</span>
         <span class="stat-label">平台支持</span>
       </div>
@@ -2144,69 +1801,6 @@ footer {
     <div class="marquee-wrapper">
       <div class="marquee-track" id="platformMarquee">
         <!-- Populated by JS -->
-      </div>
-    </div>
-  </div>
-</section>
-
-<div style="display:flex;justify-content:center;"><div class="section-divider"></div></div>
-
-<!-- ═══ MARKET OPPORTUNITY ═══ -->
-<section id="market">
-  <div class="market-inner">
-    <div class="section-header reveal" style="margin-bottom:56px;">
-      <span class="section-label">市场机遇</span>
-      <h2 class="section-title">AI 时代的<br>工程效率革命</h2>
-      <p class="section-desc">每个工程团队都需要一套标准化的 AI 工作流体系——这是一个几乎未被解决的千亿级机会</p>
-    </div>
-
-    <div class="market-grid">
-      <div class="market-card reveal">
-        <span class="market-stat">$50B+</span>
-        <div class="market-card-title">全球工程效率工具市场规模</div>
-        <div class="market-card-desc">AI 编码工具子市场增速 40%+ YoY，传统工具正在被 AI-Native 工具全面替代</div>
-      </div>
-      <div class="market-card reveal reveal-delay-1">
-        <span class="market-stat">40%</span>
-        <div class="market-card-title">工程团队时间浪费在流程上</div>
-        <div class="market-card-desc">代码审查、提交规范、文档编写、进度追踪——全是高频但低价值的重复工作</div>
-      </div>
-      <div class="market-card reveal reveal-delay-2">
-        <span class="market-stat">11+</span>
-        <div class="market-card-title">主流 AI 编程工具碎片化</div>
-        <div class="market-card-desc">Cursor、Copilot、Claude Code、Cline……每个工具都是孤岛，没有统一的工程工作流标准</div>
-      </div>
-    </div>
-
-    <div class="insight-box reveal">
-      <div class="insight-icon">⚡</div>
-      <div class="insight-content">
-        <h3>下一个十亿美元机会：AI-Native Engineering OS</h3>
-        <p>AI 编程工具解决了"如何写代码"的问题，但没有解决"如何做工程"的问题。Ethan 是第一个跨平台、与模型无关的工程工作流操作系统——把 36 年积累的软件工程最佳实践，变成每个 AI 工具都能理解和执行的标准化流程。</p>
-      </div>
-    </div>
-
-    <div class="market-position-grid reveal">
-      <div class="market-position-card">
-        <div class="mp-icon">🔒</div>
-        <div class="mp-content">
-          <h4>模型无关的护城河</h4>
-          <p>不绑定任何 LLM。无论 Claude、GPT-5 还是本地 LLM，Ethan 的工程知识始终有效——平台级壁垒。</p>
-        </div>
-      </div>
-      <div class="market-position-card">
-        <div class="mp-icon">🧩</div>
-        <div class="mp-content">
-          <h4>网络效应飞轮</h4>
-          <p>团队越用，Skills 越丰富。组织知识沉淀为资产，人员变动不再导致能力流失——越用越值钱。</p>
-        </div>
-      </div>
-      <div class="market-position-card">
-        <div class="mp-icon">🚀</div>
-        <div class="mp-content">
-          <h4>开源 + 商业双引擎</h4>
-          <p>CLI 核心开源吸引开发者生态，Team/Enterprise 版本提供 Skills 云同步、DORA 指标、合规工具——PLG 增长模型。</p>
-        </div>
       </div>
     </div>
   </div>
@@ -2497,11 +2091,11 @@ footer {
     <div class="feature-card reveal reveal-delay-2">
       <span class="feature-icon">🔗</span>
       <div class="feature-title">MCP 深度集成</div>
-      <div class="feature-desc">30 个 MCP 工具无缝接入 Claude Desktop，AI 原生工作流体验。让 Claude 直接调用 ethan_agent_orchestrate、ethan_git_commit、ethan_review。</div>
+      <div class="feature-desc">27 个 MCP 工具无缝接入 Claude Desktop，AI 原生工作流体验。让 Claude 直接调用 ethan_git_commit、ethan_review。</div>
       <div class="feature-tags">
         <span class="feature-tag">claude-desktop</span>
         <span class="feature-tag">mcp</span>
-        <span class="feature-tag">30 tools</span>
+        <span class="feature-tag">27 tools</span>
       </div>
     </div>
     <div class="feature-card reveal reveal-delay-1">
@@ -2533,165 +2127,6 @@ footer {
         <span class="feature-tag">custom-skill</span>
         <span class="feature-tag">yaml</span>
         <span class="feature-tag">team</span>
-      </div>
-    </div>
-    <div class="feature-card reveal" style="border-color:rgba(157,108,255,0.25);background:linear-gradient(135deg,rgba(157,108,255,0.04),rgba(79,158,255,0.04));">
-      <span class="feature-icon">🤝</span>
-      <div class="feature-title">Multi-Agent 编排 <span style="font-size:10px;background:rgba(0,245,160,0.15);color:var(--neon-green);border:1px solid rgba(0,245,160,0.3);padding:2px 8px;border-radius:100px;font-family:'Fira Code',monospace;font-weight:600;vertical-align:middle;">NEW v1.14</span></div>
-      <div class="feature-desc">8 个专业 Agent 协同工作，4 种协作模式（sequential / parallel / review-loop / consensus），像组建顶级工程团队一样编排 AI。</div>
-      <div class="feature-tags">
-        <span class="feature-tag">8 agents</span>
-        <span class="feature-tag">review-loop</span>
-        <span class="feature-tag">consensus</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div style="display:flex;justify-content:center;"><div class="section-divider"></div></div>
-
-<!-- ═══ MULTI-AGENT ORCHESTRATION ═══ -->
-<section id="agents">
-  <div class="agents-inner">
-    <div class="section-header reveal" style="margin-bottom:56px;">
-      <span class="section-label" style="color:var(--neon-purple)">v1.14.0 · 全新能力</span>
-      <h2 class="section-title">Multi-Agent<br>编排系统</h2>
-      <p class="section-desc">8 个专业 Agent · 4 种协作模式 · 覆盖全部 36 个 Skill<br>像组建顶级工程团队一样，让 AI Agent 协同完成复杂工程任务</p>
-    </div>
-
-    <!-- 4 Collaboration Modes -->
-    <h3 style="font-size:16px;font-weight:700;color:var(--text-muted);margin-bottom:20px;letter-spacing:1px;text-transform:uppercase;font-family:'Fira Code',monospace;">── 4 种协作模式</h3>
-    <div class="modes-grid">
-      <!-- Sequential -->
-      <div class="mode-card mode-blue reveal">
-        <div class="mode-header">
-          <span class="mode-emoji">⬇️</span>
-          <span class="mode-badge">sequential</span>
-        </div>
-        <div class="mode-title">顺序执行</div>
-        <div class="mode-desc">各 Agent 按角色顺序依次执行，每步完成后输出传递给下一个 Agent。经典分工协作，适合有明确执行链的工程任务。</div>
-        <div class="mode-flow">
-          <span class="mode-step">Architect</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">Coder</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">Reviewer</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">DevOps</span>
-        </div>
-        <div class="mode-use-case"><strong>适用场景：</strong>dev-workflow · full-dev-cycle · new-feature</div>
-      </div>
-      <!-- Parallel -->
-      <div class="mode-card mode-green reveal reveal-delay-1">
-        <div class="mode-header">
-          <span class="mode-emoji">⚡</span>
-          <span class="mode-badge">parallel</span>
-        </div>
-        <div class="mode-title">并行分析</div>
-        <div class="mode-desc">各 Agent 独立并行输出自己负责维度的分析，最后由"汇总委员会"整合为完整报告。多视角审查，速度最快。</div>
-        <div class="mode-flow">
-          <span class="mode-step">Architect ⟶</span>
-          <span class="mode-step">Reviewer ⟶</span>
-          <span class="mode-step">Security ⟶</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">汇总整合 ✓</span>
-        </div>
-        <div class="mode-use-case"><strong>适用场景：</strong>架构评审 · security-audit · 多维度分析</div>
-      </div>
-      <!-- Review Loop -->
-      <div class="mode-card mode-purple reveal">
-        <div class="mode-header">
-          <span class="mode-emoji">🔄</span>
-          <span class="mode-badge">review-loop</span>
-        </div>
-        <div class="mode-title">审查迭代</div>
-        <div class="mode-desc">Coder 实现 → Reviewer 审查（通过/修改意见）→ Coder 修改，最多 2 轮迭代。实现与质量的闭环协作。</div>
-        <div class="mode-flow">
-          <span class="mode-step">Coder 实现</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">Reviewer 审查</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">Coder 修改</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">✅ 最终版</span>
-        </div>
-        <div class="mode-use-case"><strong>适用场景：</strong>quality-workflow · bugfix-workflow</div>
-      </div>
-      <!-- Consensus -->
-      <div class="mode-card mode-orange reveal reveal-delay-1">
-        <div class="mode-header">
-          <span class="mode-emoji">🏛️</span>
-          <span class="mode-badge">consensus</span>
-        </div>
-        <div class="mode-title">共识决策</div>
-        <div class="mode-desc">多个 Agent 各自独立给出方案，最后 Consensus 阶段取交集、推荐最优解。适合有争议的架构决策与技术选型。</div>
-        <div class="mode-flow">
-          <span class="mode-step">Architect 方案A</span>
-          <span class="mode-step">Coder 方案B</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">🏛️ Consensus</span>
-          <span class="mode-arrow">→</span>
-          <span class="mode-step">📋 最优解</span>
-        </div>
-        <div class="mode-use-case"><strong>适用场景：</strong>solution-design · tech-research · 架构决策</div>
-      </div>
-    </div>
-
-    <!-- 8 Agent Roster -->
-    <div class="agent-roster-header reveal">
-      <div>
-        <div class="agent-roster-title">── 8 个内置专业 Agent</div>
-        <div class="agent-roster-subtitle" style="margin-top:4px;">覆盖全部 36 个 Skill · 支持 .ethan/agents/*.yaml 自定义扩展</div>
-      </div>
-    </div>
-    <div class="agent-roster reveal reveal-delay-1">
-      <div class="agent-card">
-        <span class="agent-emoji">🏗️</span>
-        <div class="agent-name">Architect</div>
-        <div class="agent-id">architect-agent</div>
-        <div class="agent-skills-list">需求理解 · 任务拆解 · 方案设计 · API 设计 · 系统设计 · PRD · Spec</div>
-      </div>
-      <div class="agent-card">
-        <span class="agent-emoji">💻</span>
-        <div class="agent-name">Coder</div>
-        <div class="agent-id">coder-agent</div>
-        <div class="agent-skills-list">执行实现 · 单元测试 · 重构 · 设计模式 · DB 优化 · API Mock · 数据迁移</div>
-      </div>
-      <div class="agent-card">
-        <span class="agent-emoji">🔍</span>
-        <div class="agent-name">Reviewer</div>
-        <div class="agent-id">review-agent</div>
-        <div class="agent-skills-list">代码审查 · 安全审查 · Spec Review · Git 工作流 · 威胁建模 · 技术债</div>
-      </div>
-      <div class="agent-card">
-        <span class="agent-emoji">🚀</span>
-        <div class="agent-name">DevOps</div>
-        <div class="agent-id">devops-agent</div>
-        <div class="agent-skills-list">部署上线 · Docker · CI/CD · 可观测性 · 性能优化 · 绿色编码 · 数据管道</div>
-      </div>
-      <div class="agent-card">
-        <span class="agent-emoji">📊</span>
-        <div class="agent-name">PM</div>
-        <div class="agent-id">pm-agent</div>
-        <div class="agent-skills-list">进度跟踪 · 任务报告 · 周报生成 · 技术调研 · 故障排查 · 服务目录</div>
-      </div>
-      <div class="agent-card agent-new">
-        <span class="agent-emoji">🧪</span>
-        <div class="agent-name">QA</div>
-        <div class="agent-id">qa-agent</div>
-        <div class="agent-skills-list">单元测试 · 代码审查 · Spec Review · 移动端审查 · 安全审查</div>
-      </div>
-      <div class="agent-card agent-new">
-        <span class="agent-emoji">🔐</span>
-        <div class="agent-name">Security</div>
-        <div class="agent-id">security-agent</div>
-        <div class="agent-skills-list">威胁建模 · 安全审查 · Spec Proposal</div>
-      </div>
-      <div class="agent-card agent-new">
-        <span class="agent-emoji">📈</span>
-        <div class="agent-name">Data</div>
-        <div class="agent-id">data-agent</div>
-        <div class="agent-skills-list">数据管道 · ML 实验 · DB 优化 · 可观测性 · LLM 功能设计</div>
       </div>
     </div>
   </div>
@@ -2911,7 +2346,7 @@ footer {
           <div class="arch-node node-purple">
             <span class="arch-node-icon">🔗</span>
             <span class="arch-node-title">MCP Server</span>
-            <span class="arch-node-sub">30 Tools</span>
+            <span class="arch-node-sub">27 Tools</span>
           </div>
           <div class="arch-node node-green">
             <span class="arch-node-icon">🧩</span>
@@ -2978,7 +2413,7 @@ footer {
           <div class="arch-node node-purple arch-node-wide">
             <span class="arch-node-icon">🤖</span>
             <span class="arch-node-title">Agent Orchestrator</span>
-            <span class="arch-node-sub">8 Agents · 4 Modes</span>
+            <span class="arch-node-sub">5 Built-in Agents · Multi-Agent</span>
           </div>
           <div class="arch-node node-orange arch-node-wide">
             <span class="arch-node-icon">📋</span>
@@ -3059,7 +2494,7 @@ footer {
     <div class="section-header reveal" style="margin-bottom:64px;">
       <span class="section-label">未来路线</span>
       <h2 class="section-title">AI 工程的<br>下一个时代</h2>
-      <p class="section-desc">Ethan 不只是提示词工具——<strong style="color:var(--text-primary)">我们在构建 AI 时代的工程师操作系统</strong><br>从 CLI 工具 → 团队平台 → Agent 网络，每一步都由工程师的真实需求驱动</p>
+      <p class="section-desc">Ethan 不只是提示词工具——我们在构建 AI 时代的工程师操作系统</p>
     </div>
 
     <!-- Timeline -->
@@ -3069,15 +2504,14 @@ footer {
         <div class="timeline-dot dot-active"></div>
         <div class="timeline-connector"></div>
         <div class="timeline-card">
-          <div class="timeline-phase phase-now">当前 · v1.14.0</div>
-          <h3 class="timeline-title">标准化工程工作流 + Multi-Agent 编排</h3>
-          <p class="timeline-desc">36 个 Skills 覆盖软件研发全生命周期，8 个内置 Agent + 4 种协作模式，11 平台无缝适配，30 个 MCP 工具深度集成 AI 工具链。</p>
+          <div class="timeline-phase phase-now">当前 · v1.12.0</div>
+          <h3 class="timeline-title">标准化工程工作流</h3>
+          <p class="timeline-desc">36 个 Skills 覆盖软件研发全生命周期，11 平台无缝适配，MCP 深度集成 AI 工具链。</p>
           <div class="timeline-tags">
             <span class="tl-tag">36 Skills</span>
             <span class="tl-tag">10 Pipelines</span>
-            <span class="tl-tag">30 MCP Tools</span>
-            <span class="tl-tag">8 Agents</span>
-            <span class="tl-tag">4 Modes</span>
+            <span class="tl-tag">27 MCP Tools</span>
+            <span class="tl-tag">Multi-Agent</span>
           </div>
         </div>
       </div>
@@ -3106,16 +2540,17 @@ footer {
         <div class="timeline-connector"></div>
         <div class="timeline-card">
           <div class="timeline-phase phase-mid">中期愿景 · v3.0</div>
-          <h3 class="timeline-title">智能演化：Agent 自主学习与决策</h3>
-          <p class="timeline-desc">Agent 不再只是执行预设流程——它们从历史工程决策中学习，主动发现风险，在合适的时机提出改进建议。</p>
+          <h3 class="timeline-title">自主演化的 AI 代理网络</h3>
+          <p class="timeline-desc">多个专业 Agent（架构师、开发者、审查者、运维）协同工作，像真实团队一样自主分工、相互验证。</p>
           <div class="timeline-tags">
-            <span class="tl-tag">Adaptive Agents</span>
-            <span class="tl-tag">Risk Prediction</span>
-            <span class="tl-tag">Auto-Improvement</span>
+            <span class="tl-tag">Architect Agent</span>
+            <span class="tl-tag">Coder Agent</span>
+            <span class="tl-tag">Reviewer Agent</span>
+            <span class="tl-tag">DevOps Agent</span>
           </div>
           <div class="timeline-vision-note">
             <span class="vision-spark">💡</span>
-            AI 不再是工具，而是拥有专业角色的、持续成长的虚拟团队成员
+            AI 不再是工具，而是拥有专业角色的虚拟团队成员
           </div>
         </div>
       </div>
@@ -3228,7 +2663,7 @@ footer {
         <span style="font-size:16px;font-weight:700;background:linear-gradient(135deg,#9D6CFF,#4F9EFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Ethan</span>
       </a>
       <div class="footer-divider"></div>
-      <span class="footer-copy">v1.14.0 · MIT License · Made with ❤️ by aokiz</span>
+      <span class="footer-copy">v1.12.0 · MIT License · Made with ❤️ by aokiz</span>
     </div>
     <div class="footer-links">
       <a href="https://github.com/aokiz-ek/smart-flow-skill" target="_blank">GitHub</a>
@@ -3287,31 +2722,28 @@ document.addEventListener('mousemove', (e) => {
 // TERMINAL TYPEWRITER
 // ═══════════════════════════════════════════
 const terminalLines = [
-  { text: '$ ethan --version', cls: 't-cmd' },
-  { text: 'ethan-skill v1.14.0', cls: 't-success' },
+  { text: '$ ethan commit', cls: 't-cmd' },
+  { text: '', cls: 't-muted' },
+  { text: '✦ Analyzing staged changes...', cls: 't-muted' },
+  { text: '  → 3 files changed, +47 -12', cls: 't-muted' },
   { text: '', cls: '' },
-  { text: '$ ethan agent list', cls: 't-cmd' },
+  { text: '✓ feat(auth): add OAuth2 with Google', cls: 't-success' },
+  { text: '✓ Copied to clipboard ✦', cls: 't-success' },
   { text: '', cls: '' },
-  { text: '  🏗️  architect  · 7 Skills', cls: 't-info' },
-  { text: '  💻  coder      · 8 Skills', cls: 't-info' },
-  { text: '  🔍  reviewer   · 7 Skills', cls: 't-info' },
-  { text: '  🚀  devops     · 8 Skills', cls: 't-info' },
-  { text: '  📊  pm         · 6 Skills', cls: 't-info' },
-  { text: '  🧪  qa       ✦ · 5 Skills  NEW', cls: 't-purple' },
-  { text: '  🔐  security ✦ · 3 Skills  NEW', cls: 't-purple' },
-  { text: '  📈  data     ✦ · 5 Skills  NEW', cls: 't-purple' },
+  { text: '$ ethan review', cls: 't-cmd' },
   { text: '', cls: '' },
-  { text: '$ ethan agent run quality-workflow \\', cls: 't-cmd' },
-  { text: '    --mode review-loop \\', cls: 't-muted' },
-  { text: '    -c "重构 auth 模块"', cls: 't-muted' },
+  { text: '🔍 Code Review Report', cls: 't-info' },
+  { text: '🚫 Blocker(1) auth.ts:45 SQL注入风险', cls: 't-error' },
+  { text: '⚠  Major(2)  N+1查询 · 测试缺失', cls: 't-warn' },
+  { text: '✅ 错误处理完整 · 类型清晰', cls: 't-success' },
   { text: '', cls: '' },
-  { text: '🤝 Multi-Agent: review-loop mode', cls: 't-purple' },
-  { text: '► Loop 1  [💻 Coder]   执行实现...', cls: 't-info' },
-  { text: '  Loop 1  [🔍 Reviewer] 审查中...', cls: 't-warn' },
-  { text: '  → 3 issues · 建议修改', cls: 't-error' },
-  { text: '► Loop 2  [💻 Coder]   修改中...', cls: 't-info' },
-  { text: '  Loop 2  [🔍 Reviewer] 审查通过', cls: 't-success' },
-  { text: '✅ review-loop 完成 · 质量已验证', cls: 't-success', cursor: true },
+  { text: '$ ethan autopilot dev-workflow', cls: 't-cmd' },
+  { text: '', cls: '' },
+  { text: '⚡ Auto-Pilot: dev-workflow', cls: 't-purple' },
+  { text: '✓ 需求理解  完成', cls: 't-success' },
+  { text: '✓ 任务拆解  完成', cls: 't-success' },
+  { text: '✓ 方案设计  完成', cls: 't-success' },
+  { text: '► 执行实现  进行中...', cls: 't-info', cursor: true },
 ];
 
 function renderTerminal() {
