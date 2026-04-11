@@ -1,6 +1,6 @@
-# Ethan v1.12.0
+# Ethan v1.15.0
 
-Ethan - Your AI Workflow Assistant | Generated: 2026-04-06T16:19:27.840Z
+Ethan - Your AI Workflow Assistant | Generated: 2026-04-11T16:46:27.639Z
 
 ## 重要：Skill 激活规则
 
