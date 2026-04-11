@@ -804,6 +804,41 @@ program
           console.log(`  ✅  claude-code  →  工作流: ${cmdDir}/ethan-{cmd}.md × ${WORKFLOW_SLASH_COMMANDS.length}`);
           console.log(`       使用方式：在 Claude Code 聊天中输入 /ethan-commit、/ethan-auto 等`);
           console.log(`       ⚡ 动态注入：提示词自动注入对话，无需复制粘贴`);
+
+          // ── Agent 命令（Claude Code 专属：每个 Agent 一个 .md 文件）─────────────
+          const { getActiveAgents } = await import('../agents/index');
+          const agents = getActiveAgents(dir);
+
+          // ethan-agent-list.md
+          const agentListContent =
+            `---\ndescription: "Ethan — 查看所有可用 Agent 及其 Skill 分配"\n---\n\n` +
+            `$(ethan agent list 2>/dev/null)\n`;
+          fs.writeFileSync(path.join(outDir, 'ethan-agent-list.md'), agentListContent, 'utf-8');
+
+          // ethan-agent-run.md
+          const agentRunContent =
+            `---\ndescription: "Ethan — Multi-Agent 编排：将任务分配给多个专业 Agent 协作执行"\n---\n\n` +
+            `$(![ -n "$ARGUMENTS" ] && ethan agent run $ARGUMENTS --no-copy 2>/dev/null || printf "## Ethan Multi-Agent 编排\\n\\n用法: /ethan-agent-run <pipeline> -c \\"任务描述\\"\\n\\n示例:\\n  /ethan-agent-run dev-workflow -c \\"实现用户登录功能\\"\\n\\n可用模式: sequential / parallel / review-loop / consensus")\n`;
+          fs.writeFileSync(path.join(outDir, 'ethan-agent-run.md'), agentRunContent, 'utf-8');
+
+          // ethan-agent-new.md
+          const agentNewContent =
+            `---\ndescription: "Ethan — 创建自定义 Agent，生成 .ethan/agents/<id>.yaml"\n---\n\n` +
+            `$(ethan agent new $ARGUMENTS 2>/dev/null)\n`;
+          fs.writeFileSync(path.join(outDir, 'ethan-agent-new.md'), agentNewContent, 'utf-8');
+
+          // 每个内置 Agent 生成独立快捷命令
+          let agentFileCount = 3;
+          for (const agent of agents) {
+            const agentSkillList = agent.skillIds.slice(0, 8).join('、') + (agent.skillIds.length > 8 ? '...' : '');
+            const agentContent =
+              `---\ndescription: "Ethan — ${agent.emoji} ${agent.name}：${agent.role}"\n---\n\n` +
+              `$(![ -n "$ARGUMENTS" ] && ethan agent run --no-copy -c "$ARGUMENTS" 2>/dev/null || printf "## ${agent.emoji} ${agent.name}\\n\\n**职责**: ${agent.role}\\n\\n**负责 Skill**: ${agentSkillList}\\n\\n用法: /ethan-agent-${agent.id} <任务描述>")\n`;
+            fs.writeFileSync(path.join(outDir, `ethan-agent-${agent.id}.md`), agentContent, 'utf-8');
+            agentFileCount++;
+            total++;
+          }
+          console.log(`  ✅  claude-code  →  Agents: ${cmdDir}/ethan-agent-*.md × ${agentFileCount}（含 ${agents.length} 个 Agent 快捷键）`);
         } else {
           // CodeBuddy：静态提示词（各 /ethan-xxx 命令文件）
           for (const cmd of WORKFLOW_SLASH_COMMANDS) {
@@ -854,15 +889,31 @@ program
           lingma:    '灵码（@ethan 触发）',
         };
 
+        // ── Agent 速查表章节 ─────────────────────────────────────────────────
+        const { getActiveAgents: getAgentsForOther } = await import('../agents/index');
+        const otherAgents = getAgentsForOther(dir);
+        const agentRows = otherAgents
+          .map((a) => `| \`/ethan-agent-${a.id}\` | \`@ethan agent ${a.id}\` | ${a.emoji} ${a.name} | Agent | ${a.role} |`)
+          .join('\n');
+        const agentSection =
+          `## Multi-Agent 命令\n\n` +
+          `| Slash 命令 | @ethan 形式 | Agent | 类型 | 职责 |\n` +
+          `|-----------|------------|-------|------|------|\n` +
+          `| \`/ethan-agent-list\` | \`@ethan agent list\` | — | Agent | 查看所有可用 Agent |\n` +
+          `| \`/ethan-agent-run\` | \`@ethan agent run\` | — | Agent | Multi-Agent 编排执行 |\n` +
+          `| \`/ethan-agent-new\` | \`@ethan agent new\` | — | Agent | 创建自定义 Agent |\n` +
+          `${agentRows}\n`;
+
         const content =
           `# Ethan Slash 命令速查表 — ${platformLabel[p] ?? p}\n\n` +
           `> 生成时间：${new Date().toISOString()}\n\n` +
-          `## Skills 命令（24 个）\n\n` +
+          `## Skills 命令（${skills.length} 个）\n\n` +
           `| Slash 命令 | @ethan 形式 | Skill 名称 | 类型 | 说明 |\n` +
           `|-----------|------------|-----------|------|------|\n` +
           `${skillRows}\n\n` +
           `## 工作流命令\n\n` +
           `${wfSections}\n\n` +
+          `${agentSection}\n` +
           `## 快速示例\n\n` +
           `\`\`\`\n` +
           `/ethan-code-review      # Skill：代码审查\n` +
@@ -870,7 +921,8 @@ program
           `/ethan-commit           # 工作流：生成提交信息\n` +
           `/ethan-review           # 工作流：Code Review\n` +
           `/ethan-auto             # 工作流：Auto-Pilot 超级 Prompt\n` +
-          `/ethan-workflow-start   # 工作流：启动有状态工作流\n` +
+          `/ethan-agent-run        # Agent：Multi-Agent 协作编排\n` +
+          `/ethan-agent-architect  # Agent：架构师 Agent 直接对话\n` +
           `\`\`\`\n`;
 
         const destFile = path.join(outDir, 'ethan-commands.md');
@@ -1394,7 +1446,28 @@ program
       `  Node.js: v${nodeVersion} ${nodeOk ? '✅' : '❌ (需要 Node.js >= 18)'}`
     );
 
-    // 2. MCP SDK check
+    // 2. Windows 专项检查
+    if (process.platform === 'win32') {
+      console.log('\n[Windows 环境检查]');
+      // 检查 PowerShell 执行策略
+      try {
+        const psPolicy = spawnSync('powershell', ['-Command', 'Get-ExecutionPolicy'], { encoding: 'utf-8' });
+        const policy = (psPolicy.stdout ?? '').trim();
+        const policyOk = !['Restricted', 'AllSigned'].includes(policy);
+        console.log(`  PowerShell 执行策略: ${policy} ${policyOk ? '✅' : '⚠️  需设置（Set-ExecutionPolicy RemoteSigned -Scope CurrentUser）'}`);
+      } catch { /* PowerShell not available */ }
+
+      // 检查 npm 全局路径是否在 PATH 中
+      const npmGlobal = spawnSync('npm', ['config', 'get', 'prefix'], { encoding: 'utf-8', shell: true });
+      const npmPrefix = (npmGlobal.stdout ?? '').trim();
+      if (npmPrefix) {
+        const inPath = (process.env.PATH ?? '').includes(npmPrefix);
+        console.log(`  npm global prefix: ${npmPrefix} ${inPath ? '✅ (在 PATH 中)' : '⚠️  不在 PATH 中（需手动添加）'}`);
+      }
+      console.log(`  UTF-8 编码: ${process.env.CHCP === '65001' || process.env.LC_ALL?.includes('UTF') ? '✅' : '⚠️  建议 chcp 65001'}`);
+    }
+
+    // 3. MCP SDK check
     const sdkOk = fs.existsSync(
       path.join(__dirname, '../../node_modules/@modelcontextprotocol/sdk')
     );
@@ -1644,6 +1717,178 @@ program
     console.log(JSON.stringify(config, null, 2));
     console.log(`\n文件路径：${configPath}`);
     console.log('\n💡 提示：现在运行 ethan install --platform <platform> 将使用此配置\n');
+  });
+
+// ─── setup 命令（零门槛一键安装向导） ────────────────────────────────────────
+// 面向产品、测试等非技术用户，自动检测环境，提供最简安装体验
+program
+  .command('setup')
+  .description('一键安装向导：自动检测编辑器，为非技术用户提供最简配置体验')
+  .option('--role <role>', '用户角色：dev（开发）/ pm（产品）/ qa（测试）/ design（设计）')
+  .option('--platform <platform>', '强制指定平台（跳过自动检测）')
+  .option('--lang <lang>', '界面语言：zh（默认）/ en')
+  .option('-y, --yes', '跳过所有确认，使用推荐配置')
+  .action(async (options: { role?: string; platform?: string; lang?: string; yes?: boolean }) => {
+    const readline = await import('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string, def?: string): Promise<string> =>
+      new Promise((resolve) =>
+        rl.question(def !== undefined ? `${q} [${def}]: ` : `${q}: `, (a) => resolve(a.trim() || def || ''))
+      );
+
+    const isEn = options.lang === 'en';
+    const isAuto = !!options.yes;
+
+    const t = {
+      title: isEn ? 'Ethan Setup Wizard' : 'Ethan 快速安装向导',
+      welcome: isEn
+        ? 'This wizard will configure Ethan for your editor in 3 steps.'
+        : '3 步完成配置，无需任何编程知识。',
+      step1: isEn ? '[1/3] Detecting your editor...' : '[1/3] 检测你的编辑器...',
+      step2: isEn ? '[2/3] Configuring your role...' : '[2/3] 配置你的角色...',
+      step3: isEn ? '[3/3] Generating slash commands...' : '[3/3] 生成编辑器快捷指令...',
+      done: isEn ? 'Setup complete!' : '安装完成！',
+    };
+
+    console.log(`\n${'═'.repeat(52)}`);
+    console.log(`   ${t.title}`);
+    console.log(`   ${t.welcome}`);
+    console.log(`${'═'.repeat(52)}\n`);
+
+    // ── 步骤 1：自动检测编辑器 ─────────────────────────────────────────────
+    console.log(t.step1);
+
+    // 检测逻辑：查找 .cursor / .vscode / .windsurf 等目录
+    const detectedPlatforms: string[] = [];
+    const checkDir = (d: string): boolean => fs.existsSync(path.join(process.cwd(), d));
+    if (checkDir('.cursor')) detectedPlatforms.push('cursor');
+    if (checkDir('.vscode') || checkDir('.github')) detectedPlatforms.push('copilot');
+    if (checkDir('.windsurf')) detectedPlatforms.push('windsurf');
+    if (checkDir('.codebuddy')) detectedPlatforms.push('codebuddy');
+    if (checkDir('.claude')) detectedPlatforms.push('claude-code');
+    if (checkDir('.continue')) detectedPlatforms.push('continue');
+
+    // 如果没有检测到任何编辑器，给出选项列表
+    const ALL_PLATFORMS_SETUP = ['claude-code', 'cursor', 'copilot', 'codebuddy', 'windsurf', 'zed', 'jetbrains', 'continue', 'cline', 'lingma'];
+
+    let chosenPlatform = options.platform ?? '';
+    if (!chosenPlatform) {
+      if (detectedPlatforms.length === 1 && isAuto) {
+        chosenPlatform = detectedPlatforms[0];
+        console.log(`  ✅ 检测到 ${chosenPlatform}，将自动配置`);
+      } else if (detectedPlatforms.length > 0) {
+        console.log(`  检测到以下编辑器：${detectedPlatforms.join(', ')}`);
+        const detected = detectedPlatforms.join('/');
+        if (isAuto) {
+          chosenPlatform = detectedPlatforms[0];
+        } else {
+          const choice = await ask(
+            isEn
+              ? `  Which editor? (${ALL_PLATFORMS_SETUP.join('|')}|all)`
+              : `  选择编辑器（${ALL_PLATFORMS_SETUP.join('|')}|all）`,
+            detectedPlatforms[0]
+          );
+          chosenPlatform = choice || detectedPlatforms[0];
+        }
+      } else {
+        if (isAuto) {
+          chosenPlatform = 'claude-code';
+        } else {
+          console.log(isEn ? '  No editor auto-detected. Common options:' : '  未检测到编辑器，请选择：');
+          ALL_PLATFORMS_SETUP.forEach((p, i) => console.log(`    ${i + 1}. ${p}`));
+          const choice = await ask(isEn ? '  Enter number or name' : '  输入序号或名称', '1');
+          const num = parseInt(choice, 10);
+          chosenPlatform = (!isNaN(num) && num >= 1 && num <= ALL_PLATFORMS_SETUP.length)
+            ? ALL_PLATFORMS_SETUP[num - 1]
+            : (choice || 'claude-code');
+        }
+      }
+    }
+    console.log(`  → 目标平台：${chosenPlatform}\n`);
+
+    // ── 步骤 2：角色配置 ──────────────────────────────────────────────────
+    console.log(t.step2);
+
+    const ROLE_PRESETS: Record<string, { lang: 'zh' | 'en'; disabledSkills: string[] }> = {
+      pm:     { lang: 'zh', disabledSkills: ['unit-testing', 'docker', 'cicd', 'observability', 'data-pipeline', 'ml-experiment'] },
+      qa:     { lang: 'zh', disabledSkills: ['docker', 'cicd', 'ml-experiment', 'green-code', 'api-mock'] },
+      design: { lang: 'zh', disabledSkills: ['unit-testing', 'docker', 'cicd', 'database-optimize', 'data-pipeline', 'ml-experiment', 'observability'] },
+      dev:    { lang: 'zh', disabledSkills: [] },
+    };
+
+    let chosenRole = options.role ?? '';
+    if (!chosenRole && !isAuto) {
+      console.log(isEn ? '  Your role:' : '  你的角色：');
+      console.log('    1. dev    - 开发工程师（启用所有 36 个 Skill）');
+      console.log('    2. qa     - 测试工程师（测试、审查相关 Skill）');
+      console.log('    3. pm     - 产品经理（需求、设计、周报相关 Skill）');
+      console.log('    4. design - 设计师（流程、文档类 Skill）');
+      const roleChoice = await ask(isEn ? '  Select (1-4)' : '  选择（1-4）', '1');
+      const roleMap: Record<string, string> = { '1': 'dev', '2': 'qa', '3': 'pm', '4': 'design' };
+      chosenRole = roleMap[roleChoice] ?? roleChoice ?? 'dev';
+    }
+    chosenRole = chosenRole || 'dev';
+    console.log(`  → 角色：${chosenRole}\n`);
+
+    const preset = ROLE_PRESETS[chosenRole] ?? ROLE_PRESETS.dev;
+
+    // 语言选择
+    let chosenLang: 'zh' | 'en' = preset.lang;
+    if (!isAuto && !options.lang) {
+      const langChoice = await ask(isEn ? '  Output language (zh/en)' : '  输出语言（zh/en）', 'zh');
+      chosenLang = langChoice === 'en' ? 'en' : 'zh';
+    }
+
+    rl.close();
+
+    // 写入 .ethanrc.json
+    const existingConfig = readConfig(process.cwd());
+    const newConfig = {
+      ...existingConfig,
+      lang: chosenLang,
+      ...(preset.disabledSkills.length > 0 ? { disabledSkills: preset.disabledSkills } : {}),
+      setup: { role: chosenRole, platform: chosenPlatform, setupAt: new Date().toISOString() },
+    };
+    writeConfig(newConfig, process.cwd());
+    console.log(`  ✅ .ethanrc.json 已生成（角色：${chosenRole}，语言：${chosenLang}）`);
+
+    // ── 步骤 3：生成编辑器快捷指令 ───────────────────────────────────────
+    console.log(`\n${t.step3}`);
+    const slashPlatforms = chosenPlatform === 'all' ? 'all' : chosenPlatform;
+
+    // 动态调用 slash 命令逻辑（通过 execSync，保持 tty）
+    const { execSync } = await import('child_process');
+    try {
+      execSync(`ethan slash --platform ${slashPlatforms} --dir "${process.cwd()}"`, { stdio: 'inherit' });
+    } catch {
+      // 如果 ethan 还未在全局安装（开发模式），尝试直接调用 ts-node
+      console.log(isEn ? '  Note: Run "ethan slash" manually if above failed.' : '  提示：如以上失败，请手动运行 ethan slash。');
+    }
+
+    // ── 完成 ─────────────────────────────────────────────────────────────
+    console.log(`\n${'═'.repeat(52)}`);
+    console.log(`   ${t.done}`);
+    console.log('═'.repeat(52));
+    console.log(isEn ? '\nNext steps:' : '\n下一步：');
+    if (chosenPlatform === 'claude-code') {
+      console.log(isEn
+        ? '  1. Restart Claude Code editor'
+        : '  1. 重启 Claude Code 编辑器');
+      console.log(isEn
+        ? '  2. Type /ethan- in chat to see all commands'
+        : '  2. 在聊天中输入 /ethan- 即可看到所有快捷指令');
+    } else {
+      console.log(isEn
+        ? `  1. Open ethan-commands.md in your ${chosenPlatform} context`
+        : `  1. 将 ethan-commands.md 加入你的 ${chosenPlatform} 上下文`);
+      console.log(isEn
+        ? '  2. Type /ethan-code-review or @ethan code-review to start'
+        : '  2. 输入 /ethan-code-review 或 @ethan code-review 开始使用');
+    }
+    console.log(isEn
+      ? '  3. Run "ethan agent run" for multi-agent collaboration'
+      : '  3. 运行 ethan agent run 体验多 Agent 协作');
+    console.log('');
   });
 
 // ─── workflow 命令（有状态一键工作流） ──────────────────────────────────────
@@ -3384,41 +3629,37 @@ memoryCmd
 
 memoryCmd
   .command('search <keyword>')
-  .description('在记忆库中搜索关键词（标题 + 内容 + 标签）')
+  .description('在记忆库中全文检索（加权评分 + 片段高亮）')
   .option('--global', '搜索全局记忆库')
-  .option('--tag <tag>', '按标签过滤')
+  .option('--tag <tag>', '按标签过滤（AND 语义）')
+  .option('--type <type>', '按类型过滤：workflow|skill|manual|decision|knowledge')
   .option('-n, --limit <n>', '最多显示 N 条', '10')
-  .action((keyword, options) => {
-    const dir = getMemoryDir(!!options.global);
-    const entries = loadMemoryEntries(dir);
-    const kw = keyword.toLowerCase();
-    const limit = parseInt(options.limit, 10) || 10;
+  .action(async (keyword: string, options: { global?: boolean; tag?: string; type?: string; limit?: string }) => {
+    const { searchMemory, getMemoryDir: getMemDir } = await import('../memory/index');
+    const dir = getMemDir(!!options.global);
+    const limit = parseInt(options.limit ?? '10', 10) || 10;
 
-    let results = entries.filter((e) => {
-      const matchKw =
-        e.title.toLowerCase().includes(kw) ||
-        e.content.toLowerCase().includes(kw) ||
-        e.tags.some((t) => t.toLowerCase().includes(kw));
-      const matchTag = options.tag ? e.tags.includes(options.tag) : true;
-      return matchKw && matchTag;
+    const results = searchMemory(keyword, dir, {
+      tags: options.tag ? [options.tag] : undefined,
+      type: options.type as import('../memory/types').MemoryEntry['type'] | undefined,
+      limit,
     });
-
-    results = results.slice(0, limit);
 
     if (results.length === 0) {
       console.log(`\n🔍 未找到匹配 "${keyword}" 的记忆\n`);
+      console.log('  💡 尝试更宽泛的关键词，或用 ethan memory list 查看所有记忆\n');
       return;
     }
 
     console.log(`\n🔍 找到 ${results.length} 条记忆（关键词："${keyword}"）\n`);
-    console.log('─'.repeat(60));
-    for (const e of results) {
-      const preview = e.content.length > 100 ? e.content.slice(0, 100) + '…' : e.content;
-      console.log(`\n  📌 ${e.title}`);
-      console.log(`     ID: ${e.id}  |  ${e.createdAt.slice(0, 10)}  |  标签：${e.tags.join(', ') || '无'}`);
-      console.log(`     ${preview}`);
+    console.log('─'.repeat(70));
+    for (const { entry: e, score, matchedFields, snippet } of results) {
+      console.log(`\n  📌 [${e.type}] ${e.title}`);
+      console.log(`     ID: ${e.id}  |  ${e.createdAt.slice(0, 10)}  |  相关度: ${score}  |  命中: ${matchedFields.join(', ')}`);
+      console.log(`     标签：${e.tags.join(', ') || '无'}`);
+      console.log(`     摘要：${snippet}`);
     }
-    console.log('\n' + '─'.repeat(60));
+    console.log('\n' + '─'.repeat(70));
     console.log(`\n💡 用 ethan memory show <id> 查看完整内容\n`);
   });
 
@@ -5529,6 +5770,71 @@ agentCmd
     console.log(`  ethan agent show ${agentId}          # 查看 Agent 详情`);
     console.log(`  ethan agent run --context "任务"     # 在编排中使用此 Agent`);
     console.log('');
+  });
+
+// ─── extension 命令（事件钩子 + Webhook 扩展）─────────────────────────────────
+const extCmd = program
+  .command('extension')
+  .alias('ext')
+  .description('扩展管理：事件钩子、Webhook 集成、Extension SDK');
+
+extCmd
+  .command('list')
+  .description('查看当前项目的钩子和 Webhook 配置')
+  .action(async () => {
+    const { readExtensionsConfig } = await import('../extension/index');
+    const cfg = readExtensionsConfig(process.cwd());
+    console.log('\n🔌 Ethan 扩展配置\n');
+    console.log('─'.repeat(50));
+    console.log(`\n钩子文件（${cfg.hooks.length} 个）：`);
+    if (cfg.hooks.length === 0) console.log('  （无）');
+    cfg.hooks.forEach((h) => console.log(`  ${h.enabled ? '✅' : '⏸️ '} ${h.file}`));
+    console.log(`\nWebhook（${cfg.webhooks.length} 个）：`);
+    if (cfg.webhooks.length === 0) console.log('  （无）');
+    cfg.webhooks.forEach((w) => console.log(`  ${w.enabled ? '✅' : '⏸️ '} ${w.url}  [${w.events.join(', ')}]`));
+    console.log('');
+  });
+
+extCmd
+  .command('hook-init [name]')
+  .description('在 .ethan/hooks/ 生成示例钩子文件')
+  .action(async (name?: string) => {
+    const { generateHookTemplate } = await import('../extension/index');
+    const hookName = name || 'my-hook';
+    const file = generateHookTemplate(process.cwd(), hookName);
+    console.log(`\n✅ 钩子文件已生成：${file}`);
+    console.log('\n支持的事件：before:skill | after:skill | before:pipeline | after:pipeline | workflow:done | memory:save\n');
+  });
+
+extCmd
+  .command('webhook-add <url>')
+  .description('添加 Webhook（在工作流事件后推送通知）')
+  .option('--events <events>', '监听事件（逗号分隔）', 'after:skill,workflow:done')
+  .option('--secret <secret>', 'HMAC 签名密钥（可选）')
+  .action(async (url: string, opts: { events: string; secret?: string }) => {
+    const { readExtensionsConfig, writeExtensionsConfig } = await import('../extension/index');
+    const cfg = readExtensionsConfig(process.cwd());
+    const events = opts.events.split(',').map((e: string) => e.trim()) as import('../extension/index').EthanEventType[];
+    cfg.webhooks.push({ url, events, secret: opts.secret, enabled: true, headers: {} });
+    writeExtensionsConfig(cfg, process.cwd());
+    console.log(`\n✅ Webhook 已添加：${url}`);
+    console.log(`   监听事件：${events.join(', ')}\n`);
+  });
+
+extCmd
+  .command('webhook-remove <url>')
+  .description('移除 Webhook')
+  .action(async (url: string) => {
+    const { readExtensionsConfig, writeExtensionsConfig } = await import('../extension/index');
+    const cfg = readExtensionsConfig(process.cwd());
+    const before = cfg.webhooks.length;
+    cfg.webhooks = cfg.webhooks.filter((w) => w.url !== url);
+    if (cfg.webhooks.length === before) {
+      console.error(`\n❌ 未找到 Webhook: ${url}\n`);
+      process.exit(1);
+    }
+    writeExtensionsConfig(cfg, process.cwd());
+    console.log(`\n✅ Webhook 已移除：${url}\n`);
   });
 
 program.parse(process.argv);

@@ -68,7 +68,7 @@ describe('buildMultiAgentPrompt (zh)', () => {
     expect(prompt).toContain('Agent 阵容');
     expect(prompt).toContain('Architect Agent');
     expect(prompt).toContain('Code Agent');
-    expect(prompt).toContain('Review Agent');
+    // dev-workflow uses architect+coder+pm (no reviewer/qa in this pipeline)
   });
 
   it('contains collaboration protocol', () => {
@@ -79,7 +79,6 @@ describe('buildMultiAgentPrompt (zh)', () => {
   it('contains step headings with agent names', () => {
     expect(prompt).toContain('🏗️ Architect Agent');
     expect(prompt).toContain('💻 Code Agent');
-    expect(prompt).toContain('🔍 Review Agent');
   });
 
   it('contains handoff markers between different agents', () => {
@@ -113,8 +112,8 @@ describe('buildMultiAgentPrompt (en)', () => {
 });
 
 describe('BUILT_IN_AGENTS', () => {
-  it('has 5 agents', () => {
-    expect(BUILT_IN_AGENTS).toHaveLength(5);
+  it('has 8 agents', () => {
+    expect(BUILT_IN_AGENTS).toHaveLength(8);
   });
 
   it('all agents have required fields', () => {
@@ -150,7 +149,7 @@ describe('buildSkillRouting', () => {
     const routing = buildSkillRouting(BUILT_IN_AGENTS);
     expect(routing['requirement-understanding']).toBe('architect');
     expect(routing['implementation']).toBe('coder');
-    expect(routing['code-review']).toBe('reviewer');
+    expect(routing['code-review']).toBe('qa');  // qa overrides reviewer (last-writer-wins)
     expect(routing['deployment']).toBe('devops');
     expect(routing['debug']).toBe('pm');
   });
@@ -164,7 +163,7 @@ describe('getAgentsForPipeline', () => {
       BUILT_IN_AGENTS,
       routing
     );
-    expect(agents.map((a) => a.id)).toEqual(['architect', 'coder', 'reviewer']);
+    expect(agents.map((a) => a.id)).toEqual(['architect', 'coder', 'qa']);
   });
 
   it('deduplicates consecutive same-agent steps', () => {
