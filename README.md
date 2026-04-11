@@ -17,10 +17,10 @@
 | **36 个 Skill** | 标准化工作流节点，覆盖需求→接口设计→安全→部署→PRD→Git→测试→系统设计→数据库→Docker→CI/CD→性能→重构→可观测性→设计模式→OpenSpec→技术债→Mock→数据迁移→LLM设计→威胁建模→绿色编码→服务目录→移动审查→数据管道→ML实验 |
 | **11 个平台** | Cursor / Copilot / Cline / Windsurf / Zed / JetBrains / Continue / Claude Code 等 |
 | **10 个 Pipeline** | 链式工作流（开发 / 汇报 / 质量 / 完整周期 / 故障响应 / 新功能 / Spec规范 / Bug修复 / 安全审计 / 开源发布），有状态持久化推进 |
-| **28 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算、DORA 指标、PR 分析、故障复盘、脚手架、合规证据 |
+| **31 个 MCP 工具** | AI 编辑器原生调用 Skill、Pipeline、Git、记忆库、估算、DORA 指标、PR 分析、故障复盘、脚手架、合规证据、版本升级检查 |
 | **60+ CLI 命令** | Git 集成、开发工具、记忆库、估算、分析工具（diff/deps/dora/mermaid/adr/i18n/migrate/onboard/compliance 等）、插件 OS 全覆盖 |
 | **Slash 命令生成** | `ethan slash` 一键为 Claude Code 生成 `/ethan-xxx` 原生命令，其他平台生成速查表 |
-| **自动升级** | 检测到新版本时自动后台 `npm install -g` 静默升级，重启终端即用新版 |
+| **自动升级** | 启动时显示新版本 banner，自动后台 `npm install -g` 升级；失败时显示明确提示；支持 `ethan upgrade [--force]` 手动显式升级 |
 | **自定义 Skill** | `.ethan/skills/*.yaml/.md`，YAML frontmatter + Markdown body |
 | **自定义 Pipeline** | `.ethan/pipelines/*.yaml`，引用内置或自定义 Skill 自由组合 |
 | **浏览器扩展** | Chrome/Edge MV3，GitHub PR 一键 Review + 右键菜单 |
@@ -122,7 +122,7 @@ npx ethan-skill install --platform cursor --lang en
 }
 ```
 
-重启 AI 编辑器后，可使用全部 **28 个 MCP 工具**（详见下方 MCP 工具列表）。
+重启 AI 编辑器后，可使用全部 **31 个 MCP 工具**（详见下方 MCP 工具列表）。
 
 ### 方式三：全局安装
 
@@ -347,17 +347,38 @@ ethan slash
 
 ## 自动升级
 
-Ethan 每次启动都会静默检查 npm 最新版本（24h 缓存，不阻塞 CLI）。检测到新版本后，**自动在后台执行 `npm install -g ethan-skill@latest`**，退出时显示：
+Ethan 每次启动都会静默检查 npm 最新版本（24h 缓存，不阻塞 CLI）。检测到新版本后：
+
+1. **命令执行前**显示 banner 提醒：
+   ```
+   📦  ethan v{latest} 可用（当前 v{current}）— 运行 ethan upgrade 立即更新
+   ```
+
+2. **自动在后台**执行 `npm install -g ethan-skill@latest`，退出时显示：
+   ```
+   🔄  Ethan 正在后台升级到 v{latest}，完成后重启终端生效。
+   ```
+
+3. **失败时给出明确提示**（权限不足、npm 找不到等），不再静默忽略
+
+4. **智能重试**：若后台升级静默失败，下次启动自动重试（不会被缓存永久阻断）
+
+### 手动显式升级
+
+```bash
+ethan upgrade           # 查询最新版本并升级（有实时输出）
+ethan upgrade --force   # 跳过版本比较，强制重新安装
+```
+
+### MCP 版本查询（Claude Desktop 用户）
 
 ```
-🔄  Ethan 正在后台自动升级到 v{latest}，重启终端后生效。
+调用 ethan_upgrade 工具查看当前版本状态与升级建议
 ```
-
-无需手动运行升级命令，始终保持最新版本。
 
 ---
 
-## 28 个 MCP 工具
+## 31 个 MCP 工具
 
 配置 MCP Server 后，AI 编辑器（Cursor / Cline / Continue 等）可直接调用：
 
@@ -394,6 +415,7 @@ Ethan 每次启动都会静默检查 npm 最新版本（24h 缓存，不阻塞 C
 | `ethan_postmortem` | 生成故障复盘提示词（v1.12.0 新增）|
 | `ethan_scaffold` | 黄金路径脚手架提示词（v1.12.0 新增）|
 | `ethan_compliance` | 生成合规证据收集清单（soc2/gdpr/iso27001，v1.12.0 新增）|
+| `ethan_upgrade` | 检查版本状态，输出当前版本/最新版本/升级指引（v1.15.0 新增）|
 
 ---
 
@@ -552,6 +574,7 @@ npm run test:coverage    # 覆盖率报告
 
 | 版本 | 主要变更 |
 |------|---------|
+| **v1.15.0** | 自动升级全面增强：启动 banner 提醒、智能重试（失败后不永久阻断）、错误明确提示；新增 `ethan upgrade [--force]` 显式升级命令；新增 MCP 工具 `ethan_upgrade`；`ethan doctor` 新增版本更新状态节；MCP 工具 30 → 31 |
 | **v1.14.0** | 新增 3 个专业化 Agent（qa/security/data），内置 Agent 5 → 8；新增 4 种协作模式（`--mode sequential/parallel/review-loop/consensus`）；新增 `ethan agent new` 交互式创建自定义 Agent；新增 MCP 工具 `ethan_agent_list/show`，MCP 工具 28 → 30 |
 | **v1.13.0** | Multi-Agent 编排系统（`src/agents/`）；5 个内置角色 Agent（architect/coder/reviewer/devops/pm）；新增 `ethan agent list/show/run` CLI；新增 MCP 工具 `ethan_agent_orchestrate`；MCP 工具 27 → 28；新增宣传落地页 `docs/landing.html` |
 | **v1.12.0** | 新增 10 个 Skill（技术债/Mock服务/数据迁移/LLM设计/威胁建模/绿色编码/服务目录/移动审查/数据管道/ML实验）；Skills 26 → 36；新增 3 条 Pipeline（bugfix/security-audit/open-source-release）；新增 19 个分析 CLI 命令（diff/deps/dora/adr/mermaid/i18n/onboard/migrate/postmortem/decision-log/knowledge/oss/prompt-lib/scaffold/benchmark/sync/compliance 等）；MCP 工具 22 → 27 |

@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2026-04-12
+
+### Added
+
+- **`ethan upgrade` 显式升级命令**（新增 CLI）：
+  - 前台执行，有实时输出（`stdio: 'inherit'`）
+  - 支持 `--force` 选项跳过版本比较强制重装
+  - 成功：清除缓存并提示重启终端；失败：显示明确错误与手动命令
+  - 不再依赖静默后台升级的黑盒机制
+
+- **新 MCP 工具 `ethan_upgrade`**（30 → **31**）：
+  - 通过 Claude Desktop 查询当前版本状态、npm 最新版本与升级缓存信息
+  - 输出升级指引（终端命令），MCP 环境下无法直接执行 npm，提供可操作指令
+
+- **自动升级启动 banner**（`printUpdateBanner`）：
+  - 检测到新版本时，在命令输出前打印一行可见提示：
+    ```
+    📦  ethan v{latest} 可用（当前 v{current}）— 运行 ethan upgrade 立即更新
+    ```
+  - 使用缓存（24h 内）时同步输出，不增加延迟
+
+- **`ethan doctor` 版本更新状态节**：
+  - 显示当前版本、npm 最新版、上次检查时间
+  - 有新版本时提示 `ethan upgrade`，已最新时显示 ✅
+
+### Fixed
+
+- **自动升级永不重试 Bug**：
+  - 根因：`upgradedVersion` 在 spawn 成功（不等于 npm install 成功）后立即写入缓存，若后台 npm 进程静默失败，下次检查时 `upgradedVersion === latest` 导致永久跳过
+  - 修复：增加条件 `&& !compareVersions(currentVersion, latest)`，若当前版本仍低于 latest（说明升级失败），则重新触发
+
+- **后台升级失败完全静默**：
+  - spawn 失败（npm 不在 PATH）：原先 `catch` 静默返回；修复后在进程退出时打印 `⚠️ 找不到 npm` 提示
+  - spawn 成功但子进程立即报错（如 EACCES 权限）：新增 `child.on('error', ...)` 监听并打印提示
+
+- **Windows 下 npm 查找失败**：
+  - detached spawn 在 Windows 未启用 shell 模式，部分 nvm-windows 环境下 npm 无法找到
+  - 修复：Windows 平台启用 `shell: true`
+
+### Changed
+
+- 自动升级退出消息措辞调整：
+  - 旧：`🔄 Ethan 正在后台自动升级到 v{latest}，重启终端后生效。`
+  - 新：`🔄 Ethan 正在后台升级到 v{latest}，完成后重启终端生效。`
+
+---
+
 ## [1.14.0] - 2026-04-09
 
 ### Added

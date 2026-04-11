@@ -1429,6 +1429,16 @@ pipelineCmd
     writeStats(stats);
   });
 
+// ─── upgrade 命令 ───────────────────────────────────────────────────────────
+program
+  .command('upgrade')
+  .description('检查并升级到最新版本')
+  .option('--force', '跳过版本检查，强制重新安装最新版本')
+  .action(async (options) => {
+    const { checkAndPrintUpdate } = await import('./update-check');
+    await checkAndPrintUpdate(pkg.version, pkg.name, options.force ?? false);
+  });
+
 // ─── doctor 命令 ────────────────────────────────────────────────────────────
 program
   .command('doctor')
@@ -1522,6 +1532,37 @@ program
     console.log('\n' + '─'.repeat(60));
 
     const allBuilt = ruleFiles.every(({ file }) => fs.existsSync(path.join(ROOT, file)));
+
+    // 版本更新状态检查
+    console.log(`\n[版本更新状态]`);
+    console.log(`  当前版本  : v${pkg.version}`);
+    const updateCachePath = path.join(os.homedir(), '.ethan-update-cache.json');
+    if (fs.existsSync(updateCachePath)) {
+      try {
+        const updateCache = JSON.parse(fs.readFileSync(updateCachePath, 'utf-8'));
+        const lastCheckedAgo = Math.round((Date.now() - updateCache.lastChecked) / 1000 / 60);
+        console.log(`  npm 最新版 : v${updateCache.latestVersion}`);
+        console.log(`  上次检查  : ${lastCheckedAgo} 分钟前`);
+        const needsUpdate = (() => {
+          const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
+          const [cMaj, cMin, cPat] = parse(pkg.version);
+          const [lMaj, lMin, lPat] = parse(updateCache.latestVersion);
+          if (lMaj !== cMaj) return lMaj > cMaj;
+          if (lMin !== cMin) return lMin > cMin;
+          return lPat > cPat;
+        })();
+        if (needsUpdate) {
+          console.log(`  升级状态  : ⚠️  有新版本可用，运行 ethan upgrade 升级`);
+        } else {
+          console.log(`  升级状态  : ✅ 已是最新`);
+        }
+      } catch {
+        console.log(`  升级状态  : ⚠️  缓存文件损坏，将在下次运行时重建`);
+      }
+    } else {
+      console.log(`  升级状态  : ⏳ 尚未检查（下次运行 ethan 命令时自动检查）`);
+    }
+
     if (!allBuilt) {
       console.log('\n💡 提示：运行 npm run build:rules 生成规则文件\n');
     } else {

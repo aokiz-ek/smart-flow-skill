@@ -533,6 +533,22 @@ export async function startMcpServer(): Promise<void> {
     },
   };
 
+  const upgradeTool: Tool = {
+    name: 'ethan_upgrade',
+    description: '检查 ethan-skill 是否有新版本，并查询当前安装版本与 npm 最新版本的对比信息。如需升级，请在终端运行 `ethan upgrade`。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        force: {
+          type: 'boolean',
+          description: '是否强制提示升级，即使当前已是最新版本（默认 false）',
+          default: false,
+        },
+      },
+      required: [],
+    },
+  };
+
   const complianceTool: Tool = {
     name: 'ethan_compliance',
     description: '生成合规证据收集提示词，支持 SOC 2 / GDPR / ISO 27001，输出控制措施清单与差距分析。',
@@ -575,6 +591,7 @@ export async function startMcpServer(): Promise<void> {
         postmortemTool,
         scaffoldTool,
         complianceTool,
+        upgradeTool,
       ],
     };
   });
@@ -1408,6 +1425,49 @@ export async function startMcpServer(): Promise<void> {
       return { content: [{ type: 'text', text: prompt }] };
     }
 
+    // ── ethan_upgrade ──────────────────────────────────────────────────────────
+    if (name === 'ethan_upgrade') {
+      const force = (args?.force as boolean) ?? false;
+      const cacheFile = require('path').join(require('os').homedir(), '.ethan-update-cache.json');
+      let cacheInfo = '';
+      try {
+        if (require('fs').existsSync(cacheFile)) {
+          const c = JSON.parse(require('fs').readFileSync(cacheFile, 'utf-8'));
+          const ageMin = Math.round((Date.now() - c.lastChecked) / 60000);
+          cacheInfo = `\n\n**缓存信息**\n- npm 最新版：v${c.latestVersion}\n- 上次检查：${ageMin} 分钟前`;
+          if (c.upgradedVersion) cacheInfo += `\n- 已触发升级：v${c.upgradedVersion}`;
+        }
+      } catch { /* ignore */ }
+
+      const needsUpdate = (() => {
+        try {
+          if (!require('fs').existsSync(cacheFile)) return false;
+          const c = JSON.parse(require('fs').readFileSync(cacheFile, 'utf-8'));
+          const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
+          const [cMaj, cMin, cPat] = parse(pkg.version);
+          const [lMaj, lMin, lPat] = parse(c.latestVersion);
+          if (lMaj !== cMaj) return lMaj > cMaj;
+          if (lMin !== cMin) return lMin > cMin;
+          return lPat > cPat;
+        } catch { return false; }
+      })();
+
+      const statusIcon = needsUpdate ? '⚠️' : '✅';
+      const statusMsg = needsUpdate
+        ? `发现新版本可用${force ? '（force 模式）' : ''}` : '已是最新版本';
+
+      const text =
+        `# Ethan 版本状态\n\n` +
+        `${statusIcon} **${statusMsg}**\n\n` +
+        `- 当前版本：v${pkg.version}${cacheInfo}\n\n` +
+        (needsUpdate || force
+          ? `## 升级方法\n\n在终端运行以下命令进行升级：\n\n\`\`\`bash\nethan upgrade\n# 或强制重装\nethan upgrade --force\n# 或直接使用 npm\nnpm install -g ethan-skill@latest\n\`\`\`\n\n升级完成后重启终端即可使用新版本。`
+          : `如需强制重装，在终端运行：\`ethan upgrade --force\``
+        );
+
+      return { content: [{ type: 'text', text }] };
+    }
+
     return {
       content: [
         {
@@ -1422,7 +1482,7 @@ export async function startMcpServer(): Promise<void> {
 
   // MCP server 运行时不输出到 stdout（会破坏协议）
   process.stderr.write(
-    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_agent_orchestrate + ethan_agent_list + ethan_agent_show + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance, ${PIPELINES.length} pipelines)\n`
+    `Ethan MCP Server v${pkg.version} running (${ALL_SKILLS.length} skill tools + ethan_pipeline + ethan_workflow_next + ethan_workflow_status + ethan_memory_search + ethan_estimate + ethan_git_commit + ethan_git_review + ethan_autopilot + ethan_agent_orchestrate + ethan_agent_list + ethan_agent_show + ethan_context_snapshot + ethan_spec_proposal + ethan_spec_review + ethan_spec_validate + ethan_dora + ethan_pr_analytics + ethan_postmortem + ethan_scaffold + ethan_compliance + ethan_upgrade, ${PIPELINES.length} pipelines)\n`
   );
 }
 
